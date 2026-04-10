@@ -1,0 +1,74 @@
+{
+  "name": "vibe-check",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron": "electron .",
+    "start": "vite build && electron .",
+    "mcp": "node mcp/server.mjs",
+    "mcp:http": "node mcp/server.mjs --transport http --port 3100",
+    "package": "vite build && electron-builder --publish never",
+    "package:mac": "vite build && electron-builder --mac --publish never",
+    "package:win": "vite build && electron-builder --win --publish never",
+    "package:linux": "vite build && electron-builder --linux --publish never"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Live QA observer for AI-generated code",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "chokidar": "^5.0.0",
+    "d3-hierarchy": "^3.1.2",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "vite": "^8.0.8"
+  },
+  "devDependencies": {
+    "electron": "^41.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.vibecheck.app",
+    "productName": "Vibe Check",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "mcp/**/*",
+      "src/ai/**/*",
+      "src/analysis/**/*",
+      "src/state/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": null,
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false
+    }
+  }
+}

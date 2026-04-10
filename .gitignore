@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+.vibe-check/
+.env
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.snap
+.DS_Store
