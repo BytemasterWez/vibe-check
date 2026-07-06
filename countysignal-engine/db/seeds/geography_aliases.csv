@@ -1,0 +1,9 @@
+county_fips,alias_name,alias_scope,source_hint
+35013,Doña Ana,name,census_acs
+35013,Dona Ana County,name,
+22103,Saint Tammany,name,
+22103,St Tammany,name,bls_laus
+29189,Saint Louis,name,
+36061,Manhattan,name,
+36047,Brooklyn,name,
+02020,Anchorage Borough,historical,

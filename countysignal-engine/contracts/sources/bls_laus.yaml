@@ -1,0 +1,59 @@
+source_id: bls_laus
+name: BLS Local Area Unemployment Statistics
+owner: Bureau of Labor Statistics
+category: labour
+access_method: official_download
+access_url: https://www.bls.gov/lau/tables.htm#cntyaa
+download_url: https://www.bls.gov/web/metro/laucntycur14.txt
+licence_status: public_government_data
+attribution: "Source: U.S. Bureau of Labor Statistics, Local Area Unemployment Statistics"
+scraping_allowed: false
+api_key_required: false
+update_frequency: monthly
+geography_level: county
+time_grain: month
+canonical_join_key: county_fips
+raw_format: csv
+src_table: src.bls_laus
+normalised_tables:
+  - norm.county_month_variables
+required_fields:
+  - county_fips
+  - period
+  - unemployment_rate
+field_map:
+  # source column -> src.bls_laus column
+  LAUS Code: series_id
+  State FIPS Code: state_fips
+  County FIPS Code: county_fips_part
+  Area Title: area_title
+  Year: period_year
+  Month: period_month
+  Labor Force: labor_force
+  Employed: employed
+  Unemployed: unemployed
+  Unemployment Rate: unemployment_rate
+variables:
+  - variable_id: bls_laus_unemployment_rate
+    source_field: unemployment_rate
+  - variable_id: bls_laus_labor_force
+    source_field: labor_force
+  - variable_id: bls_laus_employed
+    source_field: employed
+  - variable_id: bls_laus_unemployed
+    source_field: unemployed
+validation:
+  county_coverage_minimum: 3100
+  allow_missing_counties: true
+  required_time_parse: true
+  numeric_fields:
+    - unemployment_rate
+    - labor_force
+    - employed
+    - unemployed
+  bounds:
+    unemployment_rate: [0, 60]
+    labor_force: [0, null]
+provenance_required: true
+production_allowed: true
+status: DOCS_CONFIRMED

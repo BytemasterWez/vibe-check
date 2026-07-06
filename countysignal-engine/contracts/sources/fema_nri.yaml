@@ -1,0 +1,56 @@
+source_id: fema_nri
+name: FEMA National Risk Index (county)
+owner: Federal Emergency Management Agency
+category: hazard
+access_method: official_download
+access_url: https://hazards.fema.gov/nri/data-resources
+download_url: https://hazards.fema.gov/nri/Content/StaticDocuments/DataDownload/NRI_Table_Counties/NRI_Table_Counties.zip
+licence_status: public_government_data
+attribution: "Source: FEMA National Risk Index"
+scraping_allowed: false
+api_key_required: false
+update_frequency: annual
+geography_level: county
+time_grain: static
+canonical_join_key: county_fips
+raw_format: csv
+src_table: src.fema_nri
+normalised_tables:
+  - norm.county_static_variables
+required_fields:
+  - county_fips
+  - risk_score
+field_map:
+  NRI_ID: nri_id
+  STCOFIPS: stcofips
+  STATE: state_name
+  COUNTY: county_name
+  NRI_VER: nri_version
+  RISK_SCORE: risk_score
+  RISK_RATNG: risk_rating
+  EAL_SCORE: eal_score
+  SOVI_SCORE: social_vuln_score
+  RESL_SCORE: community_resilience_score
+  POPULATION: population
+variables:
+  - variable_id: fema_nri_risk_score
+    source_field: risk_score
+  - variable_id: fema_nri_eal_score
+    source_field: eal_score
+  - variable_id: fema_nri_social_vulnerability
+    source_field: social_vuln_score
+  - variable_id: fema_nri_community_resilience
+    source_field: community_resilience_score
+validation:
+  county_coverage_minimum: 3000
+  allow_missing_counties: true
+  required_time_parse: false
+  numeric_fields:
+    - risk_score
+    - eal_score
+  bounds:
+    risk_score: [0, 100]
+    eal_score: [0, 100]
+provenance_required: true
+production_allowed: true
+status: DOCS_CONFIRMED

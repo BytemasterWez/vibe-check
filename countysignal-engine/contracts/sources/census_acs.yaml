@@ -1,0 +1,51 @@
+source_id: census_acs
+name: Census American Community Survey 5-Year Estimates
+owner: U.S. Census Bureau
+category: demographics
+access_method: official_api
+access_url: https://www.census.gov/data/developers/data-sets/acs-5year.html
+download_url: https://api.census.gov/data/{year}/acs/acs5
+licence_status: public_government_data
+attribution: "Source: U.S. Census Bureau, American Community Survey 5-Year Estimates"
+scraping_allowed: false
+api_key_required: false        # key optional; raises rate limits (CENSUS_API_KEY)
+update_frequency: annual
+geography_level: county
+time_grain: year
+canonical_join_key: county_fips
+raw_format: json
+src_table: src.census_acs
+normalised_tables:
+  - norm.county_year_variables
+required_fields:
+  - county_fips
+  - period
+  - estimate
+api_params:
+  get_variables:
+    - B19013_001E    # median household income
+    - B01003_001E    # total population
+    - B17001_002E    # population below poverty
+    - B25064_001E    # median gross rent
+  for: "county:*"
+variables:
+  - variable_id: census_acs_median_household_income
+    source_field: B19013_001E
+  - variable_id: census_acs_total_population
+    source_field: B01003_001E
+  - variable_id: census_acs_poverty_population
+    source_field: B17001_002E
+  - variable_id: census_acs_median_gross_rent
+    source_field: B25064_001E
+validation:
+  county_coverage_minimum: 3100
+  allow_missing_counties: true
+  required_time_parse: true
+  numeric_fields:
+    - estimate
+  bounds:
+    B19013_001E: [0, 500000]
+    B01003_001E: [0, null]
+provenance_required: true
+production_allowed: true
+status: DOCS_CONFIRMED

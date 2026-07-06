@@ -1,0 +1,96 @@
+name: countysignal-engine
+
+x-app-base: &app-base
+  build:
+    context: .
+    dockerfile: services/Dockerfile
+  env_file: .env
+  volumes:
+    - raw-data:/data/raw
+    - ./exports:/app/exports
+  depends_on:
+    postgres-postgis:
+      condition: service_healthy
+    redis:
+      condition: service_started
+    object-storage:
+      condition: service_started
+  restart: unless-stopped
+
+services:
+  postgres-postgis:
+    image: postgis/postgis:16-3.4
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  object-storage:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${CSE_S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${CSE_S3_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+
+  api:
+    <<: *app-base
+    command: uvicorn services.api.main:app --host ${CSE_API_HOST:-0.0.0.0} --port ${CSE_API_PORT:-8000}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import httpx; httpx.get('http://localhost:8000/health').raise_for_status()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app-base
+    command: python -m services.worker.main
+
+  scheduler:
+    <<: *app-base
+    command: python -m services.scheduler.main
+
+  validator:
+    <<: *app-base
+    command: python -m services.validator.main
+
+  docs:
+    image: squidfunk/mkdocs-material:latest
+    command: serve --dev-addr 0.0.0.0:8080
+    working_dir: /docs
+    volumes:
+      - ./:/docs
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  redis-data:
+  minio-data:
+  raw-data:

@@ -1,0 +1,163 @@
+# Variable dictionary entries for Milestone 1 sources. Registered into
+# norm.variable_dictionary before any normalisation writes.
+variables:
+  - variable_id: bls_laus_unemployment_rate
+    source_id: bls_laus
+    name: Unemployment rate
+    description: Monthly county unemployment rate, not seasonally adjusted.
+    unit: percent
+    time_grain: month
+    geography_grain: county
+    directionality: rate
+    higher_is_good: false
+    transform_allowed: true
+    source_field: unemployment_rate
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: bls_laus_labor_force
+    source_id: bls_laus
+    name: Civilian labor force
+    unit: persons
+    time_grain: month
+    geography_grain: county
+    directionality: count
+    higher_is_good: true
+    transform_allowed: true
+    source_field: labor_force
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: bls_laus_employed
+    source_id: bls_laus
+    name: Employed persons
+    unit: persons
+    time_grain: month
+    geography_grain: county
+    directionality: count
+    higher_is_good: true
+    transform_allowed: true
+    source_field: employed
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: bls_laus_unemployed
+    source_id: bls_laus
+    name: Unemployed persons
+    unit: persons
+    time_grain: month
+    geography_grain: county
+    directionality: count
+    higher_is_good: false
+    transform_allowed: true
+    source_field: unemployed
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: census_acs_median_household_income
+    source_id: census_acs
+    name: Median household income
+    description: ACS 5-year estimate B19013_001E.
+    unit: usd
+    time_grain: year
+    geography_grain: county
+    directionality: level
+    higher_is_good: true
+    transform_allowed: true
+    source_field: B19013_001E
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: census_acs_total_population
+    source_id: census_acs
+    name: Total population
+    description: ACS 5-year estimate B01003_001E. Denominator for per-capita transforms.
+    unit: persons
+    time_grain: year
+    geography_grain: county
+    directionality: count
+    higher_is_good:
+    transform_allowed: true
+    source_field: B01003_001E
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: census_acs_poverty_population
+    source_id: census_acs
+    name: Population below poverty level
+    description: ACS 5-year estimate B17001_002E.
+    unit: persons
+    time_grain: year
+    geography_grain: county
+    directionality: count
+    higher_is_good: false
+    transform_allowed: true
+    source_field: B17001_002E
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: census_acs_median_gross_rent
+    source_id: census_acs
+    name: Median gross rent
+    description: ACS 5-year estimate B25064_001E.
+    unit: usd
+    time_grain: year
+    geography_grain: county
+    directionality: level
+    higher_is_good:
+    transform_allowed: true
+    source_field: B25064_001E
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: fema_nri_risk_score
+    source_id: fema_nri
+    name: NRI composite risk score
+    unit: index_0_100
+    time_grain: static
+    geography_grain: county
+    directionality: index
+    higher_is_good: false
+    transform_allowed: true
+    source_field: risk_score
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: fema_nri_eal_score
+    source_id: fema_nri
+    name: NRI expected annual loss score
+    unit: index_0_100
+    time_grain: static
+    geography_grain: county
+    directionality: index
+    higher_is_good: false
+    transform_allowed: true
+    source_field: eal_score
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: fema_nri_social_vulnerability
+    source_id: fema_nri
+    name: NRI social vulnerability score
+    unit: index_0_100
+    time_grain: static
+    geography_grain: county
+    directionality: index
+    higher_is_good: false
+    transform_allowed: true
+    source_field: social_vuln_score
+    normalisation_method: direct
+    missing_value_policy: "null"
+
+  - variable_id: fema_nri_community_resilience
+    source_id: fema_nri
+    name: NRI community resilience score
+    unit: index_0_100
+    time_grain: static
+    geography_grain: county
+    directionality: index
+    higher_is_good: true
+    transform_allowed: true
+    source_field: community_resilience_score
+    normalisation_method: direct
+    missing_value_policy: "null"

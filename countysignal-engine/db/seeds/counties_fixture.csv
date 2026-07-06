@@ -1,0 +1,65 @@
+county_fips,state_fips,state_abbr,state_name,county_name,county_type,county_equivalent_name,lat,lon,land_area,water_area
+01073,01,AL,Alabama,Jefferson,county,Jefferson County,33.5537,-86.8966,2877938000,25401000
+02020,02,AK,Alaska,Anchorage,municipality,Anchorage Municipality,61.1743,-149.2843,4420137000,635632000
+04013,04,AZ,Arizona,Maricopa,county,Maricopa County,33.3490,-112.4915,23828298000,64559000
+05119,05,AR,Arkansas,Pulaski,county,Pulaski County,34.7699,-92.3132,1976436000,111568000
+06037,06,CA,California,Los Angeles,county,Los Angeles County,34.1963,-118.2619,10510688000,1794793000
+06073,06,CA,California,San Diego,county,San Diego County,33.0343,-116.7350,10904220000,839182000
+06085,06,CA,California,Santa Clara,county,Santa Clara County,37.2318,-121.6951,3343890000,33875000
+08031,08,CO,Colorado,Denver,county,Denver County,39.7620,-104.8758,396571000,4238000
+09110,09,CT,Connecticut,Capitol,planning_region,Capitol Planning Region,41.7930,-72.5744,2432214000,58329000
+10003,10,DE,Delaware,New Castle,county,New Castle County,39.5782,-75.6448,1103867000,175265000
+11001,11,DC,District of Columbia,District of Columbia,district,District of Columbia,38.9042,-77.0165,158316000,18709000
+12086,12,FL,Florida,Miami-Dade,county,Miami-Dade County,25.6104,-80.4996,4917559000,1379242000
+12095,12,FL,Florida,Orange,county,Orange County,28.4845,-81.2519,2338682000,258588000
+13121,13,GA,Georgia,Fulton,county,Fulton County,33.7902,-84.4682,1364198000,21622000
+15003,15,HI,Hawaii,Honolulu,county,Honolulu County,21.4587,-157.9756,1555506000,4185563000
+16001,16,ID,Idaho,Ada,county,Ada County,43.4512,-116.2412,2725111000,15277000
+17031,17,IL,Illinois,Cook,county,Cook County,41.8401,-87.8168,2447428000,1786312000
+18097,18,IN,Indiana,Marion,county,Marion County,39.7817,-86.1386,1026227000,17296000
+19153,19,IA,Iowa,Polk,county,Polk County,41.6855,-93.5734,1470826000,29359000
+20173,20,KS,Kansas,Sedgwick,county,Sedgwick County,37.6848,-97.4611,2585637000,32530000
+21111,21,KY,Kentucky,Jefferson,county,Jefferson County,38.1869,-85.6593,984529000,44577000
+22017,22,LA,Louisiana,Caddo,parish,Caddo Parish,32.5800,-93.8823,2274073000,138904000
+22033,22,LA,Louisiana,East Baton Rouge,parish,East Baton Rouge Parish,30.5383,-91.0956,1179747000,25457000
+22051,22,LA,Louisiana,Jefferson,parish,Jefferson Parish,29.7358,-90.1123,764743000,918687000
+22055,22,LA,Louisiana,Lafayette,parish,Lafayette Parish,30.2074,-92.0637,696706000,5188000
+22071,22,LA,Louisiana,Orleans,parish,Orleans Parish,30.0687,-89.9288,438804000,468970000
+22103,22,LA,Louisiana,St. Tammany,parish,St. Tammany Parish,30.4087,-89.9536,2192559000,608993000
+23005,23,ME,Maine,Cumberland,county,Cumberland County,43.8090,-70.2551,2168411000,993735000
+24031,24,MD,Maryland,Montgomery,county,Montgomery County,39.1367,-77.2037,1276736000,36752000
+25025,25,MA,Massachusetts,Suffolk,county,Suffolk County,42.3320,-71.0202,150855000,160830000
+26163,26,MI,Michigan,Wayne,county,Wayne County,42.2846,-83.2611,1585633000,207887000
+27053,27,MN,Minnesota,Hennepin,county,Hennepin County,45.0038,-93.4770,1432453000,141050000
+28049,28,MS,Mississippi,Hinds,county,Hinds County,32.2665,-90.4429,2258580000,32713000
+29189,29,MO,Missouri,St. Louis,county,St. Louis County,38.6407,-90.4432,1315204000,39250000
+30111,30,MT,Montana,Yellowstone,county,Yellowstone County,45.9375,-108.2687,6819065000,32621000
+31055,31,NE,Nebraska,Douglas,county,Douglas County,41.2954,-96.1543,853918000,32127000
+32003,32,NV,Nevada,Clark,county,Clark County,36.2152,-115.0135,20439281000,436012000
+33011,33,NH,New Hampshire,Hillsborough,county,Hillsborough County,42.9151,-71.7160,2266722000,42116000
+34013,34,NJ,New Jersey,Essex,county,Essex County,40.7874,-74.2467,326089000,9174000
+35013,35,NM,New Mexico,Dona Ana,county,Dona Ana County,32.3527,-106.8317,9861362000,17758000
+36047,36,NY,New York,Kings,county,Kings County,40.6350,-73.9500,179664000,71501000
+36061,36,NY,New York,New York,county,New York County,40.7770,-73.9708,58681000,28550000
+37119,37,NC,North Carolina,Mecklenburg,county,Mecklenburg County,35.2468,-80.8326,1356847000,60418000
+38017,38,ND,North Dakota,Cass,county,Cass County,46.9331,-97.2481,4570240000,12474000
+39035,39,OH,Ohio,Cuyahoga,county,Cuyahoga County,41.4260,-81.6216,1184092000,2035673000
+40109,40,OK,Oklahoma,Oklahoma,county,Oklahoma County,35.5514,-97.4075,1834255000,29635000
+41051,41,OR,Oregon,Multnomah,county,Multnomah County,45.5468,-122.4152,1114571000,90867000
+42101,42,PA,Pennsylvania,Philadelphia,county,Philadelphia County,40.0094,-75.1333,347565000,22182000
+44007,44,RI,Rhode Island,Providence,county,Providence County,41.8709,-71.5786,1060636000,67023000
+45079,45,SC,South Carolina,Richland,county,Richland County,34.0219,-80.9033,1962722000,42562000
+46102,46,SD,South Dakota,Oglala Lakota,county,Oglala Lakota County,43.3356,-102.5516,5422823000,3324000
+47157,47,TN,Tennessee,Shelby,county,Shelby County,35.1840,-89.8957,1979771000,64379000
+48029,48,TX,Texas,Bexar,county,Bexar County,29.4486,-98.5197,3211326000,42258000
+48113,48,TX,Texas,Dallas,county,Dallas County,32.7666,-96.7778,2257904000,80532000
+48201,48,TX,Texas,Harris,county,Harris County,29.8578,-95.3936,4411787000,182226000
+48453,48,TX,Texas,Travis,county,Travis County,30.3341,-97.7820,2564612000,84666000
+49035,49,UT,Utah,Salt Lake,county,Salt Lake County,40.6676,-111.9241,1919573000,66884000
+50007,50,VT,Vermont,Chittenden,county,Chittenden County,44.4610,-73.0813,1390185000,207659000
+51019,51,VA,Virginia,Bedford,county,Bedford County,37.3149,-79.5241,1948976000,34121000
+51510,51,VA,Virginia,Alexandria,independent_city,Alexandria city,38.8185,-77.0861,38659000,1109000
+53033,53,WA,Washington,King,county,King County,47.4906,-121.8339,5479477000,496679000
+54039,54,WV,West Virginia,Kanawha,county,Kanawha County,38.3355,-81.5281,2331775000,24736000
+55079,55,WI,Wisconsin,Milwaukee,county,Milwaukee County,43.0175,-87.9733,624934000,1855968000
+56021,56,WY,Wyoming,Laramie,county,Laramie County,41.3071,-104.6897,6955401000,4972000

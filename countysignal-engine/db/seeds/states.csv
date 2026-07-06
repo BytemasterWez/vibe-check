@@ -1,0 +1,52 @@
+state_fips,state_abbr,state_name,is_state
+01,AL,Alabama,true
+02,AK,Alaska,true
+04,AZ,Arizona,true
+05,AR,Arkansas,true
+06,CA,California,true
+08,CO,Colorado,true
+09,CT,Connecticut,true
+10,DE,Delaware,true
+11,DC,District of Columbia,false
+12,FL,Florida,true
+13,GA,Georgia,true
+15,HI,Hawaii,true
+16,ID,Idaho,true
+17,IL,Illinois,true
+18,IN,Indiana,true
+19,IA,Iowa,true
+20,KS,Kansas,true
+21,KY,Kentucky,true
+22,LA,Louisiana,true
+23,ME,Maine,true
+24,MD,Maryland,true
+25,MA,Massachusetts,true
+26,MI,Michigan,true
+27,MN,Minnesota,true
+28,MS,Mississippi,true
+29,MO,Missouri,true
+30,MT,Montana,true
+31,NE,Nebraska,true
+32,NV,Nevada,true
+33,NH,New Hampshire,true
+34,NJ,New Jersey,true
+35,NM,New Mexico,true
+36,NY,New York,true
+37,NC,North Carolina,true
+38,ND,North Dakota,true
+39,OH,Ohio,true
+40,OK,Oklahoma,true
+41,OR,Oregon,true
+42,PA,Pennsylvania,true
+44,RI,Rhode Island,true
+45,SC,South Carolina,true
+46,SD,South Dakota,true
+47,TN,Tennessee,true
+48,TX,Texas,true
+49,UT,Utah,true
+50,VT,Vermont,true
+51,VA,Virginia,true
+53,WA,Washington,true
+54,WV,West Virginia,true
+55,WI,Wisconsin,true
+56,WY,Wyoming,true

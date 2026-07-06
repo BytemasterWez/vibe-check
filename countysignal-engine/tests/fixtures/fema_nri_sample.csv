@@ -1,0 +1,65 @@
+NRI_ID,STCOFIPS,STATE,COUNTY,NRI_VER,RISK_SCORE,RISK_RATNG,EAL_SCORE,SOVI_SCORE,RESL_SCORE,POPULATION
+C01073,01073,Alabama,Jefferson,March 2023,94.95,Relatively High,100,64.33,65.48,526607
+C02020,02020,Alaska,Anchorage,March 2023,13.88,Relatively Moderate,13.7,47.27,63.85,1694106
+C04013,04013,Arizona,Maricopa,March 2023,30.94,Relatively Moderate,27.92,32.72,60.66,2258902
+C05119,05119,Arkansas,Pulaski,March 2023,79.32,Relatively High,66.68,73.73,37.87,972072
+C06037,06037,California,Los Angeles,March 2023,39.95,Relatively Moderate,42.69,15.93,32.82,1578975
+C06073,06073,California,San Diego,March 2023,40.06,Relatively Moderate,32.97,55.87,68.28,1955485
+C06085,06085,California,Santa Clara,March 2023,53.14,Relatively High,46.48,19.54,59.42,1357230
+C08031,08031,Colorado,Denver,March 2023,37.42,Relatively Moderate,39.19,24.52,48.49,1223122
+C09110,09110,Connecticut,Capitol,March 2023,37.96,Relatively Moderate,38.04,46.5,42.03,1065008
+C10003,10003,Delaware,New Castle,March 2023,27.0,Relatively Moderate,25.3,50.72,50.62,2304632
+C11001,11001,District of Columbia,District of Columbia,March 2023,10.24,Relatively Moderate,11.02,37.85,36.19,1184754
+C12086,12086,Florida,Miami-Dade,March 2023,45.09,Relatively Moderate,39.85,52.62,30.78,1707982
+C12095,12095,Florida,Orange,March 2023,51.14,Relatively High,54.05,42.88,58.06,1450235
+C13121,13121,Georgia,Fulton,March 2023,45.43,Relatively Moderate,44.81,24.1,68.73,29151
+C15003,15003,Hawaii,Honolulu,March 2023,31.01,Relatively Moderate,31.29,47.16,54.81,1868617
+C16001,16001,Idaho,Ada,March 2023,33.11,Relatively Moderate,32.65,54.52,32.16,1832123
+C17031,17031,Illinois,Cook,March 2023,9.24,Relatively Moderate,9.77,54.86,34.07,2291274
+C18097,18097,Indiana,Marion,March 2023,13.96,Relatively Moderate,12.16,51.17,45.49,1232875
+C19153,19153,Iowa,Polk,March 2023,37.9,Relatively Moderate,33.5,13.34,40.19,1198087
+C20173,20173,Kansas,Sedgwick,March 2023,33.1,Relatively Moderate,34.99,21.11,42.38,2028693
+C21111,21111,Kentucky,Jefferson,March 2023,38.03,Relatively Moderate,33.56,20.27,64.61,1882169
+C22017,22017,Louisiana,Caddo,March 2023,91.49,Relatively High,90.62,61.3,56.82,1154110
+C22033,22033,Louisiana,East Baton Rouge,March 2023,24.99,Relatively Moderate,22.25,26.27,64.5,717611
+C22051,22051,Louisiana,Jefferson,March 2023,33.32,Relatively Moderate,27.43,24.9,56.04,1513256
+C22055,22055,Louisiana,Lafayette,March 2023,13.58,Relatively Moderate,13.92,50.06,37.41,1914532
+C22071,22071,Louisiana,Orleans,March 2023,90.65,Relatively High,90.01,56.97,37.8,1408754
+C22103,22103,Louisiana,St. Tammany,March 2023,57.99,Relatively High,62.74,61.08,61.62,170408
+C23005,23005,Maine,Cumberland,March 2023,25.42,Relatively Moderate,23.84,56.1,46.28,2411700
+C24031,24031,Maryland,Montgomery,March 2023,47.01,Relatively Moderate,42.75,46.73,35.29,1379076
+C25025,25025,Massachusetts,Suffolk,March 2023,31.67,Relatively Moderate,32.3,19.06,45.06,1918203
+C26163,26163,Michigan,Wayne,March 2023,58.94,Relatively High,58.13,86.44,38.33,806176
+C27053,27053,Minnesota,Hennepin,March 2023,47.04,Relatively Moderate,41.01,28.73,49.46,1058078
+C28049,28049,Mississippi,Hinds,March 2023,57.14,Relatively High,56.97,82.46,39.85,395264
+C29189,29189,Missouri,St. Louis,March 2023,33.54,Relatively Moderate,29.24,19.75,31.1,481116
+C30111,30111,Montana,Yellowstone,March 2023,12.37,Relatively Moderate,10.01,33.84,45.08,1723136
+C31055,31055,Nebraska,Douglas,March 2023,24.78,Relatively Moderate,21.58,18.23,67.17,296667
+C32003,32003,Nevada,Clark,March 2023,46.09,Relatively Moderate,40.9,26.17,59.81,1552971
+C33011,33011,New Hampshire,Hillsborough,March 2023,21.44,Relatively Moderate,17.88,37.53,46.95,1831413
+C34013,34013,New Jersey,Essex,March 2023,20.07,Relatively Moderate,18.28,20.11,48.67,1011450
+C35013,35013,New Mexico,Dona Ana,March 2023,50.86,Relatively High,48.28,12.08,30.83,2001605
+C36047,36047,New York,Kings,March 2023,18.5,Relatively Moderate,19.01,53.9,36.71,2288706
+C36061,36061,New York,New York,March 2023,20.99,Relatively Moderate,19.43,44.34,41.87,560868
+C37119,37119,North Carolina,Mecklenburg,March 2023,52.13,Relatively High,44.43,27.26,69.81,1439099
+C38017,38017,North Dakota,Cass,March 2023,33.81,Relatively Moderate,31.71,44.78,62.04,290310
+C39035,39035,Ohio,Cuyahoga,March 2023,78.13,Relatively High,76.49,55.98,49.1,1318109
+C40109,40109,Oklahoma,Oklahoma,March 2023,33.11,Relatively Moderate,33.88,39.34,31.41,1433536
+C41051,41051,Oregon,Multnomah,March 2023,41.76,Relatively Moderate,34.68,51.56,42.0,1841756
+C42101,42101,Pennsylvania,Philadelphia,March 2023,48.13,Relatively Moderate,47.6,30.43,35.16,829024
+C44007,44007,Rhode Island,Providence,March 2023,30.31,Relatively Moderate,28.5,30.33,50.97,1879161
+C45079,45079,South Carolina,Richland,March 2023,17.88,Relatively Moderate,17.83,28.53,43.25,1873261
+C46102,46102,South Dakota,Oglala Lakota,March 2023,72.28,Relatively High,73.73,68.94,68.18,2247937
+C47157,47157,Tennessee,Shelby,March 2023,19.94,Relatively Moderate,19.94,40.62,69.93,1531134
+C48029,48029,Texas,Bexar,March 2023,9.35,Relatively Moderate,9.98,38.33,38.42,1171596
+C48113,48113,Texas,Dallas,March 2023,50.68,Relatively High,54.18,43.03,48.08,1679014
+C48201,48201,Texas,Harris,March 2023,42.68,Relatively Moderate,39.81,51.81,62.98,2125484
+C48453,48453,Texas,Travis,March 2023,44.41,Relatively Moderate,40.1,14.56,65.88,1650137
+C49035,49035,Utah,Salt Lake,March 2023,31.53,Relatively Moderate,30.75,51.22,55.95,1085383
+C50007,50007,Vermont,Chittenden,March 2023,53.88,Relatively High,49.63,59.0,38.86,577308
+C51019,51019,Virginia,Bedford,March 2023,31.87,Relatively Moderate,31.16,52.08,58.08,2430614
+C51510,51510,Virginia,Alexandria,March 2023,47.09,Relatively Moderate,51.43,52.76,54.39,360290
+C53033,53033,Washington,King,March 2023,50.57,Relatively High,48.18,21.83,52.15,1869767
+C54039,54039,West Virginia,Kanawha,March 2023,56.94,Relatively High,49.54,62.51,63.79,1208322
+C55079,55079,Wisconsin,Milwaukee,March 2023,52.13,Relatively High,52.01,15.38,46.31,325673
+C56021,56021,Wyoming,Laramie,March 2023,32.64,Relatively Moderate,26.14,26.95,34.32,2008102

@@ -1,0 +1,15 @@
+event_id: unemployment_spike_2pp_12m
+description: County unemployment rate increases by at least 2 percentage points over 12 months.
+base_variable: bls_laus_unemployment_rate
+condition:
+  transform: change_12m
+  operator: ">="
+  threshold: 2.0
+time_grain: month
+minimum_history_months: 12
+case_control:
+  control_strategy: same_period_non_event
+  exclusions:
+    - reason: insufficient_history
+    - reason: missing_base_variable
+  max_controls_per_case: 10

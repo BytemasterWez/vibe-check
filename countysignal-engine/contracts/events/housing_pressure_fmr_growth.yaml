@@ -1,0 +1,11 @@
+# Milestone 2 event — declared now to prove events are config, not code.
+# Inactive until the hud_fmr source reaches COUNTY_JOIN_PASSING.
+event_id: housing_pressure_fmr_growth
+description: County 2-bedroom Fair Market Rent grows at least 8% year over year.
+base_variable: hud_fmr_2br
+condition:
+  transform: pct_change_12m
+  operator: ">="
+  threshold: 8.0
+time_grain: year
+minimum_history_months: 24

@@ -1,0 +1,15 @@
+site_name: CountySignal Engine
+docs_dir: docs
+theme:
+  name: material
+nav:
+  - Overview: architecture.md
+  - Data model: data_model.md
+  - Source contracts: source_contracts.md
+  - Add a source: add_new_source.md
+  - Add an event: add_new_event.md
+  - Add a recipe: add_new_recipe.md
+  - API: api.md
+  - Validation: validation.md
+  - Compliance: compliance.md
+  - Deployment: deployment.md

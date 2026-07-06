@@ -1,0 +1,55 @@
+# Feature definitions are config, not code. Each entry expands to one
+# feature.feature_definitions row per (variable, transform) pair.
+# feature_id convention: {variable_id}__{transform}
+feature_sets:
+  - variables:
+      - bls_laus_unemployment_rate
+    transforms:
+      - latest_value
+      - change_1m
+      - change_3m
+      - change_12m
+      - pct_change_12m
+      - rolling_avg_3m
+      - rolling_avg_12m
+      - zscore_national
+      - zscore_state
+      - rank_national
+      - rank_state
+      - missing_indicator
+
+  - variables:
+      - bls_laus_labor_force
+      - bls_laus_unemployed
+    transforms:
+      - latest_value
+      - pct_change_12m
+      - zscore_national
+
+  - variables:
+      - census_acs_median_household_income
+      - census_acs_median_gross_rent
+    transforms:
+      - latest_value
+      - zscore_national
+      - rank_national
+
+  - variables:
+      - census_acs_poverty_population
+    transforms:
+      - latest_value
+      - per_capita          # uses census_acs_total_population as denominator
+      - zscore_national
+
+  - variables:
+      - fema_nri_risk_score
+      - fema_nri_eal_score
+      - fema_nri_social_vulnerability
+      - fema_nri_community_resilience
+    transforms:
+      - latest_value
+      - zscore_national
+      - rank_national
+
+defaults:
+  per_capita_denominator: census_acs_total_population

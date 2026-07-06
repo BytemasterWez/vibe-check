@@ -1,0 +1,26 @@
+recipe_id: labour_shock_monitor
+name: Labour Shock Monitor
+description: Scores counties for similarity to historical unemployment spike conditions.
+event_id: unemployment_spike_2pp_12m
+features:
+  include_categories:
+    - labour
+    - demographics
+    - hazard
+    - poverty
+  # Optional explicit include/exclude of feature ids; empty means "all
+  # features whose base variable's source category matches above".
+  include_features: []
+  exclude_features: []
+model:
+  type: logistic_regression
+  compare_against:
+    - baseline_previous_value
+    - baseline_national_average
+outputs:
+  - county_score
+  - national_rank
+  - state_rank
+  - top_drivers
+  - evidence_json
+api_exposed: true
