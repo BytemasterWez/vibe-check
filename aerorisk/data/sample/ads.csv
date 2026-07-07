@@ -1,0 +1,7 @@
+AD_NUMBER,EFFECTIVE_DATE,SUBJECT,APPLIES_MFR,APPLIES_MODEL,APPLIES_ENG_MFR,APPLIES_ENG_MODEL,RECURRING,COST_BAND,NOTES
+87-20-03,1987-12-07,Seat rail and roller housing wear inspection,CESSNA,172,,,yes,low,Repetitive inspection each 100 hours until improved rails installed
+77-20-07,1977-10-14,Oil pump impeller and shaft replacement,,,LYCOMING,O-320-H,no,medium,Applies to O-320-H series engines
+2020-26-16,2021-02-16,Wing main spar lower cap corrosion and crack inspection,PIPER,PA-31,,,yes,high,Repetitive eddy-current inspection of lower spar cap bolt holes
+75-08-09,1975-05-02,Exhaust system inspection for cracks and leakage,,,LYCOMING,TIO-540,yes,medium,Repetitive exhaust inspection; nacelle heat damage risk
+2013-05-01,2013-04-10,CAPS rocket igniter line cutter replacement,CIRRUS DESIGN CORP,SR22,,,no,low,One-time parachute system component replacement
+2024-08-12,2024-09-30,Turbocharger oil supply line chafing inspection,,,CONTINENTAL,TSIO-550,no,medium,Inspect and re-clamp oil supply line

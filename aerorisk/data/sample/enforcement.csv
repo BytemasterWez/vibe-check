@@ -1,0 +1,4 @@
+CASE_ID,DATE_CLOSED,RESPONDENT,RESPONDENT_TYPE,ACTION,AMOUNT,SUMMARY
+2024EA110045,2024-09-12,GULFLINE AIR CHARTER LLC,Part 135 operator,civil_penalty,"$44,000","Operated for-hire flights with required maintenance record entries missing for two aircraft."
+2023EA070212,2023-05-30,GULFLINE AIR CHARTER LLC,Part 135 operator,suspension,,"Air carrier certificate suspended 30 days for exceeding flight and duty time limitations."
+2022EA030118,2022-02-14,RIDGELINE AERO REPAIR INC,Repair station,civil_penalty,"$18,500","Approved aircraft for return to service without completing required inspection items."
