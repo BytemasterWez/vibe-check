@@ -5,6 +5,7 @@ import { Datastore } from './datastore.js';
 import { assessAircraft } from './assess.js';
 import { renderReport } from './report.js';
 import { SOURCES, fetchSource } from './sources/fetch.js';
+import { transformReleasableAircraft } from './sources/transformFaaRegistry.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = join(HERE, '..', 'data', 'sample');
@@ -23,6 +24,10 @@ Usage:
 
   aerorisk fetch <source-id> [--dest <dir>]
       Download a source with a stable bulk endpoint (e.g. faa-registry).
+
+  aerorisk transform faa-registry --src <dir> [--dest <dir>]
+      Convert an unzipped Releasable Aircraft download (MASTER.txt,
+      ACFTREF.txt, ENGINE.txt) into registry.csv in the dest data directory.
 
 Options:
   --data <dir>   Data directory of CSV feeds (default: bundled sample dataset)
@@ -92,6 +97,42 @@ export async function run(argv) {
         return result.downloaded ? 0 : 1;
       } catch (err) {
         return fail(`fetch failed: ${err.message}`);
+      }
+    }
+    case 'transform': {
+      if (target !== 'faa-registry') {
+        return fail('transform currently supports only: faa-registry');
+      }
+      const src = args.flags.src;
+      if (!src) return fail('transform requires --src <dir> pointing at the unzipped Releasable Aircraft files');
+      const { readFileSync, writeFileSync: write, mkdirSync } = await import('node:fs');
+      const read = (name) => {
+        try {
+          return readFileSync(join(src, name), 'latin1');
+        } catch {
+          throw new Error(`missing ${name} in ${src}`);
+        }
+      };
+      try {
+        const result = transformReleasableAircraft({
+          masterText: read('MASTER.txt'),
+          acftrefText: read('ACFTREF.txt'),
+          engineText: read('ENGINE.txt'),
+        });
+        const dest = args.flags.dest ?? src;
+        mkdirSync(dest, { recursive: true });
+        const outPath = join(dest, 'registry.csv');
+        write(outPath, `${result.registryCsv}\n`);
+        console.log(`Wrote ${result.count} aircraft to ${outPath}`);
+        for (const w of result.warnings.slice(0, 10)) console.warn(`warning: ${w}`);
+        if (result.warnings.length > 10) console.warn(`…and ${result.warnings.length - 10} more warnings`);
+        console.log(
+          'Note: the releasable DB carries only the current registrant; ' +
+            'registration_history.csv requires FAA aircraft records (CARES) and is not produced by this transform.',
+        );
+        return 0;
+      } catch (err) {
+        return fail(`transform failed: ${err.message}`);
       }
     }
     case undefined:

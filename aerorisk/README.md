@@ -140,7 +140,7 @@ low-confidence "no data" findings):
 
 | Source | Feed(s) | Acquisition |
 | --- | --- | --- |
-| FAA aircraft registry (Releasable Aircraft DB, daily) | `registry.csv`, `registration_history.csv` | `aerorisk fetch faa-registry`, then transform MASTER/DEREG files |
+| FAA aircraft registry (Releasable Aircraft DB, daily) | `registry.csv` | `aerorisk fetch faa-registry`, unzip, then `aerorisk transform faa-registry --src <dir> --dest <data-dir>` |
 | FAA Service Difficulty Reports (yearly CSVs) | `sdr.csv` | manual export from sdrs.faa.gov |
 | NTSB CAROL (1962–present) | `ntsb.csv` | manual export from data.ntsb.gov |
 | FAA Airworthiness Directives (DRS) | `ads.csv` | manual export from drs.faa.gov |
@@ -148,6 +148,16 @@ low-confidence "no data" findings):
 | NASA ASRS database exports | `asrs.csv` | manual export from asrs.arc.nasa.gov |
 | FAA ASIAS runway incursions + FAA Wildlife Strike DB | `airport_risk.csv` | manual aggregation per airport |
 | Flight activity | `flights.csv` | **licensed** ADS-B export or operator logs only |
+
+The releasable registry DB carries only the *current* registrant; a full chain-of-ownership
+timeline (`registration_history.csv`) requires FAA aircraft records requests (CARES) and is not
+produced by the transform.
+
+**Network note:** all Tier-1 sources are public, unauthenticated endpoints — no API keys.
+`aerorisk fetch` needs an environment whose network policy allows the government hosts
+(`registry.faa.gov`, `sdrs.faa.gov`, `data.ntsb.gov`, `drs.faa.gov`, `asrs.arc.nasa.gov`,
+`wildlife.faa.gov`, `asias.faa.gov`). In restricted/proxied sandboxes the download fails with a
+clear error and the rest of the tool keeps working from local data.
 
 **ADS-B licensing is not optional.** OpenSky requires a written licence for commercial use;
 ADS-B Exchange data is a licensed product. Load only flight-activity data you have the rights

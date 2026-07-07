@@ -113,6 +113,6 @@ export async function fetchSource(id, destDir) {
   await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
   return {
     downloaded: true,
-    message: `Saved ${dest}. Unzip it and transform MASTER/DEREG files into registry.csv / registration_history.csv (schemas in README).`,
+    message: `Saved ${dest}. Unzip it, then run: aerorisk transform faa-registry --src <unzipped-dir> --dest <data-dir>`,
   };
 }
