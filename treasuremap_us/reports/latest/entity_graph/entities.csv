@@ -1,0 +1,9 @@
+entity_id,entity_name,normalised_name,entity_type,state,status,registration_number,registered_agent,agent_address,officers,addresses,related_entities,possible_successors,possible_predecessors,source_url,confidence,last_verified
+ent-fixture001,MERIDIAN FIXTURE FREIGHT LINES INC,,corporation,OH,merged,DEMO-0011223,CT DEMO AGENT SERVICES,,,,,KEYSTONE DEMO FREIGHT PARTNERS LP,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture002,HARBORVIEW FIXTURE FACTORS LLC,,corporation,FL,dissolved,DEMO-L99001,DEMO REGISTERED AGENTS OF FLORIDA,"100 Fixture Plaza, Tallahassee FL",R. Demo (manager),,,,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture003,SUMMIT DEMO SURETY & INSURANCE CO,,corporation,NY,merged,DEMO-INS-4410,,,,,,STERLING DEMO CAPITAL GROUP LLC,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture004,UNION DEMO PENSION SERVICES LLC,,corporation,IL,inactive,,ILLINOIS DEMO AGENTS INC,,,,,,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture005,ORCHARD FIXTURE FUND LP,,corporation,TX,dissolved,,,,Orchard Demo GP LLC (general partner),,,,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture006,NORTHFIELD SAVINGS BANK,,corporation,VT,active,,,,,,,,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture007,STERLING DEMO CAPITAL GROUP LLC,,corporation,DE,active,DEMO-7100455,DELAWARE DEMO TRUST AGENTS,,,,,,,https://example.invalid/fixture/sos,,2026-07-01
+ent-fixture008,CANYON FIXTURE ASSOCIATES LLP,,corporation,CA,forfeited,,CALIFORNIA DEMO AGENT CO,,,,,,,https://example.invalid/fixture/sos,,2026-07-01

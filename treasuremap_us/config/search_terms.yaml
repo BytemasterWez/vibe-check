@@ -1,0 +1,111 @@
+# TreasureMap US — search vocabulary.
+
+# Suffixes that mark a claimant as a business/entity (PHASE 1 targets only).
+business_suffixes:
+  - LLC
+  - L.L.C.
+  - INC
+  - INC.
+  - INCORPORATED
+  - CORP
+  - CORP.
+  - CORPORATION
+  - CO
+  - CO.
+  - COMPANY
+  - LP
+  - L.P.
+  - LLP
+  - L.L.P.
+  - LTD
+  - LTD.
+  - LIMITED
+  - PLLC
+  - PC
+  - P.C.
+  - PA          # professional association
+  - TRUST
+  - BANK
+  - N.A.
+  - FSB
+  - CREDIT UNION
+  - HOLDINGS
+  - PARTNERS
+  - PARTNERSHIP
+  - ASSOCIATES
+  - ENTERPRISES
+  - GROUP
+  - FUND
+  - CAPITAL
+  - PROPERTIES
+  - REALTY
+  - VENTURES
+
+# Terms that mark a claimant as an individual/consumer — EXCLUDED in PHASE 1
+# (core rule: no consumer-first outreach; individuals score -30 and are
+# filtered out of ingest entirely by default).
+individual_markers:
+  - ESTATE OF
+  - HEIRS OF
+  - JR
+  - SR
+  - III
+  - MR
+  - MRS
+  - MS
+
+# High-signal creditor-name seed queries for UCFL search-form mode.
+# These bias toward institutional/commercial creditors likely to have
+# dissolved, merged or been renamed (the stale-chain thesis).
+ucfl_seed_queries:
+  - SUPPLY
+  - EQUIPMENT
+  - LEASING
+  - FACTORS
+  - WHOLESALE
+  - DISTRIBUTING
+  - MANUFACTURING
+  - INSURANCE
+  - SURETY
+  - FINANCE
+  - ACCEPTANCE
+  - SAVINGS
+  - MORTGAGE
+  - LUMBER
+  - STEEL
+  - FREIGHT
+  - LOGISTICS
+  - PENSION
+  - BENEFIT
+
+# Merger / successor language for entity resolution evidence matching.
+merger_language:
+  - "merged with and into"
+  - "merged into"
+  - "acquired by"
+  - "successor in interest"
+  - "successor by merger"
+  - "f/k/a"
+  - "formerly known as"
+  - "n/k/a"
+  - "now known as"
+  - "d/b/a"
+  - "name changed to"
+  - "converted to"
+  - "surviving entity"
+  - "assignee of"
+
+# Listing-thinness signals for the asset mispricing engine — phrases whose
+# ABSENCE from a government listing suggests under-enrichment.
+enrichment_signals:
+  - zoning
+  - flood
+  - environmental
+  - phase i
+  - easement
+  - utilities
+  - rail
+  - acreage
+  - survey
+  - appraisal
+  - opportunity zone

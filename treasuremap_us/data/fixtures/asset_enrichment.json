@@ -1,0 +1,95 @@
+[
+ {
+  "asset_id": "gsa-fixture001",
+  "zoning": "I-2 heavy industrial",
+  "land_use": "warehouse",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "yes",
+  "brownfield_or_superfund_proximity": "none known",
+  "road_access": "yes",
+  "rail_access": "yes",
+  "utility_access_clues": "3-phase power on site",
+  "redevelopment_incentives": "state rail-served site grant (demo)",
+  "highest_best_use_hypothesis": "rail-served last-mile distribution",
+  "comparable_sales_proxy": "$38/sf warehouse comps (demo)",
+  "risk_notes": "roof age unknown; Phase I needed"
+ },
+ {
+  "asset_id": "gsa-fixture002",
+  "zoning": "M-1",
+  "land_use": "vacant industrial",
+  "fema_flood_zone": "AE",
+  "opportunity_zone": "yes",
+  "road_access": "yes",
+  "port_access": "yes",
+  "brownfield_or_superfund_proximity": "adjacent legacy tank farm (demo)",
+  "highest_best_use_hypothesis": "laydown yard / port logistics",
+  "risk_notes": "flood zone AE + environmental adjacency \u2014 heavy diligence"
+ },
+ {
+  "asset_id": "gsa-fixture005",
+  "zoning": "M-2",
+  "land_use": "fleet garage",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "no",
+  "road_access": "yes",
+  "brownfield_or_superfund_proximity": "former UST on site (demo)",
+  "utility_access_clues": "fuel island decommissioned",
+  "highest_best_use_hypothesis": "fleet maintenance / EV depot conversion",
+  "risk_notes": "UST closure records must be obtained"
+ },
+ {
+  "asset_id": "gsa-fixture007",
+  "zoning": "CBD",
+  "land_use": "civic",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "yes",
+  "brownfield_or_superfund_proximity": "none known",
+  "road_access": "yes",
+  "redevelopment_incentives": "historic tax credits (if eligible)",
+  "highest_best_use_hypothesis": "event venue / brewery adaptive reuse",
+  "risk_notes": "historic-eligibility restricts alterations"
+ },
+ {
+  "asset_id": "teoaf-fixture002",
+  "zoning": "I-1",
+  "land_use": "warehouse",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "yes",
+  "road_access": "yes",
+  "rail_access": "no",
+  "utility_access_clues": "dock power present",
+  "highest_best_use_hypothesis": "cross-border 3PL cross-dock",
+  "comparable_sales_proxy": "$45/sf (demo)",
+  "brownfield_or_superfund_proximity": "none known",
+  "risk_notes": "occupancy status must be confirmed"
+ },
+ {
+  "asset_id": "teoaf-fixture004",
+  "zoning": "C-2",
+  "land_use": "car wash",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "no",
+  "road_access": "yes",
+  "brownfield_or_superfund_proximity": "none known",
+  "highest_best_use_hypothesis": "continue operating business",
+  "risk_notes": "business licenses do not transfer automatically"
+ },
+ {
+  "asset_id": "teoaf-fixture006",
+  "fema_flood_zone": "",
+  "opportunity_zone": "",
+  "risk_notes": ""
+ },
+ {
+  "asset_id": "usms-fixture003",
+  "zoning": "C-H highway commercial",
+  "land_use": "vacant",
+  "fema_flood_zone": "X",
+  "opportunity_zone": "no",
+  "road_access": "yes",
+  "brownfield_or_superfund_proximity": "none known",
+  "highest_best_use_hypothesis": "QSR pad / fuel retail",
+  "risk_notes": "access permit from state DOT required"
+ }
+]

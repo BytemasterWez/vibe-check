@@ -1,0 +1,50 @@
+# TreasureMap US — scoring rules for both engines.
+# jobs/score_opportunities.py reads this file; do not hard-code weights.
+
+claimable_funds:
+  rules:
+    amount_over_10000: 30
+    business_entity_claimant: 20
+    claimant_dissolved_inactive_merged: 20
+    successor_or_agent_found: 20
+    claim_process_clear: 15
+    official_court_or_agency_source: 10
+    consumer_individual_claimant: -30
+    ownership_chain_unclear: -40
+    fee_or_legal_restriction_unclear: -50
+    source_not_verified: -100
+  min_amount_usd: 5000          # PHASE 1 filter
+  decision_thresholds:
+    sell_candidate: 80          # AND source verified AND route complete
+    improve: 40
+    park: 0                     # anything >= 0 without a route parks
+    # below park threshold -> KILL unless flagged LEGAL_REVIEW
+
+government_assets:
+  # Component scores are each 0-10; total is the weighted sum scaled to 100.
+  weights:
+    hidden_reuse_score: 0.20
+    transport_access_score: 0.12
+    utility_access_score: 0.08
+    incentive_score: 0.12
+    flood_risk_score: 0.10          # inverted: 10 = minimal flood risk
+    environmental_risk_score: 0.10  # inverted: 10 = minimal env risk
+    listing_thinness_score: 0.10    # 10 = very thin listing (our edge)
+    buyer_fit_score: 0.10
+    data_confidence_score: 0.08
+  penalties:
+    source_not_verified: -100
+  gates:
+    # No bid recommendation and no SELL_CANDIDATE unless every one of these
+    # enrichment fields is populated (Hard safety rule: no bid rec without
+    # title/environmental review fields complete).
+    required_risk_fields:
+      - fema_flood_zone
+      - brownfield_or_superfund_proximity
+      - risk_notes
+  decision_thresholds:
+    sell_candidate: 70
+    improve: 45
+    park: 0
+
+decisions: [SELL_CANDIDATE, IMPROVE, PARK, KILL, LEGAL_REVIEW]

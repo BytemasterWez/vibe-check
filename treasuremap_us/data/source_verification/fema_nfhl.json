@@ -1,0 +1,19 @@
+{
+  "status": "UNKNOWN",
+  "probes": [
+    {
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer?f=json",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='hazards.fema.gov', port=443): Max retries exceeded with url: /arcgis/rest/services/public/NFHL/MapServer?f=json (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    }
+  ],
+  "notes": "All probes denied by this runner's egress policy (proxy CONNECT 403). The source itself is UNTESTED \u2014 re-run jobs/verify_sources.py from an environment with network access to these hosts before any ingestion.",
+  "expected_mechanics": "VERIFIED_API",
+  "production_ready": false,
+  "source_id": "fema_nfhl",
+  "verified_at": "2026-07-07T14:08:53.131157+00:00"
+}

@@ -1,0 +1,3 @@
+claim_id,claimant,successor,confidence,method
+ucfl-fixture001,MERIDIAN FIXTURE FREIGHT LINES INC,KEYSTONE DEMO FREIGHT PARTNERS LP,HIGH,exact_name
+ucfl-fixture008,SUMMIT DEMO SURETY & INSURANCE CO,STERLING DEMO CAPITAL GROUP LLC,HIGH,exact_name

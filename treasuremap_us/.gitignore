@@ -1,0 +1,7 @@
+# bulk fetch archive and logs stay local; verification records and reports are committed
+data/raw/*
+!data/raw/.gitkeep
+logs/*
+!logs/.gitkeep
+__pycache__/
+*.pyc

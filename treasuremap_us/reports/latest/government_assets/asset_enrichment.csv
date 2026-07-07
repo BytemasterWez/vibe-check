@@ -1,0 +1,21 @@
+asset_id,parcel_id,zoning,land_use,fema_flood_zone,opportunity_zone,brownfield_or_superfund_proximity,road_access,rail_access,port_access,utility_access_clues,nearby_public_projects,population_growth,industrial_corridor_score,redevelopment_incentives,comparable_sales_proxy,highest_best_use_hypothesis,risk_notes
+gsa-fixture001,,I-2 heavy industrial,warehouse,X,yes,none known,yes,yes,,3-phase power on site,,,,state rail-served site grant (demo),$38/sf warehouse comps (demo),rail-served last-mile distribution,roof age unknown; Phase I needed
+gsa-fixture002,,M-1,vacant industrial,AE,yes,adjacent legacy tank farm (demo),yes,,yes,,,,,,,laydown yard / port logistics,flood zone AE + environmental adjacency — heavy diligence
+gsa-fixture003,,,,,,,,,,,,,,,,,
+gsa-fixture004,,,,,,,,,,,,,,,,,
+gsa-fixture005,,M-2,fleet garage,X,no,former UST on site (demo),yes,,,fuel island decommissioned,,,,,,fleet maintenance / EV depot conversion,UST closure records must be obtained
+gsa-fixture006,,,,,,,,,,,,,,,,,
+gsa-fixture007,,CBD,civic,X,yes,none known,yes,,,,,,,historic tax credits (if eligible),,event venue / brewery adaptive reuse,historic-eligibility restricts alterations
+gsa-fixture008,,,,,,,,,,,,,,,,,
+gsa-fixture009,,,,,,,,,,,,,,,,,
+teoaf-fixture001,,,,,,,,,,,,,,,,,
+teoaf-fixture002,,I-1,warehouse,X,yes,none known,yes,no,,dock power present,,,,,$45/sf (demo),cross-border 3PL cross-dock,occupancy status must be confirmed
+teoaf-fixture003,,,,,,,,,,,,,,,,,
+teoaf-fixture004,,C-2,car wash,X,no,none known,yes,,,,,,,,,continue operating business,business licenses do not transfer automatically
+teoaf-fixture005,,,,,,,,,,,,,,,,,
+teoaf-fixture006,,,,,,,,,,,,,,,,,
+teoaf-fixture007,,,,,,,,,,,,,,,,,
+usms-fixture001,,,,,,,,,,,,,,,,,
+usms-fixture002,,,,,,,,,,,,,,,,,
+usms-fixture003,,C-H highway commercial,vacant,X,no,none known,yes,,,,,,,,,QSR pad / fuel retail,access permit from state DOT required
+usms-fixture004,,,,,,,,,,,,,,,,,

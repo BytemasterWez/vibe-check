@@ -1,0 +1,19 @@
+{
+  "status": "UNKNOWN",
+  "probes": [
+    {
+      "url": "https://opendata.arcgis.com/datasets/8b25bd050d3f4c22a4d09b76eff5e4a2_0.geojson",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='opendata.arcgis.com', port=443): Max retries exceeded with url: /datasets/8b25bd050d3f4c22a4d09b76eff5e4a2_0.geojson (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    }
+  ],
+  "notes": "All probes denied by this runner's egress policy (proxy CONNECT 403). The source itself is UNTESTED \u2014 re-run jobs/verify_sources.py from an environment with network access to these hosts before any ingestion.",
+  "expected_mechanics": "VERIFIED_DOWNLOAD",
+  "production_ready": false,
+  "source_id": "hud_opportunity_zones",
+  "verified_at": "2026-07-07T14:08:54.014707+00:00"
+}

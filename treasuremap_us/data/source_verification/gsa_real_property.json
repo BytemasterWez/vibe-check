@@ -1,0 +1,37 @@
+{
+  "status": "UNKNOWN",
+  "probes": [
+    {
+      "url": "https://realestatesales.gov/",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='realestatesales.gov', port=443): Max retries exceeded with url: / (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    },
+    {
+      "url": "https://disposal.gsa.gov/s/",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='disposal.gsa.gov', port=443): Max retries exceeded with url: /s/ (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    },
+    {
+      "url": "https://disposal.gsa.gov/s/whatwesell",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='disposal.gsa.gov', port=443): Max retries exceeded with url: /s/whatwesell (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    }
+  ],
+  "notes": "All probes denied by this runner's egress policy (proxy CONNECT 403). The source itself is UNTESTED \u2014 re-run jobs/verify_sources.py from an environment with network access to these hosts before any ingestion.",
+  "expected_mechanics": "VERIFIED_HTML_INDEX",
+  "production_ready": false,
+  "source_id": "gsa_real_property",
+  "verified_at": "2026-07-07T14:08:44.517382+00:00"
+}

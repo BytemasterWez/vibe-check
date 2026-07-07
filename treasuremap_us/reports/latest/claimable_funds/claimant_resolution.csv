@@ -1,0 +1,27 @@
+claim_id,claimant_name,normalised_claimant_name,possible_current_entity,successor_entity,entity_status,state_of_registration,registered_agent,officer_or_manager,dissolution_date,merger_or_acquisition_clue,current_contact_route,resolution_confidence,evidence_summary,needs_attorney_review
+ucfl-fixture001,MERIDIAN FIXTURE FREIGHT LINES INC,MERIDIAN FIXTURE FREIGHT LINES INC,MERIDIAN FIXTURE FREIGHT LINES INC,KEYSTONE DEMO FREIGHT PARTNERS LP,merged,OH,CT DEMO AGENT SERVICES,,,8-K (demo): 'Meridian Fixture Freight Lines Inc merged with and into Keystone Demo Freight Partners LP',successor GC via registered agent,HIGH,match method: exact_name; source: https://example.invalid/fixture/sos,yes
+ucfl-fixture002,CASCADE DEMO STEEL SUPPLY CO,CASCADE DEMO STEEL SUPPLY CO,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture003,HARBORVIEW FIXTURE FACTORS LLC,HARBORVIEW FIXTURE FACTORS LLC,HARBORVIEW FIXTURE FACTORS LLC,,dissolved,FL,DEMO REGISTERED AGENTS OF FLORIDA,R. Demo (manager),2019-04-02,,former manager via agent of record,HIGH,match method: exact_name; source: https://example.invalid/fixture/sos,yes
+ucfl-fixture004,PINNACLE DEMO EQUIPMENT LEASING CORP,PINNACLE DEMO EQUIPMENT LEASING CORP,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture005,BLUE RIDGE FIXTURE WHOLESALE INC,BLUE RIDGE FIXTURE WHOLESALE INC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture006,LAKESIDE DEMO DISTRIBUTING COMPANY,LAKESIDE DEMO DISTRIBUTING CO,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture007,IRONWORKS FIXTURE MANUFACTURING LLC,IRONWORKS FIXTURE MANUFACTURING LLC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture008,SUMMIT DEMO SURETY & INSURANCE CO,SUMMIT DEMO SURETY INSURANCE CO,SUMMIT DEMO SURETY & INSURANCE CO,STERLING DEMO CAPITAL GROUP LLC,merged,NY,,,,press release (demo): 'Summit Demo Surety acquired by Sterling Demo Capital Group',successor claims department,HIGH,match method: exact_name; source: https://example.invalid/fixture/sos,yes
+ucfl-fixture009,REDSTONE FIXTURE FINANCE CORP,REDSTONE FIXTURE FINANCE CORP,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture010,GATEWAY DEMO ACCEPTANCE CORP,GATEWAY DEMO ACCEPTANCE CORP,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture011,NORTHFIELD FIXTURE SAVINGS BANK,NORTHFIELD FIXTURE SAVINGS BANK,NORTHFIELD SAVINGS BANK,,active,VT,,,,,,LOW,match method: normalised_name; source: https://example.invalid/fixture/sos,
+ucfl-fixture012,CROSSTOWN DEMO MORTGAGE LLC,CROSSTOWN DEMO MORTGAGE LLC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture013,TIMBERLINE FIXTURE LUMBER CO,TIMBERLINE FIXTURE LUMBER CO,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture014,KEYSTONE DEMO FREIGHT PARTNERS LP,KEYSTONE DEMO FREIGHT PARTNERS LP,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture015,RIVERBEND FIXTURE LOGISTICS INC,RIVERBEND FIXTURE LOGISTICS INC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture016,UNION DEMO PENSION SERVICES LLC,UNION DEMO PENSION SERVICES LLC,UNION DEMO PENSION SERVICES LLC,,inactive,IL,ILLINOIS DEMO AGENTS INC,,,,agent of record,MEDIUM,match method: exact_name; source: https://example.invalid/fixture/sos,
+ucfl-fixture017,APEX FIXTURE BENEFIT ADMINISTRATORS INC,APEX FIXTURE BENEFIT ADMINISTRATORS INC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture018,STERLING DEMO CAPITAL GROUP LLC,STERLING DEMO CAPITAL GROUP LLC,STERLING DEMO CAPITAL GROUP LLC,,active,DE,DELAWARE DEMO TRUST AGENTS,,,,,HIGH,match method: exact_name; source: https://example.invalid/fixture/sos,
+ucfl-fixture019,PRAIRIE FIXTURE PROPERTIES LTD,PRAIRIE FIXTURE PROPERTIES LTD,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture020,HARVEST DEMO REALTY HOLDINGS LLC,HARVEST DEMO REALTY HOLDINGS LLC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture021,FOUNDRY FIXTURE VENTURES INC,FOUNDRY FIXTURE VENTURES INC,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture022,BEACON DEMO ENTERPRISES CORP,BEACON DEMO ENTERPRISES CORP,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture023,CANYON FIXTURE ASSOCIATES LLP,CANYON FIXTURE ASSOCIATES LLP,CANYON FIXTURE ASSOCIATES LLP,,forfeited,CA,CALIFORNIA DEMO AGENT CO,,2021-06-30,,agent of record,MEDIUM,match method: exact_name; source: https://example.invalid/fixture/sos,
+ucfl-fixture024,WHARF DEMO TRADING COMPANY,WHARF DEMO TRADING CO,,,,,,,,,,NO_MATCH,no match found,
+ucfl-fixture025,ORCHARD FIXTURE FUND LP,ORCHARD FIXTURE FUND LP,ORCHARD FIXTURE FUND LP,,dissolved,TX,,Orchard Demo GP LLC (general partner),2015-11-20,,,REVIEW,match method: exact_name; source: https://example.invalid/fixture/sos,
+ucfl-fixture026,MILLRACE DEMO GROUP INC,MILLRACE DEMO GROUP INC,,,,,,,,,,NO_MATCH,no match found,

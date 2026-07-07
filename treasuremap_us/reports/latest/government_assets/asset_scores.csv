@@ -1,0 +1,21 @@
+asset_id,hidden_reuse_score,transport_access_score,utility_access_score,incentive_score,flood_risk_score,environmental_risk_score,listing_thinness_score,buyer_fit_score,data_confidence_score,total_asset_opportunity_score,decision,decision_reason
+gsa-fixture001,8,8,5,8,8,8,8,8,7,-23.2,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture002,8,5,5,8,8,8,8,8,7,-26.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture007,8,5,2,8,8,8,8,5,6,-33.0,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture004,8,5,2,2,8,8,8,5,5,-41.0,PARK,source not programmatically verified (-100); no bid recommendation permitted
+usms-fixture003,8,5,2,2,8,8,8,5,5,-41.0,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture002,8,8,2,8,2,2,8,5,6,-41.4,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture005,8,5,5,2,8,2,8,5,6,-43.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture003,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture004,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture006,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture008,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+gsa-fixture009,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture001,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture003,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture005,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture006,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+teoaf-fixture007,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+usms-fixture001,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+usms-fixture002,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted
+usms-fixture004,2,2,2,2,5,5,8,2,1,-68.8,PARK,source not programmatically verified (-100); no bid recommendation permitted

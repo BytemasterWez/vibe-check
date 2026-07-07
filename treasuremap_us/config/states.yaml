@@ -1,0 +1,62 @@
+# TreasureMap US — jurisdiction registry.
+# tier 1 = first states for state-level modules (PHASE 2+), chosen for
+# large unclaimed-property pools and public surplus-fund transparency.
+# recovery_fee_note: many states cap or regulate finder/recovery fees for
+# unclaimed property — VERIFY the statute before any fee-based monetisation
+# in that state (Hard safety rule: do not charge where law prohibits/caps fees).
+
+jurisdictions:
+  - {code: AL, name: Alabama, tier: 3}
+  - {code: AK, name: Alaska, tier: 3}
+  - {code: AZ, name: Arizona, tier: 2}
+  - {code: AR, name: Arkansas, tier: 3}
+  - {code: CA, name: California, tier: 1, recovery_fee_note: "10% cap on unclaimed property finder fees (CCP 1582); tax-sale excess proceeds claims regulated"}
+  - {code: CO, name: Colorado, tier: 2}
+  - {code: CT, name: Connecticut, tier: 2}
+  - {code: DE, name: Delaware, tier: 1, recovery_fee_note: "high entity registration density; escheat-heavy state"}
+  - {code: DC, name: District of Columbia, tier: 2}
+  - {code: FL, name: Florida, tier: 1, recovery_fee_note: "Ch. 717 caps fees (20%) and requires registration for claimants' representatives"}
+  - {code: GA, name: Georgia, tier: 2}
+  - {code: HI, name: Hawaii, tier: 3}
+  - {code: ID, name: Idaho, tier: 3}
+  - {code: IL, name: Illinois, tier: 1}
+  - {code: IN, name: Indiana, tier: 2}
+  - {code: IA, name: Iowa, tier: 3}
+  - {code: KS, name: Kansas, tier: 3}
+  - {code: KY, name: Kentucky, tier: 3}
+  - {code: LA, name: Louisiana, tier: 3}
+  - {code: ME, name: Maine, tier: 3}
+  - {code: MD, name: Maryland, tier: 2}
+  - {code: MA, name: Massachusetts, tier: 2}
+  - {code: MI, name: Michigan, tier: 2}
+  - {code: MN, name: Minnesota, tier: 2}
+  - {code: MS, name: Mississippi, tier: 3}
+  - {code: MO, name: Missouri, tier: 2}
+  - {code: MT, name: Montana, tier: 3}
+  - {code: NE, name: Nebraska, tier: 3}
+  - {code: NV, name: Nevada, tier: 2}
+  - {code: NH, name: New Hampshire, tier: 3}
+  - {code: NJ, name: New Jersey, tier: 1}
+  - {code: NM, name: New Mexico, tier: 3}
+  - {code: NY, name: New York, tier: 1, recovery_fee_note: "Abandoned Property Law 1416: 15% fee cap; agreements void within first 24 months of escheat"}
+  - {code: NC, name: North Carolina, tier: 2}
+  - {code: ND, name: North Dakota, tier: 3, recovery_fee_note: "mineral royalty suspense funds relevant"}
+  - {code: OH, name: Ohio, tier: 2}
+  - {code: OK, name: Oklahoma, tier: 2, recovery_fee_note: "mineral royalty suspense funds relevant"}
+  - {code: OR, name: Oregon, tier: 2}
+  - {code: PA, name: Pennsylvania, tier: 1}
+  - {code: RI, name: Rhode Island, tier: 3}
+  - {code: SC, name: South Carolina, tier: 3}
+  - {code: SD, name: South Dakota, tier: 3}
+  - {code: TN, name: Tennessee, tier: 2}
+  - {code: TX, name: Texas, tier: 1, recovery_fee_note: "10% finder fee cap (Prop. Code 74.507); tax-sale excess proceeds under Tax Code 34.04"}
+  - {code: UT, name: Utah, tier: 3}
+  - {code: VT, name: Vermont, tier: 3}
+  - {code: VA, name: Virginia, tier: 2}
+  - {code: WA, name: Washington, tier: 2}
+  - {code: WV, name: West Virginia, tier: 3}
+  - {code: WI, name: Wisconsin, tier: 2}
+  - {code: WY, name: Wyoming, tier: 3}
+  - {code: PR, name: Puerto Rico, tier: 2, note: "in scope for GSA + Treasury RP auctions"}
+  - {code: VI, name: U.S. Virgin Islands, tier: 3, note: "GSA scope"}
+  - {code: GU, name: Guam, tier: 3, note: "GSA Pacific territories scope"}

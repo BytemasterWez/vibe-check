@@ -1,0 +1,19 @@
+{
+  "status": "UNKNOWN",
+  "probes": [
+    {
+      "url": "https://api.opencorporates.com/v0.4/companies/search?q=test",
+      "status_code": null,
+      "outcome": "runner_network_blocked",
+      "content_type": "",
+      "bytes": 0,
+      "error": "HTTPSConnectionPool(host='api.opencorporates.com', port=443): Max retries exceeded with url: /v0.4/companies/search?q=test (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))",
+      "raw_path": ""
+    }
+  ],
+  "notes": "All probes denied by this runner's egress policy (proxy CONNECT 403). The source itself is UNTESTED \u2014 re-run jobs/verify_sources.py from an environment with network access to these hosts before any ingestion.",
+  "expected_mechanics": "VERIFIED_PAID_API",
+  "production_ready": false,
+  "source_id": "opencorporates",
+  "verified_at": "2026-07-07T14:08:56.927674+00:00"
+}

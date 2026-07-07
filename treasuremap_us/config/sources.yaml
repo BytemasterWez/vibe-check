@@ -1,0 +1,176 @@
+# TreasureMap US — source registry.
+# CORE RULE: a source is NOT production until jobs/verify_sources.py has
+# programmatically verified access and written a passing report to
+# data/source_verification/<source_id>.json. Statuses here are *declared
+# expectations*; the verifier's recorded status always wins at runtime.
+#
+# status values (see docs/source_limitations.md):
+#   VERIFIED_API | VERIFIED_DOWNLOAD | VERIFIED_HTML_INDEX |
+#   VERIFIED_SEARCH_FORM | VERIFIED_BROWSER_SESSION | VERIFIED_MANUAL_ONLY |
+#   VERIFIED_PAID_API | BLOCKED | UNKNOWN
+
+operator:
+  name: TreasureMap US
+  # Contact address advertised in the User-Agent for polite crawling.
+  contact: wesley.Stewart@ymail.com
+  user_agent: "TreasureMapUS/0.1 (source verification; +mailto:{contact})"
+  # Global politeness: never faster than this, per host.
+  min_seconds_between_requests: 5
+  respect_robots_txt: true
+
+sources:
+  # ---------------- Engine 1: Claimable Funds ----------------
+  bankruptcy_ucfl:
+    engine: claimable_funds
+    name: U.S. Courts Bankruptcy Unclaimed Funds Locator
+    agency: Administrative Office of the U.S. Courts
+    homepage: https://ucf.uscourts.gov/
+    probe_urls:
+      - https://ucf.uscourts.gov/
+      - https://ucf.uscourts.gov/about
+    # Observed (research, unverified): GET query params are supported,
+    # e.g. /?CreditorName=<name>&SelectedCourts=<court_code>
+    search_url_template: "https://ucf.uscourts.gov/?CreditorName={creditor}&SelectedCourts={court}"
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_SEARCH_FORM
+    claim_process: >
+      Claimant must identify the underlying case and follow the specific
+      bankruptcy court's unclaimed funds procedure (typically AO Form 1340
+      Application for Payment of Unclaimed Funds filed with that court).
+    notes: >
+      Consolidated locator across participating bankruptcy courts. Not all
+      courts participate; per-court registers (e.g. pamb.uscourts.gov/ucf,
+      utb.uscourts.gov) are fallback sources. Automation must stay within
+      polite, low-volume query rates; bulk scraping is not authorised.
+
+  # ---------------- Engine 2: Government Assets ----------------
+  gsa_real_property:
+    engine: government_assets
+    name: GSA Real Property Disposition / RealEstateSales.gov
+    agency: General Services Administration
+    homepage: https://realestatesales.gov/
+    probe_urls:
+      - https://realestatesales.gov/
+      - https://disposal.gsa.gov/s/
+      - https://disposal.gsa.gov/s/whatwesell
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_HTML_INDEX
+    notes: >
+      Surplus federal real property sold by competitive public sale across
+      the 50 states, DC, PR, USVI and Pacific territories. disposal.gsa.gov
+      is a Salesforce Experience site (/s/ paths) — listing data may be
+      reachable via its aura/API endpoints, which must be verified for ToS
+      compliance before use. GSA's open API programme (api.gsa.gov via
+      api.data.gov keys) covers *personal property* auctions
+      (gsaauctions/v2/auctions); check whether real property is exposed.
+
+  gsa_auctions_api:
+    engine: government_assets
+    name: GSA Auctions API (personal property; real-property coverage TBD)
+    agency: General Services Administration / api.data.gov
+    homepage: https://gsa.github.io/auctions_api/
+    probe_urls:
+      - https://api.gsa.gov/assets/gsaauctions/v2/auctions?api_key=DEMO_KEY
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_API
+    api_key_env: GSA_API_KEY   # free key from api.data.gov; DEMO_KEY for probing
+    notes: JSON/XML GET API. Primarily personal property; useful as a
+      verified-API reference implementation and for adjacent asset classes.
+
+  treasury_seized_rp:
+    engine: government_assets
+    name: Treasury (TEOAF) Seized Real Property Auctions
+    agency: U.S. Department of the Treasury / TEOAF
+    homepage: https://www.treasury.gov/auctions/treasury/rp/
+    probe_urls:
+      - https://www.treasury.gov/auctions/treasury/rp/
+      - https://www.treasury.gov/auctions/treasury/rp/about.shtml
+    contractor_urls:
+      - https://cwsmarketing.com/auctions/real-estate/
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_HTML_INDEX
+    notes: >
+      Residential, commercial, land, warehouses and operating businesses
+      seized/forfeited under federal law, across the U.S. and Puerto Rico.
+      Prime contractor CWS Asset Management & Sales (cwsmarketing.com)
+      hosts the live listing detail. No buyer's premium; closing typically
+      within 45 days; deposits by cashier's check.
+
+  usms_forfeited_rp:
+    engine: government_assets
+    name: USMS Forfeited Real Property Sales
+    agency: U.S. Marshals Service, Asset Forfeiture Division
+    homepage: https://www.usmarshals.gov/what-we-do/asset-forfeiture/real-property
+    probe_urls:
+      - https://www.usmarshals.gov/what-we-do/asset-forfeiture/real-property
+    contractor_urls:
+      - https://www.bid4assets.com/storefront/usms
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_HTML_INDEX
+    notes: >
+      USMS manages and disposes of legally forfeited real property; public
+      online auctions largely run through the Bid4Assets USMS storefront.
+      Bid4Assets requires account registration to bid; listing *browsing*
+      access must be verified separately from bidding access.
+
+  # ---------------- Enrichment sources ----------------
+  fema_nfhl:
+    engine: enrichment
+    name: FEMA National Flood Hazard Layer (NFHL) ArcGIS services
+    agency: FEMA
+    homepage: https://hazards.fema.gov/femaportal/NFHL/
+    probe_urls:
+      - https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer?f=json
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_API
+    notes: Point-in-polygon flood zone queries via ArcGIS REST identify/query.
+
+  hud_opportunity_zones:
+    engine: enrichment
+    name: HUD/CDFI Qualified Opportunity Zones (census tracts)
+    agency: HUD / CDFI Fund
+    homepage: https://www.cdfifund.gov/opportunity-zones
+    probe_urls:
+      - https://opendata.arcgis.com/datasets/8b25bd050d3f4c22a4d09b76eff5e4a2_0.geojson
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_DOWNLOAD
+    notes: Static designation list (fixed since 2018) — a one-time verified
+      download is sufficient; join on census tract GEOID.
+
+  census_geocoder:
+    engine: enrichment
+    name: U.S. Census Bureau Geocoder
+    agency: U.S. Census Bureau
+    homepage: https://geocoding.geo.census.gov/geocoder/
+    probe_urls:
+      - "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1600+Pennsylvania+Ave+NW,+Washington,+DC&benchmark=Public_AR_Current&format=json"
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_API
+    notes: Free, keyless, returns lat/lon + census tract GEOID (needed for
+      the Opportunity Zone join). Batch endpoint accepts CSV up to 10k rows.
+
+  sec_edgar:
+    engine: entity_resolution
+    name: SEC EDGAR full-text search & company API
+    agency: U.S. Securities and Exchange Commission
+    homepage: https://www.sec.gov/cgi-bin/srqsb?text=form-type
+    probe_urls:
+      - https://efts.sec.gov/LATEST/search-index?q=test
+      - https://data.sec.gov/submissions/CIK0000320193.json
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_API
+    notes: Requires declared User-Agent per SEC fair-access policy; used for
+      merger/successor evidence on registered companies.
+
+  opencorporates:
+    engine: entity_resolution
+    name: OpenCorporates API
+    agency: OpenCorporates Ltd (aggregator of official registries)
+    homepage: https://api.opencorporates.com/
+    probe_urls:
+      - https://api.opencorporates.com/v0.4/companies/search?q=test
+    declared_status: UNKNOWN
+    expected_mechanics: VERIFIED_PAID_API
+    api_key_env: OPENCORPORATES_API_KEY
+    notes: Unkeyed access is heavily rate-limited; commercial use requires a
+      licence. Treat as PAID_API; fall back to state SoS lookups.
