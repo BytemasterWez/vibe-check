@@ -134,6 +134,71 @@ low-confidence "no data" findings):
 | `airport_risk.csv` | airport | `AIRPORT, NAME, RUNWAY_INCURSIONS_5YR, WILDLIFE_STRIKES_5YR, COASTAL, NOTES` |
 | `flights.csv` | historical flight | `N_NUMBER, DATE, ORIGIN, DEST, DURATION_MIN` |
 
+## Automated ingestion (V1)
+
+`aerorisk ingest` is the automation layer: manual work belongs at the human
+review layer, not at ingestion. Each source adapter runs the same contract —
+**discover → fetch → checksum/store raw → transform → validate → load staging
+→ promote → emit health record** — and a blocked source never stops the others.
+
+```sh
+# Full run (registry first — SDR/NTSB match layers need it)
+node bin/aerorisk.js ingest all --base ./data/ingest
+
+# Individual sources
+node bin/aerorisk.js ingest faa-registry
+node bin/aerorisk.js ingest faa-sdr --years 1995:current
+node bin/aerorisk.js ingest ntsb --tails N123AB,N789EF          # api mode
+node bin/aerorisk.js ingest ntsb --mode bulk --bulk-url <url>   # bulk mode
+
+# Offline mode: local files instead of the network (for "all", one
+# subdirectory per source: faa_registry/ faa_sdr/ ntsb/)
+node bin/aerorisk.js ingest all --offline ./exports --base ./data/ingest
+
+# Reports read straight from the promoted production tables
+node bin/aerorisk.js report N789EF --data ./data/ingest/db/production
+```
+
+Layout under `--base`:
+
+```
+raw/<source>/<YYYY-MM-DD>/artifact + artifact.meta.json   sha256, size, URL, HTTP status
+db/staging/<source>/*.csv     written by adapters, validated before promotion
+db/production/*.csv           only touched by a successful promote
+db/schemas/<source>.json      column fingerprints for schema-change detection
+db/source_health.csv          every run, success or failure — no silent failures
+reports/ingestion_health/YYYY-MM-DD.md   daily health report
+```
+
+Adapter status: **faa-registry** (page-discovers the zip link, canonical URL
+as fallback; parses the full bundle — MASTER, ACFTREF, ENGINE, DEREG,
+DOCINDEX, DEALER, RESERVED — and derives a registration-history view from
+deregistrations), **faa-sdr** (crawls yearly CSV links, downloads
+missing/changed years only, flexible column mapping across year layouts,
+aircraft match layer with confidence tiers `EXACT_N_NUMBER → SERIAL_MATCH →
+MAKE_MODEL_ENGINE_MATCH → MODEL_ONLY → WEAK_TEXT_MATCH → NO_MATCH`, JASC
+model-pattern summaries), **ntsb** (API mode for targeted N-number queries,
+bulk mode for dataset files, defensive field extraction — the exact live API
+shape is unverified from this sandbox and unmapped shapes surface as
+warnings). Health statuses: `OK, OK_WITH_WARNINGS, SOURCE_UNAVAILABLE,
+SCHEMA_CHANGED, ZERO_ROWS, VALIDATION_FAILED, BLOCKED, PARTIAL`. A schema
+change blocks promotion until re-run with `--accept-schema-change`.
+
+Adapters not yet automated (planned order): faa-ad (DRS + Federal Register
+fallback), faa-enforcement (quarterly PDFs/tables), asrs (segmented exports,
+10k-record windows), asias runway incursions, wildlife strikes.
+
+### Docker
+
+```sh
+docker build -t aerorisk .
+docker run --rm -v aerorisk-data:/data aerorisk ingest all --base /data
+docker run --rm -v aerorisk-data:/data aerorisk report N123AB --data /data/db/production
+```
+
+Nightly cron (FAA registry refreshes daily at 23:30 Central):
+`30 5 * * * docker run --rm -v aerorisk-data:/data aerorisk ingest all --base /data`
+
 ## Loading real data
 
 `node bin/aerorisk.js sources` lists the real public feeds. Summary:

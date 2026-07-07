@@ -6,6 +6,7 @@ import { assessAircraft } from './assess.js';
 import { renderReport } from './report.js';
 import { SOURCES, fetchSource } from './sources/fetch.js';
 import { transformReleasableAircraft } from './sources/transformFaaRegistry.js';
+import { ADAPTERS, buildContext, runIngestion } from './ingest/runner.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = join(HERE, '..', 'data', 'sample');
@@ -29,6 +30,21 @@ Usage:
       Convert an unzipped Releasable Aircraft download (MASTER.txt,
       ACFTREF.txt, ENGINE.txt) into registry.csv in the dest data directory.
 
+  aerorisk ingest <faa-registry|faa-sdr|ntsb|all> [options]
+      Automated ingestion: discover → download → hash/store raw → transform
+      → validate → stage → promote, with per-source health records.
+      Options:
+        --base <dir>             ingestion root (default: ./data/ingest)
+        --offline <dir>          use local files instead of the network
+                                 (for "all": subdirs faa_registry/ faa_sdr/ ntsb/)
+        --years <from:to>        SDR year window, e.g. 1995:current
+        --tails <N1,N2,...>      NTSB api-mode registration numbers
+        --mode <api|bulk>        NTSB fetch mode (default api)
+        --bulk-url <url>         NTSB bulk dataset URL (bulk mode)
+        --accept-schema-change   promote despite a changed table schema
+      After a run, generate reports from the ingested data with:
+        aerorisk report <N-NUMBER> --data <base>/db/production
+
 Options:
   --data <dir>   Data directory of CSV feeds (default: bundled sample dataset)
   --out <file>   Write the report/JSON to a file instead of stdout
@@ -41,7 +57,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith('--')) {
       const key = a.slice(2);
-      if (key === 'json') args.flags.json = true;
+      if (key === 'json' || key === 'accept-schema-change') args.flags[key] = true;
       else args.flags[key] = argv[++i];
     } else {
       args._.push(a);
@@ -134,6 +150,37 @@ export async function run(argv) {
       } catch (err) {
         return fail(`transform failed: ${err.message}`);
       }
+    }
+    case 'ingest': {
+      if (!target) {
+        return fail(`ingest requires a source: ${[...ADAPTERS.keys()].join(', ')}, or all`);
+      }
+      const base = args.flags.base ?? join(process.cwd(), 'data', 'ingest');
+      const ctx = buildContext(base, {
+        options: {
+          offline: args.flags.offline,
+          years: args.flags.years,
+          tails: args.flags.tails,
+          mode: args.flags.mode,
+          bulkUrl: args.flags['bulk-url'],
+          acceptSchemaChange: args.flags['accept-schema-change'] ?? false,
+        },
+      });
+      const { records, reportPath } = await runIngestion([target], ctx);
+      let failed = 0;
+      for (const r of records) {
+        const line = `${r.source_name}: ${r.status}` +
+          (r.records_loaded !== '' ? ` (${r.records_loaded} rows loaded)` : '') +
+          (r.error_message ? ` — ${r.error_message}` : '');
+        if (r.status === 'OK' || r.status === 'OK_WITH_WARNINGS') console.log(line);
+        else {
+          console.error(line);
+          failed += 1;
+        }
+      }
+      console.log(`Health report: ${reportPath}`);
+      console.log(`Production tables: ${join(base, 'db', 'production')}`);
+      return failed === records.length && records.length > 0 ? 1 : 0;
     }
     case undefined:
     case 'help':

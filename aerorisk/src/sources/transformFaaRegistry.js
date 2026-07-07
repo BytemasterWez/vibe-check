@@ -15,6 +15,7 @@
 // so registration_history.csv is not produced by this transform.
 
 import { parseCsv } from '../csv.js';
+import { normalizeHeader, normalizeRowKeys } from '../ingest/columnMap.js';
 
 const REGISTRANT_TYPES = {
   1: 'Individual',
@@ -115,3 +116,131 @@ export function transformReleasableAircraft({ masterText, acftrefText, engineTex
 
   return { registryCsv, count: rows.length, warnings };
 }
+
+// ---------------------------------------------------------------------------
+// Full-bundle transform (Automated Ingestion V1)
+//
+// The Releasable Aircraft zip also ships DEREG.txt (deregistered aircraft),
+// DOCINDEX.txt (document index), DEALER.txt, and RESERVED.txt. DEREG headers
+// use hyphens where MASTER uses spaces, so all bundle parsing goes through
+// normalised header keys.
+
+// Generic pass-through: normalise headers, drop the empty trailing column the
+// FAA's trailing commas produce, trim values.
+function passThroughTable(text) {
+  const rows = parseCsv(text).map(normalizeRowKeys);
+  const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+  return { columns, rows };
+}
+
+function transformDereg(deregText, aircraftRef, engineRef) {
+  const rows = [];
+  for (const raw of parseCsv(deregText)) {
+    const r = normalizeRowKeys(raw);
+    if (!r.N_NUMBER) continue;
+    const acft = aircraftRef.get(r.MFR_MDL_CODE ?? '');
+    const eng = engineRef.get(r.ENG_MFR_MDL ?? '');
+    rows.push({
+      N_NUMBER: `N${r.N_NUMBER}`,
+      SERIAL_NUMBER: r.SERIAL_NUMBER ?? '',
+      MFR: acft?.mfr?.trim() ?? '',
+      MODEL: acft?.model?.trim() ?? '',
+      ENG_MFR: eng?.mfr?.trim() ?? '',
+      ENG_MODEL: eng?.model?.trim() ?? '',
+      YEAR_MFR: r.YEAR_MFR ?? '',
+      REGISTRANT_NAME: r.NAME ?? '',
+      CITY: r.CITY ?? '',
+      STATE: r.STATE ?? '',
+      CANCEL_DATE: isoDate(r.CANCEL_DATE),
+      LAST_ACT_DATE: isoDate(r.LAST_ACT_DATE),
+      STATUS_CODE: r.STATUS_CODE ?? '',
+    });
+  }
+  return rows;
+}
+
+export const DEREG_COLUMNS = [
+  'N_NUMBER', 'SERIAL_NUMBER', 'MFR', 'MODEL', 'ENG_MFR', 'ENG_MODEL',
+  'YEAR_MFR', 'REGISTRANT_NAME', 'CITY', 'STATE', 'CANCEL_DATE',
+  'LAST_ACT_DATE', 'STATUS_CODE',
+];
+
+export const HISTORY_COLUMNS = ['N_NUMBER', 'DATE', 'EVENT', 'DETAILS'];
+
+// files: { master, acftref, engine, dereg?, docindex?, dealer?, reserved? }
+// Returns { tables: [{ name, columns, rows }], warnings } where tables
+// include both the normalised bundle tables and the Datastore-compatible
+// views (registry, registration_history).
+export function transformRegistryBundle(files) {
+  const warnings = [];
+
+  const current = transformReleasableAircraft({
+    masterText: files.master,
+    acftrefText: files.acftref,
+    engineText: files.engine,
+  });
+  warnings.push(...current.warnings);
+  const currentRows = parseCsv(current.registryCsv);
+
+  const aircraftRef = new Map(
+    parseCsv(files.acftref).map((r) => [normalizeRowKeys(r).CODE, { mfr: r.MFR, model: r.MODEL }]),
+  );
+  const engineRef = new Map(
+    parseCsv(files.engine).map((r) => [normalizeRowKeys(r).CODE, { mfr: r.MFR, model: r.MODEL }]),
+  );
+
+  const tables = [
+    { name: 'aircraft_registry_current', columns: REGISTRY_COLUMNS, rows: currentRows },
+    // Datastore-compatible view — the report pipeline reads registry.csv.
+    { name: 'registry', columns: REGISTRY_COLUMNS, rows: currentRows },
+  ];
+
+  const acftrefTable = passThroughTable(files.acftref);
+  tables.push({ name: 'aircraft_reference', ...acftrefTable });
+  const engineTable = passThroughTable(files.engine);
+  tables.push({ name: 'engine_reference', ...engineTable });
+
+  const historyRows = [];
+  if (files.dereg) {
+    const deregRows = transformDereg(files.dereg, aircraftRef, engineRef);
+    tables.push({ name: 'deregistered_aircraft', columns: DEREG_COLUMNS, rows: deregRows });
+    for (const d of deregRows) {
+      if (!d.CANCEL_DATE) continue;
+      historyRows.push({
+        N_NUMBER: d.N_NUMBER,
+        DATE: d.CANCEL_DATE,
+        EVENT: 'Registration cancelled',
+        DETAILS: `Previous registrant: ${d.REGISTRANT_NAME || 'unknown'}${d.STATUS_CODE ? ` (status ${d.STATUS_CODE})` : ''}`,
+      });
+    }
+  } else {
+    warnings.push('DEREG.txt not present — deregistration history unavailable');
+  }
+  // Registration-history view derived from deregistration records: churn and
+  // cancellation signals for the registration-complexity module.
+  tables.push({ name: 'registration_history', columns: HISTORY_COLUMNS, rows: historyRows });
+
+  const optional = [
+    ['docindex', 'document_index'],
+    ['dealer', 'dealers'],
+    ['reserved', 'reserved_n_numbers'],
+  ];
+  for (const [key, tableName] of optional) {
+    if (files[key]) {
+      tables.push({ name: tableName, ...passThroughTable(files[key]) });
+    }
+  }
+
+  return { tables, warnings };
+}
+
+// Maps bundle filenames (case-insensitive) to transform inputs.
+export const BUNDLE_FILES = {
+  master: /^MASTER\.txt$/i,
+  acftref: /^ACFTREF\.txt$/i,
+  engine: /^ENGINE\.txt$/i,
+  dereg: /^DEREG\.txt$/i,
+  docindex: /^DOCINDEX\.txt$/i,
+  dealer: /^DEALER\.txt$/i,
+  reserved: /^RESERVED\.txt$/i,
+};
