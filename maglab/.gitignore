@@ -1,0 +1,20 @@
+# Xcode / iOS (project file is generated via XcodeGen)
+ios/MagLab.xcodeproj/
+ios/MagLab/Info.plist
+*.xcworkspace
+xcuserdata/
+DerivedData/
+.build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Analysis outputs
+analysis/data/
+data/
+
+# OS
+.DS_Store

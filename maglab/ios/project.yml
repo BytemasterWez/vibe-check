@@ -1,0 +1,63 @@
+# XcodeGen project definition. Generate MagLab.xcodeproj with:
+#   brew install xcodegen && cd maglab/ios && xcodegen generate
+# (Or create an equivalent project manually in Xcode — see README.md.)
+name: MagLab
+options:
+  bundleIdPrefix: com.maglab
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  MagLab:
+    type: application
+    platform: iOS
+    sources:
+      - path: MagLab
+    info:
+      path: MagLab/Info.plist
+      properties:
+        CFBundleDisplayName: MagLab
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSLocationWhenInUseUsageDescription: >-
+          MagLab records your GPS track during a field survey so magnetic
+          readings can be mapped. Location is only captured while a survey
+          is recording, and surveys stay on this device unless you
+          explicitly share them.
+        NSMotionUsageDescription: >-
+          MagLab uses motion data (accelerometer, gyroscope, barometer)
+          to score reading quality and log relative altitude during a
+          survey recording.
+    settings:
+      base:
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1"
+
+  MagLabTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MagLabTests
+    dependencies:
+      - target: MagLab
+
+schemes:
+  MagLab:
+    build:
+      targets:
+        MagLab: all
+        MagLabTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MagLabTests
