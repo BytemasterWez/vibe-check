@@ -1,0 +1,59 @@
+name: MagLab Verify
+
+# Phase 1-3 verification gate (see maglab/docs/VERIFICATION.md):
+#   core-logic-linux  — scoring spine compiled + tested under Swift 6,
+#                       plus a parse pass over every iOS source file
+#   backend-tests     — FastAPI skeleton tests (/health live, stubs 501)
+#   ios-simulator     — the real proof: XcodeGen project generation, full
+#                       app compile (SwiftUI/SwiftData/CoreMotion) and the
+#                       complete XCTest suite on an iOS simulator
+
+on:
+  push:
+    paths:
+      - "maglab/**"
+      - ".github/workflows/maglab-verify.yml"
+  workflow_dispatch:
+
+jobs:
+  core-logic-linux:
+    runs-on: ubuntu-latest
+    container: swift:6.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scoring spine tests + parse pass
+        run: bash maglab/tools/verify_scoring_linux.sh
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: pip install fastapi httpx pytest
+      - name: Run backend tests
+        working-directory: maglab/backend
+        run: python -m pytest tests/ -v
+
+  ios-simulator:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: maglab/ios
+        run: xcodegen generate
+      - name: List available simulators
+        run: xcrun simctl list devices available | head -30
+      - name: Build and test on iOS simulator
+        working-directory: maglab/ios
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project MagLab.xcodeproj \
+            -scheme MagLab \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGNING_ALLOWED=NO

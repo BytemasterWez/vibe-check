@@ -41,7 +41,11 @@ final class RecordingEngine: ObservableObject {
         scorer: AnomalyScoring = RuleBasedAnomalyScorer(),
         config: ScoringConfig = .current
     ) {
-        self.modelContext = ModelContext(container)
+        // The engine is @MainActor, so it can share the container's main
+        // context — which is also what the views' @Query observes, so
+        // recorded runs/samples/markers appear in the UI without relying
+        // on cross-context change merging.
+        self.modelContext = container.mainContext
         self.sensors = sensors
         self.scorer = scorer
         self.config = config
