@@ -11,12 +11,15 @@ import { HealthLog, healthRecord, STATUS } from './health.js';
 import { faaRegistryAdapter } from './adapters/faaRegistry.js';
 import { faaSdrAdapter } from './adapters/faaSdr.js';
 import { ntsbAdapter } from './adapters/ntsb.js';
+import { faaAdAdapter } from './adapters/faaAd.js';
 
-// Registry first: SDR/NTSB match layers read the promoted registry table.
+// Registry first: SDR/NTSB/AD match and applicability layers read the
+// promoted registry table.
 export const ADAPTERS = new Map([
   ['faa-registry', faaRegistryAdapter],
   ['faa-sdr', faaSdrAdapter],
   ['ntsb', ntsbAdapter],
+  ['faa-ad', faaAdAdapter],
 ]);
 
 export function buildContext(base, { now = new Date(), fetchImpl = globalThis.fetch, options = {} } = {}) {

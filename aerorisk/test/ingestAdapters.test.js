@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildContext, runIngestion } from '../src/ingest/runner.js';
@@ -105,6 +105,13 @@ function offlineBase() {
   const ntsb = join(dir, 'ntsb');
   mkdirSync(ntsb, { recursive: true });
   writeFileSync(join(ntsb, 'carol_export.json'), NTSB_JSON);
+  const ad = join(dir, 'faa_ad');
+  mkdirSync(ad, { recursive: true });
+  writeFileSync(
+    join(ad, 'ads.csv'),
+    'AD_NUMBER,EFFECTIVE_DATE,SUBJECT,APPLIES_MFR,APPLIES_MODEL,APPLIES_ENG_MFR,APPLIES_ENG_MODEL,RECURRING,COST_BAND,NOTES\n' +
+      '2020-26-16,2021-02-16,Wing main spar corrosion,PIPER,PA-31,,,yes,high,Repetitive eddy-current inspection\n',
+  );
   return dir;
 }
 
@@ -123,6 +130,7 @@ test('ingest all (offline): registry + SDR + NTSB land in production with health
   assert.match(byName.faa_registry.status, /OK/);
   assert.match(byName.faa_sdr.status, /OK/);
   assert.match(byName.ntsb.status, /OK/);
+  assert.match(byName.faa_ad.status, /OK/);
 
   // Bundle tables beyond MASTER/ACFTREF/ENGINE.
   assert.equal(ctx.tableStore.readProduction('deregistered_aircraft').length, 1);
@@ -316,18 +324,23 @@ test('NTSB api mode with no tails and no registry → PARTIAL, honestly', async 
 
 test('runner isolation: a blocked source does not stop other adapters', async () => {
   const base = newBase();
-  // Registry blocked (network), SDR + NTSB offline — all three must report.
+  // Remove the registry subdir so registry falls through to the network
+  // (stubbed 403 → BLOCKED) while SDR/NTSB/AD stay offline and succeed.
   const offline = offlineBase();
+  rmSync(join(offline, 'faa_registry'), { recursive: true, force: true });
   const ctx = buildContext(base, {
     now: NOW,
     fetchImpl: stubFetch(() => ({ status: 403 })),
     options: { offline },
   });
   const { records, reportPath } = await runIngestion(['all'], ctx);
-  assert.equal(records.length, 3);
+  assert.equal(records.length, 4);
   const byName = Object.fromEntries(records.map((r) => [r.source_name, r]));
+  // Registry is network-blocked; the offline sources still succeed.
+  assert.equal(byName.faa_registry.status, 'BLOCKED');
   assert.match(byName.faa_sdr.status, /OK/);
   assert.match(byName.ntsb.status, /OK/);
+  assert.match(byName.faa_ad.status, /OK/);
   assert.ok(reportPath.includes('ingestion_health'));
 });
 
