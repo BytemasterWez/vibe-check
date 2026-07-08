@@ -9,6 +9,12 @@ export const DISCLAIMER =
   'maintenance, or charter decision. Verify every record against original sources and the ' +
   'aircraft’s own documents before acting.';
 
+function formatValue(v) {
+  if (typeof v === 'boolean') return v ? 'yes' : 'no';
+  if (typeof v === 'number') return `${v}/100`;
+  return String(v);
+}
+
 export function renderReport(assessment) {
   const { identity } = assessment;
   if (!identity.registry) {
@@ -56,6 +62,14 @@ export function renderReport(assessment) {
     '| Sub-score | Value | Confidence |',
     '| --- | --- | --- |',
     ...assessment.modules.map((m) => `| ${m.label} | ${m.score}/100 | ${m.confidence} |`),
+  );
+  push('**Score breakdown (V1 components):**');
+  push(
+    '| Component | Value | Note |',
+    '| --- | --- | --- |',
+    ...assessment.scoreBreakdown.map(
+      (c) => `| ${c.name} | ${formatValue(c.value)} | ${c.note} |`,
+    ),
   );
 
   // Section 2 — Aircraft identity

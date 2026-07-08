@@ -12,7 +12,10 @@ export function assessAccidents(store, { registry, now }) {
   const direct = store.ntsbForTail(registry.N_NUMBER, registry.SERIAL_NUMBER);
   const modelEvents = store.ntsbForModel(registry.MFR, registry.MODEL, registry.N_NUMBER);
 
-  let score = 0;
+  // Direct (tail/serial) and same-model context scored separately, never
+  // conflated — a model theme is discussion context, not this aircraft's record.
+  let directScore = 0;
+  let modelScore = 0;
 
   for (const ev of direct) {
     const injury = (ev.HIGHEST_INJURY ?? 'none').toLowerCase();
@@ -20,7 +23,7 @@ export function assessAccidents(store, { registry, now }) {
     let w = (INJURY_WEIGHT[injury] ?? 18) + (DAMAGE_WEIGHT[damage] ?? 0);
     const age = daysAgo(ev.DATE, now);
     if (age !== null && age > 10 * 365) w = Math.round(w * 0.6);
-    score += w;
+    directScore += w;
 
     const open = (ev.STATUS ?? '').toLowerCase() !== 'closed';
     findings.push({
@@ -31,12 +34,12 @@ export function assessAccidents(store, { registry, now }) {
         (ev.PROBABLE_CAUSE ? ` Probable cause: ${ev.PROBABLE_CAUSE}` : ' Probable cause not yet published.'),
       evidence: [`NTSB ${ev.EVENT_ID}`],
     });
-    if (open) score += 10;
+    if (open) directScore += 10;
   }
 
   const themes = causeThemes(modelEvents);
   if (themes.length > 0) {
-    score += Math.min(12, themes.length * 4);
+    modelScore += Math.min(12, themes.length * 4);
     findings.push({
       severity: 'review',
       text: `Same-model NTSB events (${modelEvents.length}) show recurring themes: ${themes.join('; ')}. Relevant for insurance and pre-buy discussion, not a defect claim against this aircraft.`,
@@ -55,14 +58,19 @@ export function assessAccidents(store, { registry, now }) {
   return {
     key: 'accidents',
     label: 'Accident/incident signal',
-    score: Math.min(100, score),
+    score: Math.min(100, directScore + modelScore),
     confidence: 'high',
     findings,
     narrative:
       direct.length > 0
         ? `${direct.length} NTSB event(s) directly reference this aircraft. Read the full docket(s) before any transaction.`
         : 'No direct NTSB accident/incident history for this aircraft in the loaded records; same-model context (if any) is noted for discussion only.',
-    detail: { directCount: direct.length, modelEventCount: modelEvents.length },
+    detail: {
+      directCount: direct.length,
+      modelEventCount: modelEvents.length,
+      ntsbDirectEventScore: Math.min(100, directScore),
+      ntsbModelContextScore: Math.min(100, modelScore),
+    },
   };
 }
 

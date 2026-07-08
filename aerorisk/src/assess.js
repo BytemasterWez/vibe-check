@@ -12,13 +12,17 @@ import { assessEnforcement } from './modules/enforcement.js';
 import { assessHumanFactors } from './modules/humanFactors.js';
 import { assessAirportContext } from './modules/airportContext.js';
 import { compositeScore, bandFor, reviewPriorityLanguage, reportConfidence } from './scoring.js';
+import { buildScoreBreakdown } from './scoreBreakdown.js';
 
 const SEVERITY_RANK = { priority: 0, review: 1, info: 2 };
 
 export function assessAircraft(store, rawNNumber, { now = new Date() } = {}) {
   const identity = resolveIdentity(store, rawNNumber);
   if (!identity.registry) {
-    return { identity, modules: [], score: null, band: null, findings: [], generatedAt: now.toISOString() };
+    return {
+      identity, modules: [], score: null, band: null, findings: [],
+      scoreBreakdown: [], generatedAt: now.toISOString(),
+    };
   }
 
   const registry = identity.registry;
@@ -44,7 +48,7 @@ export function assessAircraft(store, rawNNumber, { now = new Date() } = {}) {
     .flatMap((m) => m.findings.map((f) => ({ ...f, module: m.label })))
     .sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9));
 
-  return {
+  const assessment = {
     identity,
     registry,
     modules,
@@ -57,4 +61,6 @@ export function assessAircraft(store, rawNNumber, { now = new Date() } = {}) {
     topFindings: findings.filter((f) => f.severity !== 'info').slice(0, 5),
     generatedAt: now.toISOString(),
   };
+  assessment.scoreBreakdown = buildScoreBreakdown(assessment);
+  return assessment;
 }

@@ -42,6 +42,21 @@ export function assessRegistration(store, { registry, now }) {
     });
   }
 
+  // Deregistration history for the CURRENT mark is a distinct signal: the
+  // aircraft was previously off the registry (export/return, repossession,
+  // non-renewal, damage rebuild) and re-registered. Sourced from the registry
+  // adapter's deregistration-derived history rows.
+  const deregEvents = history.filter((h) => /cancel|deregist/i.test(h.EVENT));
+  const deregistrationHistoryFlag = deregEvents.length > 0;
+  if (deregistrationHistoryFlag) {
+    score += 25;
+    findings.push({
+      severity: 'priority',
+      text: `Prior deregistration on record for this mark (${deregEvents.map((d) => d.DATE).join(', ')}). Re-registration after a cancellation warrants explaining why the aircraft left the registry — export/return, repossession, lapsed renewal, or rebuild are all possibilities.`,
+      evidence: deregEvents.map((h) => `Registry history ${h.DATE}: ${h.EVENT} — ${h.DETAILS}`),
+    });
+  }
+
   const lastChange = ownershipEvents.at(-1);
   if (lastChange) {
     const age = daysAgo(lastChange.DATE, now);
@@ -73,5 +88,11 @@ export function assessRegistration(store, { registry, now }) {
       findings.length > 0 && score > 0
         ? 'Public registry history shows ownership/registration complexity worth reviewing. None of this is evidence of wrongdoing; it defines what to ask the seller.'
         : 'Registration history in the loaded records looks unremarkable.',
+    detail: {
+      ownershipChanges5yr: recentEvents.length,
+      deregistrationHistoryFlag,
+      deregistrationEvents: deregEvents.length,
+      trusteeRegistered: TRUST_RE.test(registry.REGISTRANT_NAME ?? ''),
+    },
   };
 }

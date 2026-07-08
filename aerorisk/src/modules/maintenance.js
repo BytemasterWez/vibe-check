@@ -50,12 +50,16 @@ export function assessMaintenance(store, { registry, now }) {
   const tailSdrs = store.sdrsForTail(registry.N_NUMBER);
   const modelSdrs = store.sdrsForModel(registry.MFR, registry.MODEL, registry.N_NUMBER);
 
-  let score = 0;
+  // Tail-specific and model-level scores are tracked separately: the spec
+  // requires these never be conflated (a model theme is a pre-buy topic, not
+  // a defect claim against this airframe).
+  let tailScore = 0;
+  let modelScore = 0;
 
   for (const sdr of tailSdrs) {
     const age = daysAgo(sdr.DATE, now);
     const recent = age !== null && age <= 3 * 365;
-    score += recent ? 20 : 10;
+    tailScore += recent ? 20 : 10;
     findings.push({
       severity: recent ? 'priority' : 'review',
       text: `Tail-specific service difficulty report (${sdr.DATE}): ${sdr.PART_NAME} — ${sdr.NARRATIVE} [${chapterOf(sdr.JASC_CODE)}]`,
@@ -65,7 +69,7 @@ export function assessMaintenance(store, { registry, now }) {
 
   const modelThemes = groupByChapter(modelSdrs).filter(([, list]) => list.length >= 2);
   for (const [chapter, list] of modelThemes.slice(0, 4)) {
-    score += Math.min(10, 3 + list.length * 2);
+    modelScore += Math.min(10, 3 + list.length * 2);
     findings.push({
       severity: 'review',
       text: `Model-level SDR theme for ${registry.MFR} ${registry.MODEL}: ${list.length} reports involving ${chapter}. This is fleet-wide context, not a defect claim against this aircraft — flag it for the pre-buy inspection.`,
@@ -90,13 +94,15 @@ export function assessMaintenance(store, { registry, now }) {
   return {
     key: 'maintenance',
     label: 'Maintenance signal',
-    score: Math.min(100, score),
+    score: Math.min(100, tailScore + modelScore),
     confidence: tailSdrs.length + modelSdrs.length > 0 ? 'medium' : 'low',
     findings,
     narrative: buildNarrative(registry, tailSdrs, modelThemes),
     detail: {
       tailSdrCount: tailSdrs.length,
       modelSdrCount: modelSdrs.length,
+      sdrTailScore: Math.min(100, tailScore),
+      sdrModelScore: Math.min(100, modelScore),
       modelThemes: modelThemes.map(([chapter, list]) => ({ chapter, count: list.length })),
     },
   };
