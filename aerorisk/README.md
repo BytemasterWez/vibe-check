@@ -142,7 +142,7 @@ review layer, not at ingestion. Each source adapter runs the same contract —
 → promote → emit health record** — and a blocked source never stops the others.
 
 ```sh
-# Full run (registry first — SDR/NTSB match layers need it)
+# Full run (registry first — SDR/NTSB/AD layers read the promoted registry)
 node bin/aerorisk.js ingest all --base ./data/ingest
 
 # Individual sources
@@ -150,13 +150,20 @@ node bin/aerorisk.js ingest faa-registry
 node bin/aerorisk.js ingest faa-sdr --years 1995:current
 node bin/aerorisk.js ingest ntsb --tails N123AB,N789EF          # api mode
 node bin/aerorisk.js ingest ntsb --mode bulk --bulk-url <url>   # bulk mode
+node bin/aerorisk.js ingest faa-ad --ad-pages 3                 # Federal Register
+node bin/aerorisk.js ingest faa-enforcement --offline ./exports/faa_enforcement
+node bin/aerorisk.js ingest asrs --offline ./exports/asrs
 
 # Offline mode: local files instead of the network (for "all", one
-# subdirectory per source: faa_registry/ faa_sdr/ ntsb/)
+# subdirectory per source: faa_registry/ faa_sdr/ ntsb/ faa_ad/
+# faa_enforcement/ asrs/)
 node bin/aerorisk.js ingest all --offline ./exports --base ./data/ingest
 
 # Reports read straight from the promoted production tables
 node bin/aerorisk.js report N789EF --data ./data/ingest/db/production
+
+# Batch enrichment (the V1 target): many N-numbers → scored records + gate
+node bin/aerorisk.js batch tails.txt --data ./data/ingest/db/production --out-dir ./out
 ```
 
 Layout under `--base`:
@@ -170,23 +177,37 @@ db/source_health.csv          every run, success or failure — no silent failur
 reports/ingestion_health/YYYY-MM-DD.md   daily health report
 ```
 
-Adapter status: **faa-registry** (page-discovers the zip link, canonical URL
-as fallback; parses the full bundle — MASTER, ACFTREF, ENGINE, DEREG,
-DOCINDEX, DEALER, RESERVED — and derives a registration-history view from
-deregistrations), **faa-sdr** (crawls yearly CSV links, downloads
-missing/changed years only, flexible column mapping across year layouts,
-aircraft match layer with confidence tiers `EXACT_N_NUMBER → SERIAL_MATCH →
-MAKE_MODEL_ENGINE_MATCH → MODEL_ONLY → WEAK_TEXT_MATCH → NO_MATCH`, JASC
-model-pattern summaries), **ntsb** (API mode for targeted N-number queries,
-bulk mode for dataset files, defensive field extraction — the exact live API
-shape is unverified from this sandbox and unmapped shapes surface as
-warnings). Health statuses: `OK, OK_WITH_WARNINGS, SOURCE_UNAVAILABLE,
-SCHEMA_CHANGED, ZERO_ROWS, VALIDATION_FAILED, BLOCKED, PARTIAL`. A schema
-change blocks promotion until re-run with `--accept-schema-change`.
+Adapter status:
 
-Adapters not yet automated (planned order): faa-ad (DRS + Federal Register
-fallback), faa-enforcement (quarterly PDFs/tables), asrs (segmented exports,
-10k-record windows), asias runway incursions, wildlife strikes.
+- **faa-registry** — page-discovers the zip link (canonical URL fallback);
+  parses the full bundle (MASTER, ACFTREF, ENGINE, DEREG, DOCINDEX, DEALER,
+  RESERVED) and derives a registration-history view from deregistrations.
+- **faa-sdr** — crawls yearly CSV links, downloads missing/changed years only,
+  flexible column mapping across year layouts, aircraft match layer with
+  confidence tiers `EXACT_N_NUMBER → SERIAL_MATCH → MAKE_MODEL_ENGINE_MATCH →
+  MODEL_ONLY → WEAK_TEXT_MATCH → NO_MATCH`, JASC model-pattern summaries.
+- **ntsb** — API mode (targeted N-number queries) and bulk mode; defensive
+  field extraction over CAROL-style JSON/CSV. The exact live API shape is
+  unverified from this sandbox; unmapped shapes surface as warnings.
+- **faa-ad** — api mode discovers FAA AD final rules via the Federal Register
+  public JSON API; offline mode loads a structured AD CSV as authoritative.
+  Text-match applicability from AD prose is tagged `TEXT_MATCH` and reported
+  low-confidence; structured loads are `STRUCTURED`/high. Wording stays "AD
+  exposure", never "AD non-compliance".
+- **faa-enforcement** — offline/structured-first (quarterly compilations have
+  no clean bulk API); categorises actions (maintenance/operational/drug-
+  testing/hazmat/certificate) and rolls entities up with counts. Operator
+  risk, labelled "public enforcement history".
+- **asrs** — offline/structured-first (10k-record export windows, no open bulk
+  API); flexible header mapping, theme summarisation. Capped at low confidence
+  by design — voluntary, unverified, human-factors themes only.
+
+Health statuses: `OK, OK_WITH_WARNINGS, SOURCE_UNAVAILABLE, SCHEMA_CHANGED,
+ZERO_ROWS, VALIDATION_FAILED, BLOCKED, PARTIAL`. A schema change blocks
+promotion until re-run with `--accept-schema-change`.
+
+Planned context sources (not yet built): asias runway incursions, wildlife
+strikes.
 
 ### Docker
 

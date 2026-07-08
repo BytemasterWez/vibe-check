@@ -112,6 +112,20 @@ function offlineBase() {
     'AD_NUMBER,EFFECTIVE_DATE,SUBJECT,APPLIES_MFR,APPLIES_MODEL,APPLIES_ENG_MFR,APPLIES_ENG_MODEL,RECURRING,COST_BAND,NOTES\n' +
       '2020-26-16,2021-02-16,Wing main spar corrosion,PIPER,PA-31,,,yes,high,Repetitive eddy-current inspection\n',
   );
+  const enf = join(dir, 'faa_enforcement');
+  mkdirSync(enf, { recursive: true });
+  writeFileSync(
+    join(enf, 'enforcement.csv'),
+    'CASE_ID,DATE_CLOSED,RESPONDENT,RESPONDENT_TYPE,ACTION,AMOUNT,SUMMARY\n' +
+      '2024EA110045,2024-09-12,GULFLINE AIR CHARTER LLC,Part 135 operator,civil_penalty,"$44,000",Missing maintenance record entries for two aircraft\n',
+  );
+  const asrs = join(dir, 'asrs');
+  mkdirSync(asrs, { recursive: true });
+  writeFileSync(
+    join(asrs, 'asrs.csv'),
+    'ACN,DATE,MFR,MODEL,AIRPORT,THEMES,SYNOPSIS\n' +
+      '1954102,2024-06-19,PIPER,PA-31-350,OPF,maintenance sign-off;dispatch pressure,Pressure to defer exhaust discrepancy\n',
+  );
   return dir;
 }
 
@@ -131,6 +145,8 @@ test('ingest all (offline): registry + SDR + NTSB land in production with health
   assert.match(byName.faa_sdr.status, /OK/);
   assert.match(byName.ntsb.status, /OK/);
   assert.match(byName.faa_ad.status, /OK/);
+  assert.match(byName.faa_enforcement.status, /OK/);
+  assert.match(byName.asrs.status, /OK/);
 
   // Bundle tables beyond MASTER/ACFTREF/ENGINE.
   assert.equal(ctx.tableStore.readProduction('deregistered_aircraft').length, 1);
@@ -334,13 +350,15 @@ test('runner isolation: a blocked source does not stop other adapters', async ()
     options: { offline },
   });
   const { records, reportPath } = await runIngestion(['all'], ctx);
-  assert.equal(records.length, 4);
+  assert.equal(records.length, 6);
   const byName = Object.fromEntries(records.map((r) => [r.source_name, r]));
   // Registry is network-blocked; the offline sources still succeed.
   assert.equal(byName.faa_registry.status, 'BLOCKED');
   assert.match(byName.faa_sdr.status, /OK/);
   assert.match(byName.ntsb.status, /OK/);
   assert.match(byName.faa_ad.status, /OK/);
+  assert.match(byName.faa_enforcement.status, /OK/);
+  assert.match(byName.asrs.status, /OK/);
   assert.ok(reportPath.includes('ingestion_health'));
 });
 

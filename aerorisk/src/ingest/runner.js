@@ -12,6 +12,8 @@ import { faaRegistryAdapter } from './adapters/faaRegistry.js';
 import { faaSdrAdapter } from './adapters/faaSdr.js';
 import { ntsbAdapter } from './adapters/ntsb.js';
 import { faaAdAdapter } from './adapters/faaAd.js';
+import { faaEnforcementAdapter } from './adapters/faaEnforcement.js';
+import { asrsAdapter } from './adapters/asrs.js';
 
 // Registry first: SDR/NTSB/AD match and applicability layers read the
 // promoted registry table.
@@ -20,6 +22,8 @@ export const ADAPTERS = new Map([
   ['faa-sdr', faaSdrAdapter],
   ['ntsb', ntsbAdapter],
   ['faa-ad', faaAdAdapter],
+  ['faa-enforcement', faaEnforcementAdapter],
+  ['asrs', asrsAdapter],
 ]);
 
 export function buildContext(base, { now = new Date(), fetchImpl = globalThis.fetch, options = {} } = {}) {
