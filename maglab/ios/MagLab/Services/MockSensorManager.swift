@@ -14,14 +14,20 @@ final class MockSensorManager: SensorProviding {
 
     let isMock = true
 
-    // Walk parameters
-    private let originLatitude = 51.50072
-    private let originLongitude = -0.12462
-    private let walkSpeedMps = 1.4
-    private let anomalySpacingM = 40.0
-    private let anomalyPeak_uT = 12.0
-    private let anomalyWidthM = 5.0
-    private let backgroundField_uT = 49.0
+    // Walk parameters (internal so tests can assert against them).
+    let originLatitude = 51.50072
+    let originLongitude = -0.12462
+    let walkSpeedMps = 1.4
+    /// Targets sit mid-interval (20 m, 60 m, ...) so the walk never starts
+    /// on top of one — the baseline must warm up on quiet ground.
+    let anomalySpacingM = 40.0
+    let anomalyPeak_uT = 12.0
+    /// Gaussian σ. Must stay narrow relative to the rolling-baseline window
+    /// (~28 m of walk): a wider bump elevates >50% of the window, drags the
+    /// median baseline up, and produces a phantom negative-residual "shadow
+    /// anomaly" after the pass. Real ferrous targets are metres wide.
+    let anomalyWidthM = 2.5
+    let backgroundField_uT = 49.0
 
     private var startedAt: Date?
 
@@ -38,6 +44,12 @@ final class MockSensorManager: SensorProviding {
     func latestSnapshot() -> SensorSnapshot {
         let now = Date()
         let t = startedAt.map { now.timeIntervalSince($0) } ?? 0
+        return snapshot(elapsed: t, at: now)
+    }
+
+    /// Deterministic snapshot for a given elapsed walk time. Tests use this
+    /// to fast-forward the simulated walk without waiting in real time.
+    func snapshot(elapsed t: TimeInterval, at now: Date = Date()) -> SensorSnapshot {
         let distanceM = t * walkSpeedMps
 
         var snapshot = SensorSnapshot()
@@ -60,9 +72,9 @@ final class MockSensorManager: SensorProviding {
         snapshot.locationFixTimestamp = now
 
         // Magnetic field: background + Gaussian bump around each buried
-        // target + small deterministic pseudo-noise.
-        let nearestTargetM = (distanceM / anomalySpacingM).rounded() * anomalySpacingM
-        let offsetM = distanceM - nearestTargetM
+        // target + small deterministic pseudo-noise. Targets are at
+        // spacing/2, 3·spacing/2, ... so the origin is quiet ground.
+        let offsetM = distanceM.truncatingRemainder(dividingBy: anomalySpacingM) - anomalySpacingM / 2
         let bump = anomalyPeak_uT * exp(-(offsetM * offsetM) / (2 * anomalyWidthM * anomalyWidthM))
         let noise = sin(t * 7.3) * 0.35 + sin(t * 13.7) * 0.15
         let total = backgroundField_uT + bump + noise
