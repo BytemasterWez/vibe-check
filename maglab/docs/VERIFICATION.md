@@ -13,13 +13,27 @@ executed. Last updated: 2026-07-08 (verification pass on branch
 | Backend contract | 🧱 STUBBED (by design) | Phase 7 gate |
 | Scoring-spine compile + tests (Swift 6, Linux) | ✅ PROVEN | 24/24 XCTests pass via `tools/verify_scoring_linux.sh` |
 | Syntax of all iOS sources | ✅ PROVEN | `swiftc -parse` clean over every file |
-| Full app compile (SwiftUI/SwiftData/CoreMotion) | ⬜ NOT YET PROVEN | requires Xcode on macOS |
-| Simulator mock flow | ⬜ NOT YET PROVEN | requires Xcode |
+| Full app compile (SwiftUI/SwiftData/CoreMotion) | ✅ PROVEN | CI `ios-simulator` job, `xcodebuild` on macos-15, Xcode default toolchain |
+| XcodeGen project generation | ✅ PROVEN | CI `ios-simulator` job generates `MagLab.xcodeproj` cleanly |
+| XCTest suite on iOS simulator | ✅ PROVEN | `** TEST SUCCEEDED **`, 24/24 on iPhone 16 simulator (CI run 28978043491) |
+| Simulator mock *interactive* flow (manual UI) | ⬜ NOT YET PROVEN | XCTests are logic/pipeline, not UI-driving; needs a manual run or XCUITest |
 | Real sensor verification | ⬜ NOT YET PROVEN | requires iPhone |
 | Field signal verification | ⬜ NOT YET PROVEN | FIELD_TEST_PROTOCOL.md |
 
-**Decision standing: VERIFY BEFORE EXPANDING. No Phase 4+ work until the
-Xcode build, simulator flow, and real-device control tests pass.**
+**Decision standing: VERIFY BEFORE EXPANDING. The app now compiles and its
+tests pass on a simulator in CI. Still required before Phase 4+: a manual
+simulator run of the interactive flow (create → record → pause → save →
+persists → detail opens) and the real-device control tests.**
+
+## Continuous verification (CI)
+
+`.github/workflows/maglab-verify.yml` runs on every push touching `maglab/`:
+
+- **core-logic-linux** — the Linux scoring harness (24 tests + parse pass).
+- **backend-tests** — FastAPI `pytest` (2/2).
+- **ios-simulator** (macos-15) — `xcodegen generate` + `xcodebuild test`
+  on an iPhone 16 simulator. First green run: 28978043491 (2026-07-08),
+  full app compiled and 24/24 XCTests passed.
 
 ## What was executed and passed (Linux, Swift 6.0.3, Docker)
 
@@ -65,24 +79,35 @@ anomalous zone is wide relative to ~28 m of walk (window 100 samples at
 5 Hz × 1.4 m/s). Wide made-ground areas will suppress their own residuals
 — one more reason repeat runs and controls matter.
 
-## What Linux verification cannot prove
+## Now proven by the macOS CI job
+
+The `ios-simulator` job compiles the whole app with the real Apple SDKs, so
+the items the Linux harness could not reach are now covered:
 
 - SwiftUI view compilation and navigation (HomeView → NewSurvey →
   LiveRecording → SurveyDetail).
-- SwiftData `@Model` macro expansion, ModelContainer schema, persistence
-  and fetch behaviour.
-- RecordingEngine's Timer loop, @MainActor isolation, pause/resume
-  lifecycle, batched saves.
-- Core Location/Core Motion permission flow and real sensor callbacks.
+- SwiftData `@Model` macro expansion and ModelContainer schema (schema
+  builds; the test host boots with it).
+- RecordingEngine, SensorManager and every Core Location / Core Motion
+  call site type-check against the frameworks.
 - XcodeGen project generation and Info.plist privacy strings.
 
-## Next step (requires a Mac + iPhone)
+## Still NOT proven by any automation
 
-1. `brew install xcodegen && cd maglab/ios && xcodegen generate && open MagLab.xcodeproj`
-2. Simulator: build, run, create survey, record in mock mode, watch score
-   rise ~14 s into the walk (target at 20 m), pause/resume, stop/save,
-   confirm survey persists and detail opens. Run ⌘U (24 tests).
-3. Real iPhone gate (see FIELD_TEST_PROTOCOL.md):
+- **Interactive runtime behaviour.** The XCTests are logic/pipeline tests,
+  not UI-driving. Nothing yet exercises the live flow — permission prompts,
+  the Timer sampling loop actually ticking, pause/resume state, records
+  appearing in Home/Detail. Compiling ≠ behaving.
+- Real sensor data and field signal (needs an iPhone).
+
+## Next step
+
+1. **Manual simulator run** (Mac): `cd maglab/ios && xcodegen generate &&
+   open MagLab.xcodeproj`, then run and walk the flow — create survey,
+   record in mock mode, watch the score rise ~14 s in (target at 20 m),
+   pause/resume, stop/save, confirm it persists and detail opens.
+   (Optional hardening: add an XCUITest so CI covers this too.)
+2. Real iPhone gate (see FIELD_TEST_PROTOCOL.md):
    - stationary table baseline 2–3 min: stable total, low residual, no
      repeated false high-confidence anomalies;
    - known metal object, 3 slow passes: score rises near it, sane flags,
