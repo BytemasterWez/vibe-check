@@ -126,6 +126,18 @@ function offlineBase() {
     'ACN,DATE,MFR,MODEL,AIRPORT,THEMES,SYNOPSIS\n' +
       '1954102,2024-06-19,PIPER,PA-31-350,OPF,maintenance sign-off;dispatch pressure,Pressure to defer exhaust discrepancy\n',
   );
+  const ri = join(dir, 'runway_incursions');
+  mkdirSync(ri, { recursive: true });
+  writeFileSync(
+    join(ri, 'ri.csv'),
+    'AIRPORT,DATE,SEVERITY,DESCRIPTION\nOPF,2025-03-01,C,crossed hold short\n',
+  );
+  const wl = join(dir, 'wildlife_strikes');
+  mkdirSync(wl, { recursive: true });
+  writeFileSync(
+    join(wl, 'wl.csv'),
+    'AIRPORT,DATE,SPECIES,DAMAGE\nOPF,2025-05-01,Gull,None\n',
+  );
   return dir;
 }
 
@@ -147,6 +159,8 @@ test('ingest all (offline): registry + SDR + NTSB land in production with health
   assert.match(byName.faa_ad.status, /OK/);
   assert.match(byName.faa_enforcement.status, /OK/);
   assert.match(byName.asrs.status, /OK/);
+  assert.match(byName.runway_incursions.status, /OK/);
+  assert.match(byName.wildlife_strikes.status, /OK/);
 
   // Bundle tables beyond MASTER/ACFTREF/ENGINE.
   assert.equal(ctx.tableStore.readProduction('deregistered_aircraft').length, 1);
@@ -350,7 +364,7 @@ test('runner isolation: a blocked source does not stop other adapters', async ()
     options: { offline },
   });
   const { records, reportPath } = await runIngestion(['all'], ctx);
-  assert.equal(records.length, 6);
+  assert.equal(records.length, 8);
   const byName = Object.fromEntries(records.map((r) => [r.source_name, r]));
   // Registry is network-blocked; the offline sources still succeed.
   assert.equal(byName.faa_registry.status, 'BLOCKED');
@@ -359,6 +373,8 @@ test('runner isolation: a blocked source does not stop other adapters', async ()
   assert.match(byName.faa_ad.status, /OK/);
   assert.match(byName.faa_enforcement.status, /OK/);
   assert.match(byName.asrs.status, /OK/);
+  assert.match(byName.runway_incursions.status, /OK/);
+  assert.match(byName.wildlife_strikes.status, /OK/);
   assert.ok(reportPath.includes('ingestion_health'));
 });
 

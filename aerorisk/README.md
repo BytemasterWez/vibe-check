@@ -201,13 +201,20 @@ Adapter status:
 - **asrs** — offline/structured-first (10k-record export windows, no open bulk
   API); flexible header mapping, theme summarisation. Capped at low confidence
   by design — voluntary, unverified, human-factors themes only.
+- **runway-incursions** — offline/structured-first ASIAS event export;
+  aggregates 5-year incursion counts per airport and merges into the shared
+  airport_risk view. Airport surface-risk context, not aircraft/operator blame.
+- **wildlife-strikes** — offline/structured-first FAA Wildlife Strike Database
+  export; 5-year strike and damaging-strike counts per airport plus a species
+  summary, merged into airport_risk. Airport/model exposure, not accusation.
 
-Health statuses: `OK, OK_WITH_WARNINGS, SOURCE_UNAVAILABLE, SCHEMA_CHANGED,
-ZERO_ROWS, VALIDATION_FAILED, BLOCKED, PARTIAL`. A schema change blocks
-promotion until re-run with `--accept-schema-change`.
+The runway-incursion and wildlife adapters each own one column of the shared
+`airport_risk` view and merge (never clobber) — runway runs first so wildlife
+merges on top. Health statuses: `OK, OK_WITH_WARNINGS, SOURCE_UNAVAILABLE,
+SCHEMA_CHANGED, ZERO_ROWS, VALIDATION_FAILED, BLOCKED, PARTIAL`. A schema
+change blocks promotion until re-run with `--accept-schema-change`.
 
-Planned context sources (not yet built): asias runway incursions, wildlife
-strikes.
+All eight adapters from the ingestion spec are now implemented.
 
 ### Docker
 

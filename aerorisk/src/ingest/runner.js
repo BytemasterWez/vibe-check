@@ -14,9 +14,12 @@ import { ntsbAdapter } from './adapters/ntsb.js';
 import { faaAdAdapter } from './adapters/faaAd.js';
 import { faaEnforcementAdapter } from './adapters/faaEnforcement.js';
 import { asrsAdapter } from './adapters/asrs.js';
+import { runwayIncursionsAdapter } from './adapters/runwayIncursions.js';
+import { wildlifeStrikesAdapter } from './adapters/wildlifeStrikes.js';
 
 // Registry first: SDR/NTSB/AD match and applicability layers read the
-// promoted registry table.
+// promoted registry table. Runway-incursion runs before wildlife so both can
+// merge their column into the shared airport_risk view.
 export const ADAPTERS = new Map([
   ['faa-registry', faaRegistryAdapter],
   ['faa-sdr', faaSdrAdapter],
@@ -24,6 +27,8 @@ export const ADAPTERS = new Map([
   ['faa-ad', faaAdAdapter],
   ['faa-enforcement', faaEnforcementAdapter],
   ['asrs', asrsAdapter],
+  ['runway-incursions', runwayIncursionsAdapter],
+  ['wildlife-strikes', wildlifeStrikesAdapter],
 ]);
 
 export function buildContext(base, { now = new Date(), fetchImpl = globalThis.fetch, options = {} } = {}) {

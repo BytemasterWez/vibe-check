@@ -36,7 +36,8 @@ Usage:
       Convert an unzipped Releasable Aircraft download (MASTER.txt,
       ACFTREF.txt, ENGINE.txt) into registry.csv in the dest data directory.
 
-  aerorisk ingest <faa-registry|faa-sdr|ntsb|faa-ad|faa-enforcement|asrs|all> [options]
+  aerorisk ingest <faa-registry|faa-sdr|ntsb|faa-ad|faa-enforcement|asrs|
+                   runway-incursions|wildlife-strikes|all> [options]
       Automated ingestion: discover → download → hash/store raw → transform
       → validate → stage → promote, with per-source health records.
       Options:
