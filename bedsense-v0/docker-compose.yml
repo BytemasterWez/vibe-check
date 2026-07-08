@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bedsense_db
+    environment:
+      POSTGRES_USER: bedsense
+      POSTGRES_PASSWORD: bedsense
+      POSTGRES_DB: bedsense
+    ports:
+      - "5438:5432"
+    volumes:
+      - bedsense_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bedsense -d bedsense"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    container_name: bedsense_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bedsense:bedsense@db:5432/bedsense
+      LOCAL_ONLY: "true"
+      ENABLE_MOCK_SENSOR: "true"
+      ENABLE_AI_EXPLANATIONS: "false"
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./evidence:/app/evidence
+      - ./data:/app/data
+
+  dashboard:
+    build: ./frontend
+    container_name: bedsense_dashboard
+    depends_on:
+      - api
+    environment:
+      API_BASE_URL: http://api:8088
+    ports:
+      - "8090:3000"
+
+volumes:
+  bedsense_pgdata:
