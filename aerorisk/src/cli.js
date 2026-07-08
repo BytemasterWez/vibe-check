@@ -7,6 +7,7 @@ import { renderReport } from './report.js';
 import { SOURCES, fetchSource } from './sources/fetch.js';
 import { transformReleasableAircraft } from './sources/transformFaaRegistry.js';
 import { ADAPTERS, buildContext, runIngestion } from './ingest/runner.js';
+import { runBatch, recordsCsv, renderBatchReport } from './batch.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = join(HERE, '..', 'data', 'sample');
@@ -19,6 +20,11 @@ Usage:
 
   aerorisk list [--data <dir>]
       List aircraft present in the loaded dataset.
+
+  aerorisk batch <file|N1,N2,...> [--data <dir>] [--out-dir <dir>]
+      Enrich and score many aircraft at once (the V1 target). Input is a
+      file of N-numbers (one per line) or a comma-separated list. Writes
+      records.csv, records.json, and report.md to --out-dir (default: cwd).
 
   aerorisk sources
       Show the public data sources and how each feed is acquired.
@@ -98,6 +104,31 @@ export async function run(argv) {
         console.log(`${r.N_NUMBER}\t${r.YEAR_MFR} ${r.MFR} ${r.MODEL}\ts/n ${r.SERIAL_NUMBER}\t${r.REGISTRANT_NAME}`);
       }
       return 0;
+    }
+    case 'batch': {
+      if (!target) return fail('batch requires a file of N-numbers or a comma-separated list');
+      const { existsSync, readFileSync, writeFileSync: write, mkdirSync } = await import('node:fs');
+      let nNumbers;
+      if (existsSync(target)) {
+        nNumbers = readFileSync(target, 'utf8').split(/[\r\n,]+/).map((s) => s.trim()).filter(Boolean);
+      } else {
+        nNumbers = target.split(',').map((s) => s.trim()).filter(Boolean);
+      }
+      if (nNumbers.length === 0) return fail('no N-numbers found in input');
+
+      const store = new Datastore(dataDir);
+      const result = runBatch(store, nNumbers);
+      const outDir = args.flags['out-dir'] ?? process.cwd();
+      mkdirSync(outDir, { recursive: true });
+      write(join(outDir, 'records.csv'), recordsCsv(result));
+      write(join(outDir, 'records.json'), `${JSON.stringify({ coverage: result.coverage, records: result.records }, null, 2)}\n`);
+      const report = renderBatchReport(result);
+      write(join(outDir, 'report.md'), `${report}\n`);
+
+      const c = result.coverage;
+      console.log(`Submitted ${c.submitted}; resolved ${c.resolved}; scored ${c.scored}; with evidence ${c.withEvidence}; direct signal ${c.withDirectSignal}.`);
+      console.log(`Wrote records.csv, records.json, report.md to ${outDir}`);
+      return c.submitted > 0 && c.resolved === 0 ? 1 : 0;
     }
     case 'sources': {
       for (const s of SOURCES) {
