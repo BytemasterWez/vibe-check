@@ -1,0 +1,599 @@
+{
+ "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages?updatedFrom=2026-07-08T00:00:00&updatedTo=2026-07-09T00:00:00&stages=tender&limit=3",
+ "version": "1.1",
+ "extensions": [
+  "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+  "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+  "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+ ],
+ "publishedDate": "2026-07-08T15:27:32+01:00",
+ "publisher": {
+  "name": "Cabinet Office",
+  "scheme": "GB-GOR",
+  "uid": "D2",
+  "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+ },
+ "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+ "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+ "releases": [
+  {
+   "ocid": "ocds-h6vhtk-06c6a5",
+   "id": "064329-2026",
+   "date": "2026-07-08T15:27:32+01:00",
+   "tag": [
+    "tender"
+   ],
+   "initiationType": "tender",
+   "tender": {
+    "id": "ocds-h6vhtk-06c6a5",
+    "legalBasis": {
+     "id": "32014L0024",
+     "scheme": "CELEX"
+    },
+    "title": "Procurement of Gas Supplies",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "09123000",
+     "description": "Natural gas"
+    },
+    "mainProcurementCategory": "goods",
+    "description": "Provision of gas supplies to Academies in Yorkshire and the Humber",
+    "value": {
+     "amount": 5000000,
+     "currency": "GBP"
+    },
+    "lots": [
+     {
+      "id": "1",
+      "description": "Provision of metered gas supplies to Academies in Yorkshire and the Humber",
+      "value": {
+       "amount": 5000000,
+       "currency": "GBP"
+      },
+      "contractPeriod": {
+       "durationInDays": 1080
+      },
+      "hasRenewal": false,
+      "submissionTerms": {
+       "variantPolicy": "allowed"
+      },
+      "hasOptions": false,
+      "status": "active"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "deliveryAddresses": [
+       {
+        "region": "UKE"
+       }
+      ],
+      "relatedLot": "1"
+     }
+    ],
+    "participationFees": [
+     {
+      "id": "1",
+      "type": [
+       "document"
+      ]
+     }
+    ],
+    "submissionMethod": [
+     "electronicSubmission"
+    ],
+    "submissionMethodDetails": "http://www.theenergyspecialists.co.uk",
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure",
+    "tenderPeriod": {
+     "endDate": "2026-08-04"
+    },
+    "submissionTerms": {
+     "languages": [
+      "en"
+     ]
+    },
+    "awardPeriod": {
+     "startDate": "2026-08-05T12:00:00+01:00"
+    },
+    "bidOpening": {
+     "date": "2026-08-05T12:00:00+01:00"
+    },
+    "hasRecurrence": false
+   },
+   "parties": [
+    {
+     "name": "DELTA ACADEMIES TRUST",
+     "id": "GB-COH-07386086",
+     "identifier": {
+      "legalName": "DELTA ACADEMIES TRUST",
+      "id": "07386086",
+      "scheme": "GB-COH"
+     },
+     "address": {
+      "streetAddress": "Education House",
+      "locality": "Knottingley",
+      "region": "UKE45",
+      "postalCode": "WF110EP",
+      "countryName": "United Kingdom"
+     },
+     "contactPoint": {
+      "name": "Jayne Singleton",
+      "telephone": "+44 1522300219",
+      "email": "jayne@theenergyspecialists.co.uk",
+      "url": "http://www.theenergyspecialists.co.uk"
+     },
+     "roles": [
+      "buyer"
+     ],
+     "details": {
+      "url": "http://www.theenergyspecialists.co.uk",
+      "classifications": [
+       {
+        "scheme": "TED_CA_TYPE",
+        "description": "Multi Academy Trust"
+       },
+       {
+        "scheme": "COFOG",
+        "id": "09",
+        "description": "Education"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Chief Finance and Operations Officer",
+     "id": "GB-FTS-60900",
+     "identifier": {
+      "legalName": "Chief Finance and Operations Officer"
+     },
+     "address": {
+      "locality": "Knottingley",
+      "countryName": "United Kingdom"
+     },
+     "roles": [
+      "reviewBody"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-COH-07386086",
+    "name": "DELTA ACADEMIES TRUST"
+   },
+   "language": "en"
+  },
+  {
+   "ocid": "ocds-h6vhtk-06c6a4",
+   "id": "064328-2026",
+   "date": "2026-07-08T15:27:18+01:00",
+   "tag": [
+    "tender"
+   ],
+   "initiationType": "tender",
+   "tender": {
+    "id": "ocds-h6vhtk-06c6a4",
+    "legalBasis": {
+     "id": "32014L0024",
+     "scheme": "CELEX"
+    },
+    "title": "Procurement of Electricity Supplies",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "09310000",
+     "description": "Electricity"
+    },
+    "mainProcurementCategory": "goods",
+    "description": "Provision of electricity supplies to Academies in Yorkshire and the Humber",
+    "value": {
+     "amount": 20000000,
+     "currency": "GBP"
+    },
+    "lotDetails": {
+     "maximumLotsBidPerSupplier": Infinity
+    },
+    "lots": [
+     {
+      "id": "1",
+      "title": "Half Hour Metered Supplies",
+      "description": "Provision of half hour metered electricity supplies to Academies in Yorkshire and the Humber",
+      "value": {
+       "amount": 15000000,
+       "currency": "GBP"
+      },
+      "contractPeriod": {
+       "durationInDays": 1080
+      },
+      "hasRenewal": false,
+      "submissionTerms": {
+       "variantPolicy": "allowed"
+      },
+      "hasOptions": false,
+      "status": "active"
+     },
+     {
+      "id": "2",
+      "title": "Non Half Hour Metered Supplies",
+      "description": "Provision of non half hour metered electricity supplies to Academies in Yorkshire and the Humber",
+      "value": {
+       "amount": 5000000,
+       "currency": "GBP"
+      },
+      "contractPeriod": {
+       "durationInDays": 1080
+      },
+      "hasRenewal": false,
+      "submissionTerms": {
+       "variantPolicy": "allowed"
+      },
+      "hasOptions": false,
+      "status": "active"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "additionalClassifications": [
+       {
+        "scheme": "CPV",
+        "id": "09310000",
+        "description": "Electricity"
+       }
+      ],
+      "deliveryAddresses": [
+       {
+        "region": "UKE"
+       }
+      ],
+      "relatedLot": "1"
+     },
+     {
+      "id": "2",
+      "additionalClassifications": [
+       {
+        "scheme": "CPV",
+        "id": "09310000",
+        "description": "Electricity"
+       }
+      ],
+      "deliveryAddresses": [
+       {
+        "region": "UKE"
+       }
+      ],
+      "relatedLot": "2"
+     }
+    ],
+    "participationFees": [
+     {
+      "id": "1",
+      "type": [
+       "document"
+      ]
+     }
+    ],
+    "submissionMethod": [
+     "electronicSubmission"
+    ],
+    "submissionMethodDetails": "http://www.theenergyspecialists.co.uk",
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure",
+    "tenderPeriod": {
+     "endDate": "2026-08-04"
+    },
+    "submissionTerms": {
+     "languages": [
+      "en"
+     ]
+    },
+    "awardPeriod": {
+     "startDate": "2026-08-05T12:00:00+01:00"
+    },
+    "bidOpening": {
+     "date": "2026-08-05T12:00:00+01:00"
+    },
+    "hasRecurrence": false
+   },
+   "parties": [
+    {
+     "name": "DELTA ACADEMIES TRUST",
+     "id": "GB-COH-07386086",
+     "identifier": {
+      "legalName": "DELTA ACADEMIES TRUST",
+      "id": "07386086",
+      "scheme": "GB-COH"
+     },
+     "address": {
+      "streetAddress": "Education House",
+      "locality": "Knottingley",
+      "region": "UKE45",
+      "postalCode": "WF110EP",
+      "countryName": "United Kingdom"
+     },
+     "contactPoint": {
+      "name": "Jayne Singleton",
+      "telephone": "+44 1522300219",
+      "email": "jayne@theenergyspecialists.co.uk",
+      "url": "http://www.theenergyspecialists.co.uk"
+     },
+     "roles": [
+      "buyer"
+     ],
+     "details": {
+      "url": "http://www.theenergyspecialists.co.uk",
+      "classifications": [
+       {
+        "scheme": "TED_CA_TYPE",
+        "description": "Multi Academy Trust"
+       },
+       {
+        "scheme": "COFOG",
+        "id": "09",
+        "description": "Education"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Chief Finance and Operations Officer",
+     "id": "GB-FTS-60900",
+     "identifier": {
+      "legalName": "Chief Finance and Operations Officer"
+     },
+     "address": {
+      "locality": "Knottingley",
+      "countryName": "United Kingdom"
+     },
+     "roles": [
+      "reviewBody"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-COH-07386086",
+    "name": "DELTA ACADEMIES TRUST"
+   },
+   "language": "en"
+  },
+  {
+   "ocid": "ocds-h6vhtk-06c69f",
+   "id": "064318-2026",
+   "date": "2026-07-08T15:18:58+01:00",
+   "tag": [
+    "tender"
+   ],
+   "description": "NOTE: To register your interest in this notice and obtain any additional information please visit the Public Contracts Scotland Web Site at https://www.publiccontractsscotland.gov.uk/Search/Search_Switch.aspx?ID=836900.\nThe buyer has indicated that it will accept electronic responses to this notice via the Postbox facility. A user guide is available at https://www.publiccontractsscotland.gov.uk/sitehelp/help_guides.aspx.\nSuppliers are advised to allow adequate time for uploading documents and to dispatch the electronic response well in advance of the closing time to avoid any last minute problems.\n(SC Ref:836900)\nDownload the ESPD document here: https://www.publiccontractsscotland.gov.uk/ESPD/ESPD_Download.aspx?id=836900",
+   "initiationType": "tender",
+   "tender": {
+    "id": "CASE/693111",
+    "legalBasis": {
+     "id": "32014L0024",
+     "scheme": "CELEX"
+    },
+    "title": "Framework Agreement for the Service, Calibration and Maintenance of Sea-Bird Scientific Oceanographic Instrumentation",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "50433000",
+     "description": "Calibration services"
+    },
+    "mainProcurementCategory": "services",
+    "description": "1.1.\tThe Scottish Government, through Marine Directorate (MD) invites tenders from suitable contractors to supply a Framework Pricing Agreement for the maintenance contract (service, calibration and, where necessary, repairs) of several items of Sea-Bird Scientific oceanographic equipment.",
+    "value": {
+     "amount": 160000,
+     "currency": "GBP"
+    },
+    "lots": [
+     {
+      "id": "1",
+      "description": "The Scottish Government, through Marine Directorate (MD) invites tenders from suitable contractors to supply a Framework Pricing Agreement for the maintenance contract (service, calibration and, where necessary, repairs) of several items of Sea-Bird Scientific oceanographic equipment.",
+      "awardCriteria": {
+       "criteria": [
+        {
+         "name": "Understanding and Delivery of Requirements",
+         "type": "quality",
+         "description": "40%"
+        },
+        {
+         "name": "Staff Competence, Knowledge and Experience",
+         "type": "quality",
+         "description": "30%"
+        },
+        {
+         "name": "Risk, Quality Assurance and Health & Safety",
+         "type": "quality",
+         "description": "15%"
+        },
+        {
+         "name": "Corporate & Social Responsibilities",
+         "type": "quality",
+         "description": "10%"
+        },
+        {
+         "name": "Fair Work First",
+         "type": "quality",
+         "description": "5%"
+        },
+        {
+         "type": "price",
+         "description": "30"
+        }
+       ]
+      },
+      "contractPeriod": {
+       "startDate": "2026-07-29T00:00:00+01:00",
+       "endDate": "2030-07-28T23:59:59+01:00"
+      },
+      "hasRenewal": false,
+      "submissionTerms": {
+       "variantPolicy": "allowed"
+      },
+      "hasOptions": false,
+      "status": "active"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "additionalClassifications": [
+       {
+        "scheme": "CPV",
+        "id": "34930000",
+        "description": "Marine equipment"
+       }
+      ],
+      "deliveryAddresses": [
+       {
+        "region": "UK"
+       }
+      ],
+      "deliveryLocation": {
+       "description": "Supplier Premises"
+      },
+      "relatedLot": "1"
+     }
+    ],
+    "submissionMethod": [
+     "electronicSubmission"
+    ],
+    "submissionMethodDetails": "https://www.publiccontractsscotland.gov.uk/",
+    "selectionCriteria": {
+     "criteria": [
+      {
+       "type": "economic",
+       "description": "This section covers questions 4B1-6 of the SPD (Scotland).",
+       "minimum": "4B1a: Bidders will be required to have a minimum \"specific\" yearly turnover of 240,000 GBP for the last two years.\nIn the event that the Bidder does not comply with this requirement, they will not be considered any further in this tendering exercise.\nAs evidence for the SPD (Scotland) question 4B1a, the Procurement Officer may ask for annual accounts from the bidder.\n4B5: It is a requirement of this contract that bidders hold or can commit to obtain prior to the commencement of any subsequently awarded contract, the types of insurance indicated below:\nEmployers (Compulsory) Liability Insurance = In accordance with the legal obligation for the time being enforced.\nPublic Liability Insurance = 1 Million GBP\n4B6: Bidders must demonstrate a Current Ratio of greater than 0.8.\nCurrent Ratio will be calculated as follows: net current assets divided by net current liabilities.\nPlease state whether you have applied IFRS15 to your accounts.\nThere must be no qualification or contra-indication from any evidence provided in support of the bidders economic and financial standing.",
+       "appliesTo": [
+        "supplier"
+       ]
+      },
+      {
+       "type": "technical",
+       "description": "Details of technical facilities, measures for ensuring quality and quality management procedures.",
+       "minimum": "4C1.2: Bidders will be required to provide three examples over the last five years that demonstrate that they have the relevant experience to deliver the services/supplies as described in the Contract Notice or the relevant section of the site notice.\n4C2: Bidders will be required to provide details of the technicians or technical bodies the bidder can call upon in relation to this procurement exercise.\n4C3a: Bidders will be required to provide details of the technical facilities and measures for ensuring quality.\n4C4: Bidders are required to provide a statement of the relevant supply chain management and/or tracking systems used.\n4C5. Bidder will be requested to provide an opportunity for the bidder to check on technical capacity of the bidder and on their quality measures.\n4C7: Bidders will be required to confirm what environmental management measures they will employ.\n4C9: Bidders should provide details of relevant tools, plant or technical equipment available to you in relation to this procurement exercise.\n4C10: Bidders will be required to confirm that whether they intend to subcontract and if so, for what proportion of the contract.\nQuality Management Procedures\n1. The bidder must hold a UKAS (or equivalent) accredited independent third party certificate of compliance in accordance with BS EN ISO 9001 (or equivalent).\nOR\n2. The bidder must have the following:\nA documented policy regarding quality management. The policy must set out the responsibilities for quality management demonstrating that the bidder has and continues to implement a quality management policy that is authorised by their Chief Executive, or equivalent, and is periodically reviewed at a senior management level. The policy must be relevant to the nature and scale of the work to be undertaken and set out responsibilities for quality management throughout the organisation.",
+       "appliesTo": [
+        "supplier"
+       ]
+      }
+     ]
+    },
+    "otherRequirements": {
+     "requiresStaffNamesAndQualifications": true
+    },
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure",
+    "techniques": {
+     "hasFrameworkAgreement": true,
+     "frameworkAgreement": {
+      "maximumParticipants": 1,
+      "periodRationale": "N/A"
+     }
+    },
+    "coveredBy": [
+     "GPA"
+    ],
+    "tenderPeriod": {
+     "endDate": "2026-07-24T12:00:00+01:00"
+    },
+    "submissionTerms": {
+     "languages": [
+      "en"
+     ],
+     "bidValidityPeriod": {
+      "durationInDays": 180
+     }
+    },
+    "awardPeriod": {
+     "startDate": "2026-07-24T13:00:00+01:00"
+    },
+    "bidOpening": {
+     "date": "2026-07-24T13:00:00+01:00",
+     "address": {
+      "streetAddress": "East Lothian"
+     }
+    },
+    "hasRecurrence": false,
+    "contractTerms": {
+     "hasElectronicOrdering": true,
+     "hasElectronicPayment": true
+    }
+   },
+   "parties": [
+    {
+     "name": "Scottish Government",
+     "id": "GB-FTS-72395",
+     "identifier": {
+      "legalName": "Scottish Government"
+     },
+     "address": {
+      "streetAddress": "Victoria Quay, The Shore",
+      "locality": "Edinburgh",
+      "region": "UKM",
+      "postalCode": "EH6 6QQ",
+      "countryName": "United Kingdom"
+     },
+     "contactPoint": {
+      "telephone": "+44 412425466",
+      "email": "brody.johnston@gov.scot",
+      "url": "https://www.publiccontractsscotland.gov.uk/"
+     },
+     "roles": [
+      "buyer",
+      "centralPurchasingBody"
+     ],
+     "details": {
+      "url": "http://www.scotland.gov.uk",
+      "buyerProfile": "https://www.publiccontractsscotland.gov.uk/search/Search_AuthProfile.aspx?ID=AA10482",
+      "classifications": [
+       {
+        "scheme": "TED_CA_TYPE",
+        "id": "MINISTRY",
+        "description": "Ministry or any other national or federal authority, including their regional or local subdivisions"
+       },
+       {
+        "scheme": "COFOG",
+        "id": "01",
+        "description": "General public services"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Sheriff Court House",
+     "id": "GB-FTS-324",
+     "identifier": {
+      "legalName": "Sheriff Court House"
+     },
+     "address": {
+      "streetAddress": "27 Chambers Street",
+      "locality": "Edinburgh",
+      "postalCode": "EH1 1LB",
+      "countryName": "United Kingdom"
+     },
+     "roles": [
+      "reviewBody"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-FTS-72395",
+    "name": "Scottish Government"
+   },
+   "links": [
+    {
+     "rel": "canonical",
+     "href": "https://api.publiccontractsscotland.gov.uk/v1/Notice?id=ocds-r6ebe6-0000836900"
+    }
+   ],
+   "language": "en"
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - tpdata:/srv/tenderpulse/data
+    restart: unless-stopped
+
+  # Daily ingestion at 06:30 UTC. Sleep-loop keeps the image dependency-free;
+  # swap for host cron or a platform scheduler in production if preferred.
+  worker:
+    build: .
+    env_file: .env
+    volumes:
+      - tpdata:/srv/tenderpulse/data
+    command: >
+      sh -c 'while true; do
+        python -m app.workers.ingest --source all --since-days 1;
+        sleep 86400;
+      done'
+    restart: unless-stopped
+
+volumes:
+  tpdata:

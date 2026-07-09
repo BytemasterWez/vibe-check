@@ -1,0 +1,350 @@
+{
+ "uri": "https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Search?publishedFrom=2026-07-07T00:00:00&publishedTo=2026-07-08T00:00:00&stages=tender&limit=10",
+ "version": "1.1",
+ "extensions": [
+  "https://standard.open-contracting.org/profiles/eu/master/en/extension.json",
+  "https://raw.githubusercontent.com/portaledcahn/ocds_tenderDatePublished_extension/master/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+  "https://raw.githubusercontent.com/Crown-Commercial-Service/ocds_awards_datePublished_extension/main/extension.json",
+  "https://raw.githubusercontent.com/Crown-Commercial-Service/ocds_partyDetails_vcse_extension/main/extension.json",
+  "https://raw.githubusercontent.com/Crown-Commercial-Service/ocds_tender_suitability_extension/main/extension.json",
+  "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json"
+ ],
+ "publishedDate": "2026-07-07T17:45:10+01:00",
+ "publisher": {
+  "name": "Cabinet Office",
+  "scheme": "GB-GOR",
+  "uid": "D2",
+  "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+ },
+ "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+ "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+ "releases": [
+  {
+   "ocid": "ocds-b5fd17-5c27e2d5-bb96-496b-9bb7-af7b77680f26",
+   "id": "b06d2a61-b1d7-4a60-9098-8dd2dc72a140-905097",
+   "language": "en",
+   "date": "2026-07-07T17:45:09+01:00",
+   "tag": [
+    "tender"
+   ],
+   "initiationType": "tender",
+   "tender": {
+    "id": "MT237685",
+    "title": "Filming - The Special Qualities of the North York Moors",
+    "description": "This contract is to provide North York Moors National Park with filming and photography to showcase The Special Qualities of the North York Moors.\r\nThe filming will take place September - October, with delivery for February 2027",
+    "datePublished": "2026-07-07T17:45:09+01:00",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "79340000",
+     "description": "Advertising and marketing services"
+    },
+    "additionalClassifications": [
+     {
+      "scheme": "CPV",
+      "id": "79342100",
+      "description": "Direct marketing services"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "deliveryAddresses": [
+       {
+        "region": "North East",
+        "countryName": "United Kingdom"
+       },
+       {
+        "region": "Yorkshire and the Humber",
+        "countryName": "United Kingdom"
+       },
+       {
+        "region": "North West",
+        "countryName": "United Kingdom"
+       },
+       {
+        "region": "East of England",
+        "countryName": "United Kingdom"
+       }
+      ]
+     }
+    ],
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure (below threshold)",
+    "tenderPeriod": {
+     "endDate": "2026-07-20T17:00:00+01:00"
+    },
+    "contractPeriod": {
+     "startDate": "2026-09-01T00:00:00+01:00",
+     "endDate": "2027-02-28T23:59:59Z"
+    },
+    "suitability": {
+     "sme": true,
+     "vcse": false
+    },
+    "mainProcurementCategory": "services",
+    "documents": [
+     {
+      "id": "1",
+      "documentType": "tenderNotice",
+      "description": "Opportunity notice on Contracts Finder",
+      "url": "https://www.contractsfinder.service.gov.uk/Notice/b06d2a61-b1d7-4a60-9098-8dd2dc72a140",
+      "datePublished": "2026-07-07T17:45:09+01:00",
+      "format": "text/html",
+      "language": "en"
+     },
+     {
+      "id": "2",
+      "documentType": "tenderNotice",
+      "description": "NOTE: To register your interest in this notice and obtain any additional information please visit the myTenders Web Site at the link provided.",
+      "url": "https://www.mytenders.co.uk/search/show/search_view.aspx?ID=JUL171588"
+     }
+    ]
+   },
+   "parties": [
+    {
+     "id": "GB-CFS-234546",
+     "name": "North York Moors National Park",
+     "identifier": {
+      "legalName": "North York Moors National Park"
+     },
+     "address": {
+      "streetAddress": "The Old Vicarage, Bondgate, Helmsley, York, North Yorkshir, Bondgate",
+      "locality": "York",
+      "postalCode": "YO62 5BP",
+      "countryName": "England"
+     },
+     "contactPoint": {
+      "name": "Tom Outing",
+      "email": "t.outing@northyorkmoors.org.uk",
+      "telephone": "+44 7896056846"
+     },
+     "details": {
+      "url": "https://www.northyorkmoors.org.uk"
+     },
+     "roles": [
+      "buyer"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-CFS-234546",
+    "name": "North York Moors National Park"
+   }
+  },
+  {
+   "ocid": "ocds-b5fd17-f5d289de-8088-47d8-983c-5da2c2331d1c",
+   "id": "b7aaab9a-a493-4655-900f-aa85d1a12db1-905096",
+   "language": "en",
+   "date": "2026-07-07T17:45:05+01:00",
+   "tag": [
+    "tender"
+   ],
+   "initiationType": "tender",
+   "tender": {
+    "id": "MT237686",
+    "title": "Find Your Repurpose - Reuse Campaign",
+    "description": "MWDA is seeking to engage an organisation who will be able to effectively manage external services and suppliers throughout all aspects of the campaign to deliver a multi-channel behavioural change campaign aimed at raising awareness and encouraging positive action amongst residents within the Liverpool City Region regarding reducing household waste and increasing reuse.",
+    "datePublished": "2026-07-07T17:45:05+01:00",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "79342000",
+     "description": "Marketing services"
+    },
+    "additionalClassifications": [
+     {
+      "scheme": "CPV",
+      "id": "79341400",
+      "description": "Advertising campaign services"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "deliveryAddresses": [
+       {
+        "region": "North West",
+        "countryName": "United Kingdom"
+       }
+      ]
+     }
+    ],
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure (below threshold)",
+    "tenderPeriod": {
+     "endDate": "2026-08-07T12:00:00+01:00"
+    },
+    "contractPeriod": {
+     "startDate": "2026-09-01T00:00:00+01:00",
+     "endDate": "2027-03-31T23:59:59+01:00"
+    },
+    "suitability": {
+     "sme": true,
+     "vcse": true
+    },
+    "mainProcurementCategory": "services",
+    "documents": [
+     {
+      "id": "1",
+      "documentType": "tenderNotice",
+      "description": "Opportunity notice on Contracts Finder",
+      "url": "https://www.contractsfinder.service.gov.uk/Notice/b7aaab9a-a493-4655-900f-aa85d1a12db1",
+      "datePublished": "2026-07-07T17:45:05+01:00",
+      "format": "text/html",
+      "language": "en"
+     },
+     {
+      "id": "2",
+      "documentType": "tenderNotice",
+      "description": "NOTE: To register your interest in this notice and obtain any additional information please visit the myTenders Web Site at the link provided.",
+      "url": "https://www.mytenders.co.uk/search/show/search_view.aspx?ID=JUL171585"
+     }
+    ]
+   },
+   "parties": [
+    {
+     "id": "GB-CFS-230757",
+     "name": "Merseyside Waste Disposal Authority",
+     "identifier": {
+      "legalName": "Merseyside Waste Disposal Authority"
+     },
+     "address": {
+      "streetAddress": "7 th Floor, No. 1 Mann Island",
+      "locality": "Liverpool",
+      "postalCode": "L3 1BP",
+      "countryName": "England"
+     },
+     "contactPoint": {
+      "name": "Danni Millar",
+      "email": "procurement@merseysidewda.gov.uk",
+      "telephone": "+44 1512551444"
+     },
+     "details": {
+      "url": "http://https://www.merseysidewda.gov.uk/"
+     },
+     "roles": [
+      "buyer"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-CFS-230757",
+    "name": "Merseyside Waste Disposal Authority"
+   }
+  },
+  {
+   "ocid": "ocds-b5fd17-91e972bd-ec6d-47f9-b71c-dd57b928b020",
+   "id": "5da93aca-a01f-4a7e-9f96-2ede2a1444a2-905080",
+   "language": "en",
+   "date": "2026-07-07T16:32:32+01:00",
+   "tag": [
+    "tender"
+   ],
+   "initiationType": "tender",
+   "tender": {
+    "id": "ESOP1000121",
+    "title": "National Trust - Clumber Park - Diamond-backed Spider Recovery Project Consultancy Services (A)",
+    "description": "The National Trust is seeking suitably qualified ecological consultants to support the recovery of the Critically Endangered Diamond-backed Spider (Thanatus formicinus). The commission is divided into three work packages. This opportunity relates to Package A: spider ecology, monitoring and research across Clumber Park and the Sherwood Forest landscape. The project will improve understanding of the species' ecology, breeding phenology and dispersal, provide habitat management guidance, assess habitat connectivity, and develop a translocation methodology and implementation plan by 2029. Work will be undertaken in collaboration with the National Trust, British Arachnological Society, University of Nottingham and other stakeholders. The project runs from 2026-2029.\r\n\r\nThis opportunity is being conducted on the Proactis Plaza portal. \r\nhttps://supplierlive.proactisp2p.com/ \r\nIf you would like to be involved, please ensure you have access to your Proactis account and let us know your supplier number so that we can make sure you have access to the tender pack.\r\nIf you do not have a Proactis account please create one and let us know your supplier number. There is no cost to have a Proactis account.",
+    "datePublished": "2026-07-07T16:32:32+01:00",
+    "status": "active",
+    "classification": {
+     "scheme": "CPV",
+     "id": "71313000",
+     "description": "Environmental engineering consultancy services"
+    },
+    "additionalClassifications": [
+     {
+      "scheme": "CPV",
+      "id": "90711500",
+      "description": "Environmental monitoring other than for construction"
+     },
+     {
+      "scheme": "CPV",
+      "id": "90712400",
+      "description": "Natural resources management or conservation strategy planning services"
+     },
+     {
+      "scheme": "CPV",
+      "id": "90721700",
+      "description": "Endangered species protection services"
+     }
+    ],
+    "items": [
+     {
+      "id": "1",
+      "deliveryAddresses": [
+       {
+        "region": "East Midlands",
+        "countryName": "United Kingdom"
+       },
+       {
+        "region": "West Midlands",
+        "countryName": "United Kingdom"
+       }
+      ]
+     }
+    ],
+    "value": {
+     "amount": 35922,
+     "currency": "GBP"
+    },
+    "procurementMethod": "open",
+    "procurementMethodDetails": "Open procedure (below threshold)",
+    "tenderPeriod": {
+     "endDate": "2026-07-31T17:00:00+01:00"
+    },
+    "contractPeriod": {
+     "startDate": "2026-08-10T00:00:00+01:00",
+     "endDate": "2029-03-01T23:59:59Z"
+    },
+    "suitability": {
+     "sme": true,
+     "vcse": true
+    },
+    "mainProcurementCategory": "services",
+    "documents": [
+     {
+      "id": "1",
+      "documentType": "tenderNotice",
+      "description": "Opportunity notice on Contracts Finder",
+      "url": "https://www.contractsfinder.service.gov.uk/Notice/5da93aca-a01f-4a7e-9f96-2ede2a1444a2",
+      "datePublished": "2026-07-07T16:32:32+01:00",
+      "format": "text/html",
+      "language": "en"
+     }
+    ]
+   },
+   "parties": [
+    {
+     "id": "GB-SRS-sid4gov.cabinetoffice.gov.uk/BTvR42rM",
+     "name": "THE NATIONAL TRUST FOR PLACES OF HISTORIC INTEREST OR NATURAL BEAUTY",
+     "identifier": {
+      "legalName": "THE NATIONAL TRUST FOR PLACES OF HISTORIC INTEREST OR NATURAL BEAUTY",
+      "scheme": "GB-SRS",
+      "id": "sid4gov.cabinetoffice.gov.uk/BTvR42rM"
+     },
+     "address": {
+      "streetAddress": "HEELIS",
+      "locality": "SWINDON",
+      "postalCode": "SN22NA",
+      "countryName": "England"
+     },
+     "contactPoint": {
+      "name": "Vicky Bray",
+      "email": "vicky.bray@nationaltrust.org.uk",
+      "telephone": "07770324545"
+     },
+     "roles": [
+      "buyer"
+     ]
+    }
+   ],
+   "buyer": {
+    "id": "GB-SRS-sid4gov.cabinetoffice.gov.uk/BTvR42rM",
+    "name": "THE NATIONAL TRUST FOR PLACES OF HISTORIC INTEREST OR NATURAL BEAUTY"
+   }
+  }
+ ]
+}
