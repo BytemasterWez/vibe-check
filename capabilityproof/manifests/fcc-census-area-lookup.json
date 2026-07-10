@@ -1,0 +1,54 @@
+{
+  "capability_id": "source.fcc.census_area_lookup",
+  "manifest_version": "1.0",
+  "claim": "Resolves a US latitude/longitude to census block, county and state FIPS codes via the FCC Area API, no authentication required",
+  "publisher": {
+    "name": "Federal Communications Commission",
+    "authority_url": "https://geo.fcc.gov/api/census/"
+  },
+  "protocol": "rest",
+  "category": "geospatial",
+  "tags": ["fips", "geocode", "census-block", "county", "geospatial", "lookup", "united-states"],
+  "tasks": [
+    "convert coordinates to county FIPS",
+    "lat/lon to census block lookup",
+    "derive join keys for county-level datasets from a point"
+  ],
+  "coverage": {
+    "countries": ["US"],
+    "granularity": "census block",
+    "temporal": "2010 and 2020 census geographies"
+  },
+  "join_keys": ["state_fips", "county_fips", "block_fips"],
+  "update_frequency": "static per census vintage",
+  "license": "Public domain (US federal data)",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "unpublished",
+  "pagination": "none",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://geo.fcc.gov/api/census/area?lat={lat}&lon={lon}&censusYear=2020&format=json"
+  },
+  "usage_notes": "block_fips is 15 digits; its first 5 digits are the county FIPS. Points over water can return multiple or zero results.",
+  "test_pack": {
+    "id": "fcc_area_dc_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://geo.fcc.gov/api/census/area?lat=38.8894&lon=-77.0352&censusYear=2020&format=json"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 10000 },
+      { "type": "min_rows", "path": "results", "min": 1 },
+      { "type": "fields_present", "path": "results", "fields": ["state_fips", "county_fips", "block_fips", "county_name"] },
+      { "type": "field_pattern", "path": "results", "field": "block_fips", "pattern": "^[0-9]{15}$" },
+      { "type": "known_answer", "path": "results.0.county_fips", "equals": "11001" },
+      { "type": "known_answer", "path": "results.0.state_fips", "equals": "11" }
+    ]
+  },
+  "fallback_capability_ids": []
+}
