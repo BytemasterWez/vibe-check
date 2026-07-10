@@ -16,6 +16,11 @@
 //   node capabilityproof/scout.mjs status              show quarantine streaks
 //   node capabilityproof/scout.mjs promote --ready     promote sources with a clean streak
 //   node capabilityproof/scout.mjs promote <id>        promote one source regardless of streak
+//   node capabilityproof/scout.mjs approve <id>        human approval: clear the experimental flag
+//
+// Promoted sources remain EXPERIMENTAL (excluded by strict trust policies)
+// until a human runs `approve` — the Scout generates candidate contracts,
+// it never certifies a source.
 //
 // Env: CAPABILITYPROOF_LLM_URL (default http://localhost:1234/v1),
 //      CAPABILITYPROOF_LLM_MODEL (default: first loaded model),
@@ -36,7 +41,7 @@ const DATA_DIR = process.env.CAPABILITYPROOF_DATA_DIR || DEFAULT_DATA_DIR;
 const CANDIDATES_FILE = process.env.CAPABILITYPROOF_CANDIDATES || path.join(HERE, 'scout', 'candidates.json');
 const PROMOTE_STREAK = parseInt(process.env.CAPABILITYPROOF_SCOUT_STREAK || '3', 10);
 
-const VALID_CHECK_TYPES = ['status', 'json', 'max_latency', 'min_rows', 'fields_present', 'field_pattern', 'value_range', 'known_answer', 'freshness'];
+const VALID_CHECK_TYPES = ['status', 'json', 'max_latency', 'min_rows', 'unique_field', 'fields_present', 'field_pattern', 'value_range', 'known_answer', 'freshness'];
 
 fs.mkdirSync(PROPOSED_DIR, { recursive: true });
 
@@ -310,16 +315,40 @@ function promote(args) {
     promoted++;
   }
   if (promoted === 0) console.log(targetId ? `nothing promoted: ${targetId} not found in quarantine` : `nothing promoted: no source has a streak of ${PROMOTE_STREAK} yet`);
-  else console.log(`\n${promoted} source(s) promoted. Commit the moved manifest file(s) to make it permanent.`);
+  else console.log(`\n${promoted} source(s) promoted as EXPERIMENTAL (strict policies exclude them until "scout.mjs approve <id>"). Commit the moved manifest file(s) to make it permanent.`);
+}
+
+function approve(targetId) {
+  if (!targetId) {
+    console.error('usage: approve <capability_id>');
+    process.exitCode = 2;
+    return;
+  }
+  for (const file of fs.readdirSync(MANIFEST_DIR).filter((f) => f.endsWith('.json'))) {
+    const full = path.join(MANIFEST_DIR, file);
+    const manifest = JSON.parse(fs.readFileSync(full, 'utf-8'));
+    if (manifest.capability_id !== targetId) continue;
+    if (!manifest.scouted) {
+      console.log(`${targetId} was not scouted — nothing to approve.`);
+      return;
+    }
+    manifest.approved = true;
+    manifest.approved_at = new Date().toISOString();
+    fs.writeFileSync(full, JSON.stringify(manifest, null, 2));
+    console.log(`approved ${targetId} — no longer experimental; strict trust policies may now select it.`);
+    return;
+  }
+  console.log(`not found in the promoted catalogue: ${targetId}`);
+  process.exitCode = 1;
 }
 
 // Run the CLI only when executed directly, so tests can import the drafting
 // functions without triggering a discovery sweep.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [command, ...rest] = process.argv.slice(2);
-  const run = { discover, 'verify-proposed': verifyProposed, status, promote: () => promote(rest) }[command || 'discover'];
+  const run = { discover, 'verify-proposed': verifyProposed, status, promote: () => promote(rest), approve: () => approve(rest[0]) }[command || 'discover'];
   if (!run) {
-    console.error('Commands: discover | verify-proposed | status | promote [--ready | <capability_id>]');
+    console.error('Commands: discover | verify-proposed | status | promote [--ready | <capability_id>] | approve <capability_id>');
     process.exitCode = 2;
   } else {
     await run();

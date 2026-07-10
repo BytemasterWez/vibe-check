@@ -182,6 +182,23 @@ const CHECKS = {
     return { ok: v !== undefined && v !== null, detail: `"${check.path}" is ${v === undefined ? 'absent' : 'present'}` };
   },
 
+  unique_field(probe, check) {
+    const rows = extractRows(probe.body, check);
+    if (rows.length === 0) return { ok: false, detail: `no rows at "${check.path ?? ''}" to inspect` };
+    const seen = new Map();
+    for (const row of rows.slice(0, check.sample ?? 500)) {
+      const v = String(resolvePath(row, check.field));
+      seen.set(v, (seen.get(v) || 0) + 1);
+    }
+    const dupes = [...seen.entries()].filter(([, n]) => n > 1);
+    return {
+      ok: dupes.length === 0,
+      detail: dupes.length === 0
+        ? `"${check.field}" unique across ${seen.size} rows`
+        : `${dupes.length} duplicated value(s) of "${check.field}" (e.g. ${JSON.stringify(dupes[0][0])} × ${dupes[0][1]})`,
+    };
+  },
+
   freshness(probe, check) {
     const v = resolvePath(probe.body, check.path);
     if (v === undefined || v === null) return { ok: false, detail: `no timestamp at "${check.path}"` };
@@ -205,6 +222,7 @@ const DIMENSION = {
   json: 'availability',
   max_latency: 'availability',
   min_rows: 'completeness',
+  unique_field: 'completeness',
   fields_present: 'schema',
   field_pattern: 'join_keys',
   value_range: 'schema',

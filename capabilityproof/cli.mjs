@@ -86,13 +86,25 @@ async function main() {
       print(service.getReceipt(rest[0]));
       break;
     }
+    case 'resolve': {
+      if (!rest[0]) throw new Error('usage: resolve "<task>" [policy]');
+      print(await service.resolve({ task: rest[0], policy: rest[1] }));
+      break;
+    }
+    case 'replay': {
+      if (!rest[0]) throw new Error('usage: replay <receipt_id>');
+      const result = await service.replay(rest[0]);
+      print(result);
+      if (!result.evidence_integrity) process.exitCode = 1;
+      break;
+    }
     case 'explain': {
       if (!rest[0]) throw new Error('usage: explain <capability_id>');
       print(service.explainFailure(rest[0]));
       break;
     }
     default:
-      console.error('Commands: list | verify <id> | verify-all | search "<task>" | route "<task>" | receipt <id> | explain <id>');
+      console.error('Commands: list | verify <id> | verify-all | search "<task>" | route "<task>" | resolve "<task>" [policy] | receipt <id> | replay <id> | explain <id>');
       process.exitCode = 2;
   }
 }

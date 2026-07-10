@@ -9,8 +9,13 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { canonicalize } from './evaluate.mjs';
+import { isExperimental } from './manifest.mjs';
 
 const DEFAULT_TTL_HOURS = 6;
+
+// Version of the verification runner itself; recorded in every receipt so a
+// result can be traced to the exact code generation that produced it.
+export const RUNNER_VERSION = '0.3.0';
 
 export function ensureKeys(dataDir) {
   const keyDir = path.join(dataDir, 'keys');
@@ -61,7 +66,10 @@ export function buildReceipt({ manifest, probe, evaluation, history, evidenceHas
     expires_at: new Date(verifiedAt.getTime() + ttl * 3600000).toISOString(),
     protocol: manifest.protocol,
     risk_class: manifest.risk_class,
+    experimental: isExperimental(manifest),
     test_pack: manifest.test_pack.id,
+    contract_version: manifest.test_pack.contract_version || '1.0.0',
+    runner_version: RUNNER_VERSION,
     probe: {
       url: probe.url,
       method: probe.method,

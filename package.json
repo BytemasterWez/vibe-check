@@ -15,6 +15,7 @@
     "capabilityproof:scout": "node capabilityproof/scout.mjs discover",
     "capabilityproof:report": "node capabilityproof/report.mjs daily",
     "capabilityproof:doctor": "node capabilityproof/doctor.mjs",
+    "capabilityproof:bench": "node capabilityproof/bench/failure-injection.mjs",
     "capabilityproof:test": "node capabilityproof/test/smoke.mjs",
     "package": "vite build && electron-builder --publish never",
     "package:mac": "vite build && electron-builder --mac --publish never",

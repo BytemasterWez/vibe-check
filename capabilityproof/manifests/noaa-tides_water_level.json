@@ -65,7 +65,8 @@
           "f"
         ]
       }
-    ]
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

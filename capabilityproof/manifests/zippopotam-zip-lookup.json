@@ -8,22 +8,40 @@
   },
   "protocol": "rest",
   "category": "geospatial",
-  "tags": ["zip", "postal-code", "geocode", "place", "lookup", "united-states"],
+  "tags": [
+    "zip",
+    "postal-code",
+    "geocode",
+    "place",
+    "lookup",
+    "united-states"
+  ],
   "tasks": [
     "convert ZIP code to city and state",
     "get coordinates for a postal code",
     "postal code lookup for 60+ countries"
   ],
   "coverage": {
-    "countries": ["US", "global"],
+    "countries": [
+      "US",
+      "global"
+    ],
     "granularity": "postal code",
     "temporal": "static reference data"
   },
-  "join_keys": ["post_code", "state_abbreviation"],
+  "join_keys": [
+    "post_code",
+    "state_abbreviation"
+  ],
   "update_frequency": "static reference dataset",
   "license": "Free service, GeoNames-derived data (CC BY)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "fair use",
   "pagination": "none",
   "risk_class": "read_only",
@@ -40,14 +58,42 @@
       "url": "https://api.zippopotam.us/us/90210"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 10000 },
-      { "type": "known_answer", "path": "post code", "equals": "90210" },
-      { "type": "min_rows", "path": "places", "min": 1 },
-      { "type": "known_answer", "path": "places.0.state abbreviation", "equals": "CA" },
-      { "type": "field_pattern", "path": "places", "field": "latitude", "pattern": "^-?[0-9]+\\.[0-9]+$" }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 10000
+      },
+      {
+        "type": "known_answer",
+        "path": "post code",
+        "equals": "90210"
+      },
+      {
+        "type": "min_rows",
+        "path": "places",
+        "min": 1
+      },
+      {
+        "type": "known_answer",
+        "path": "places.0.state abbreviation",
+        "equals": "CA"
+      },
+      {
+        "type": "field_pattern",
+        "path": "places",
+        "field": "latitude",
+        "pattern": "^-?[0-9]+\\.[0-9]+$"
+      }
+    ],
+    "contract_version": "1.0.0"
   },
-  "fallback_capability_ids": ["source.fcc.census_area_lookup"]
+  "fallback_capability_ids": [
+    "source.fcc.census_area_lookup"
+  ]
 }

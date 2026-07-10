@@ -8,22 +8,39 @@
   },
   "protocol": "rest",
   "category": "economic",
-  "tags": ["treasury", "debt", "fiscal", "economic", "indicator", "time-series", "united-states"],
+  "tags": [
+    "treasury",
+    "debt",
+    "fiscal",
+    "economic",
+    "indicator",
+    "time-series",
+    "united-states"
+  ],
   "tasks": [
     "get current US national debt",
     "daily public debt time series",
     "economic indicator data from an authoritative source"
   ],
   "coverage": {
-    "countries": ["US"],
+    "countries": [
+      "US"
+    ],
     "granularity": "national, daily",
     "temporal": "1993 to present, business days"
   },
-  "join_keys": ["record_date"],
+  "join_keys": [
+    "record_date"
+  ],
   "update_frequency": "each federal business day",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished",
   "pagination": "page[size]/page[number] parameters; meta.total-count for totals",
   "risk_class": "read_only",
@@ -40,15 +57,51 @@
       "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=10"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "data", "min": 10 },
-      { "type": "fields_present", "path": "data", "fields": ["record_date", "tot_pub_debt_out_amt", "debt_held_public_amt"] },
-      { "type": "field_pattern", "path": "data", "field": "record_date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
-      { "type": "value_range", "path": "data", "field": "tot_pub_debt_out_amt", "min": 20000000000000, "max": 100000000000000 },
-      { "type": "freshness", "path": "data.0.record_date", "max_age_hours": 336 }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "data",
+        "min": 10
+      },
+      {
+        "type": "fields_present",
+        "path": "data",
+        "fields": [
+          "record_date",
+          "tot_pub_debt_out_amt",
+          "debt_held_public_amt"
+        ]
+      },
+      {
+        "type": "field_pattern",
+        "path": "data",
+        "field": "record_date",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+      },
+      {
+        "type": "value_range",
+        "path": "data",
+        "field": "tot_pub_debt_out_amt",
+        "min": 20000000000000,
+        "max": 100000000000000
+      },
+      {
+        "type": "freshness",
+        "path": "data.0.record_date",
+        "max_age_hours": 336
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }
