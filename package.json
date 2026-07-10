@@ -19,7 +19,10 @@
     "package:linux": "vite build && electron-builder --linux --publish never"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "BytemasterWez",
+    "email": "142010457+BytemasterWez@users.noreply.github.com"
+  },
   "license": "ISC",
   "description": "Live QA observer for AI-generated code",
   "dependencies": {
