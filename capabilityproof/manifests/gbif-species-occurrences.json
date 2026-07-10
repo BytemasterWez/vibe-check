@@ -8,22 +8,42 @@
   },
   "protocol": "rest",
   "category": "environment",
-  "tags": ["biodiversity", "species", "occurrence", "ecology", "environment", "geospatial", "global"],
+  "tags": [
+    "biodiversity",
+    "species",
+    "occurrence",
+    "ecology",
+    "environment",
+    "geospatial",
+    "global"
+  ],
   "tasks": [
     "find species occurrence records by location",
     "biodiversity data for environmental analysis",
     "georeferenced ecological observations"
   ],
   "coverage": {
-    "countries": ["global"],
+    "countries": [
+      "global"
+    ],
     "granularity": "individual occurrence records with coordinates",
     "temporal": "historical to near-real-time"
   },
-  "join_keys": ["gbif_key", "taxon_key", "country_code"],
+  "join_keys": [
+    "gbif_key",
+    "taxon_key",
+    "country_code"
+  ],
   "update_frequency": "continuous ingestion from publishers",
   "license": "Per-record (CC0/CC BY/CC BY-NC); check the license field",
-  "auth": { "type": "none", "paid": false, "notes": "Search is open; downloads require a free account." },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false,
+    "notes": "Search is open; downloads require a free account."
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "fair use",
   "pagination": "offset/limit, max 300 per page",
   "risk_class": "read_only",
@@ -40,13 +60,38 @@
       "url": "https://api.gbif.org/v1/occurrence/search?limit=5"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "results", "min": 5 },
-      { "type": "fields_present", "path": "results", "fields": ["key", "datasetKey", "basisOfRecord"] },
-      { "type": "known_answer", "path": "count", "min_number": 1000000 }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "results",
+        "min": 5
+      },
+      {
+        "type": "fields_present",
+        "path": "results",
+        "fields": [
+          "key",
+          "datasetKey",
+          "basisOfRecord"
+        ]
+      },
+      {
+        "type": "known_answer",
+        "path": "count",
+        "min_number": 1000000
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

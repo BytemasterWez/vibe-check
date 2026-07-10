@@ -8,22 +8,41 @@
   },
   "protocol": "rest",
   "category": "hazards",
-  "tags": ["earthquake", "seismic", "hazard", "geojson", "usgs", "real-time", "global"],
+  "tags": [
+    "earthquake",
+    "seismic",
+    "hazard",
+    "geojson",
+    "usgs",
+    "real-time",
+    "global"
+  ],
   "tasks": [
     "list recent earthquakes worldwide",
     "real-time seismic hazard feed",
     "earthquake magnitude and location data"
   ],
   "coverage": {
-    "countries": ["global"],
+    "countries": [
+      "global"
+    ],
     "granularity": "event-level with point geometry",
     "temporal": "rolling 24-hour window, updated every minute"
   },
-  "join_keys": ["event_id", "time", "geometry"],
+  "join_keys": [
+    "event_id",
+    "time",
+    "geometry"
+  ],
   "update_frequency": "every 60 seconds",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished; feed is cached",
   "pagination": "none — fixed-window feed files",
   "risk_class": "read_only",
@@ -40,14 +59,45 @@
       "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "features", "min": 1 },
-      { "type": "fields_present", "path": "features", "fields": ["id", "properties.time", "properties.place", "geometry.coordinates"] },
-      { "type": "known_answer", "path": "metadata.title", "contains": "All Earthquakes" },
-      { "type": "freshness", "path": "metadata.generated", "unit": "epoch_ms", "max_age_hours": 2 }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "features",
+        "min": 1
+      },
+      {
+        "type": "fields_present",
+        "path": "features",
+        "fields": [
+          "id",
+          "properties.time",
+          "properties.place",
+          "geometry.coordinates"
+        ]
+      },
+      {
+        "type": "known_answer",
+        "path": "metadata.title",
+        "contains": "All Earthquakes"
+      },
+      {
+        "type": "freshness",
+        "path": "metadata.generated",
+        "unit": "epoch_ms",
+        "max_age_hours": 2
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

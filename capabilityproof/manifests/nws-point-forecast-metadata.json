@@ -8,22 +8,41 @@
   },
   "protocol": "rest",
   "category": "weather",
-  "tags": ["weather", "forecast", "nws", "noaa", "gridpoint", "united-states"],
+  "tags": [
+    "weather",
+    "forecast",
+    "nws",
+    "noaa",
+    "gridpoint",
+    "united-states"
+  ],
   "tasks": [
     "get official US weather forecast for a coordinate",
     "resolve lat/lon to NWS forecast grid",
     "authoritative US government weather data"
   ],
   "coverage": {
-    "countries": ["US"],
+    "countries": [
+      "US"
+    ],
     "granularity": "2.5km forecast grid",
     "temporal": "current conditions and 7-day forecast"
   },
-  "join_keys": ["latitude", "longitude", "grid_id"],
+  "join_keys": [
+    "latitude",
+    "longitude",
+    "grid_id"
+  ],
   "update_frequency": "hourly",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false, "notes": "A descriptive User-Agent header is required by NWS policy." },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false,
+    "notes": "A descriptive User-Agent header is required by NWS policy."
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished; enforced by User-Agent",
   "pagination": "none",
   "risk_class": "read_only",
@@ -44,13 +63,41 @@
       }
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 10000 },
-      { "type": "known_answer", "path": "properties.gridId", "equals": "LWX" },
-      { "type": "known_answer", "path": "properties.forecast", "contains": "api.weather.gov/gridpoints/LWX" },
-      { "type": "fields_present", "path": "properties", "fields": ["gridX", "gridY", "forecast", "forecastHourly"] }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 10000
+      },
+      {
+        "type": "known_answer",
+        "path": "properties.gridId",
+        "equals": "LWX"
+      },
+      {
+        "type": "known_answer",
+        "path": "properties.forecast",
+        "contains": "api.weather.gov/gridpoints/LWX"
+      },
+      {
+        "type": "fields_present",
+        "path": "properties",
+        "fields": [
+          "gridX",
+          "gridY",
+          "forecast",
+          "forecastHourly"
+        ]
+      }
+    ],
+    "contract_version": "1.0.0"
   },
-  "fallback_capability_ids": ["source.openmeteo.hourly_forecast"]
+  "fallback_capability_ids": [
+    "source.openmeteo.hourly_forecast"
+  ]
 }

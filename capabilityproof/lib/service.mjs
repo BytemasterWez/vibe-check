@@ -18,6 +18,9 @@ import {
 import { createStore } from './store.mjs';
 import { searchCapabilities } from './registry.mjs';
 import { notify } from './notify.mjs';
+import { resolvePolicy, applyPolicy, POLICIES } from './policy.mjs';
+import { RUNNER_VERSION } from './receipts.mjs';
+import { runChecks as evaluateChecks } from './evaluate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_MANIFEST_DIR = path.join(HERE, '..', 'manifests');
@@ -70,6 +73,11 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     const evidence = {
       capability_id: capabilityId,
       test_pack: manifest.test_pack.id,
+      contract_version: manifest.test_pack.contract_version || '1.0.0',
+      runner_version: RUNNER_VERSION,
+      // The full contract is retained so any receipt can be replayed later:
+      // re-run this request, re-apply these checks, compare outcomes.
+      contract: manifest.test_pack,
       request: { method: probe.method, url: probe.url },
       response: {
         http_status: probe.status,
@@ -201,6 +209,150 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     };
   }
 
+  // Resolve: the machine decision. Given a task (or explicit capability),
+  // apply a trust policy and answer: what should I use right now, with what
+  // evidence, and what are my fallbacks? Stale top candidates are re-verified
+  // live (bounded) before rejection.
+  async function resolve({ task, capability_id, policy, max_live_probes = 2 } = {}) {
+    const { name: policyName, rules } = resolvePolicy(policy);
+    const warnings = [];
+
+    let candidateIds;
+    if (capability_id) {
+      if (!manifests.has(capability_id)) throw new ServiceError(404, `unknown capability: ${capability_id}`);
+      candidateIds = [capability_id, ...(manifests.get(capability_id).fallback_capability_ids || [])].filter((id) => manifests.has(id));
+    } else if (task) {
+      candidateIds = search({ task, limit: 10 }).filter((c) => c.eligible).map((c) => c.capability_id);
+    } else {
+      throw new ServiceError(400, 'task or capability_id is required');
+    }
+    if (candidateIds.length === 0) {
+      return { decision: 'rejected', reason: 'no capabilities matched the task', policy: { name: policyName, rules }, warnings };
+    }
+
+    let probes = 0;
+    const evaluated = [];
+    for (const id of candidateIds) {
+      const manifest = manifests.get(id);
+      let receipt = store.latestReceiptFor(id);
+      const staleOrMissing = !receipt || receipt.status !== 'verified' || !receiptIsFresh(receipt);
+      if (staleOrMissing && probes < max_live_probes) {
+        probes++;
+        receipt = (await verify(id)).receipt;
+        warnings.push(`live-verified ${id} because its receipt was missing, stale or failing`);
+      }
+      const stats = store.historyStats(id);
+      const streak = store.verifiedStreak(id);
+      const verdict = applyPolicy({ manifest, receipt, stats, streak }, rules);
+      evaluated.push({ id, manifest, receipt, verdict });
+    }
+
+    const approved = evaluated.filter((e) => e.verdict.allowed);
+    if (approved.length === 0) {
+      return {
+        decision: 'rejected',
+        reason: 'no candidate satisfied the trust policy',
+        policy: { name: policyName, rules },
+        candidates: evaluated.map((e) => ({ capability_id: e.id, confidence: e.verdict.confidence, blocked_by: e.verdict.reasons })),
+        warnings,
+        live_probes_used: probes,
+      };
+    }
+
+    approved.sort((a, b) => b.verdict.confidence - a.verdict.confidence);
+    const best = approved[0];
+    return {
+      decision: 'approved',
+      capability_id: best.id,
+      claim: best.manifest.claim,
+      recommended_source: best.manifest.publisher?.name,
+      receipt_id: best.receipt.receipt_id,
+      receipt_valid_until: best.receipt.expires_at,
+      contract_version: best.receipt.contract_version,
+      confidence: best.verdict.confidence,
+      experimental: best.receipt.experimental === true,
+      instructions: {
+        protocol: best.manifest.protocol,
+        request: best.manifest.endpoint || best.manifest.test_pack.request,
+        auth: best.manifest.auth,
+        pagination: best.manifest.pagination || null,
+        notes: best.manifest.usage_notes || null,
+      },
+      fallbacks: approved.slice(1, 4).map((e) => ({ capability_id: e.id, confidence: e.verdict.confidence })),
+      policy: { name: policyName, rules },
+      warnings,
+      live_probes_used: probes,
+    };
+  }
+
+  // Resolve, then actually execute the call against the approved source.
+  // Caller-supplied params only fill {placeholders} in the manifest's own
+  // endpoint template — the host and path are never caller-controlled.
+  async function resolveAndFetch({ task, capability_id, policy, params = {} } = {}) {
+    const resolution = await resolve({ task, capability_id, policy });
+    if (resolution.decision !== 'approved') return { resolution, fetch: null };
+
+    const manifest = manifests.get(resolution.capability_id);
+    let request = manifest.test_pack.request;
+    if (manifest.endpoint?.url) {
+      const filled = manifest.endpoint.url.replace(/\{(\w+)\}/g, (whole, key) =>
+        params[key] !== undefined ? encodeURIComponent(String(params[key])) : whole
+      );
+      if (!/\{\w+\}/.test(filled)) {
+        request = { method: manifest.endpoint.method || 'GET', url: filled, headers: manifest.test_pack.request.headers };
+      } else if (Object.keys(params).length) {
+        resolution.warnings.push(`endpoint template still has unfilled placeholders; used the verified test request instead`);
+      }
+    }
+    const probe = await runProbe(request);
+    return {
+      resolution,
+      fetch: {
+        url: probe.url,
+        http_status: probe.status,
+        latency_ms: probe.latency_ms,
+        fetched_at: probe.fetched_at,
+        error: probe.error,
+        data: probe.body ?? probe.body_text,
+      },
+    };
+  }
+
+  // Replay: reproduce why a receipt passed. Verifies the stored evidence is
+  // still hash-bound to the receipt, re-runs the recorded contract against
+  // the live source, and diffs the outcomes.
+  async function replay(receiptId) {
+    const receipt = store.getReceipt(receiptId);
+    if (!receipt) throw new ServiceError(404, `unknown receipt: ${receiptId}`);
+    const evidence = store.getEvidence(receiptId);
+    if (!evidence) throw new ServiceError(404, `no evidence for receipt: ${receiptId}`);
+    if (!evidence.contract) throw new ServiceError(409, 'evidence predates contract retention; cannot replay');
+
+    const { receipt_id, ...evidenceSansId } = evidence;
+    const integrity = evidenceHash(evidenceSansId) === receipt.evidence_hash;
+
+    const probe = await runProbe(evidence.contract.request);
+    const evaluation = evaluateChecks(probe, evidence.contract);
+    const recorded = new Map((evidence.checks || []).map((c, i) => [`${i}:${c.type}`, c.ok]));
+    const differences = evaluation.checks
+      .map((c, i) => ({ index: i, type: c.type, recorded: recorded.get(`${i}:${c.type}`), now: c.ok, detail: c.detail }))
+      .filter((d) => d.recorded !== undefined && d.recorded !== d.now);
+
+    return {
+      receipt_id: receiptId,
+      capability_id: receipt.capability_id,
+      contract_version: evidence.contract_version,
+      runner_version_recorded: evidence.runner_version,
+      runner_version_now: RUNNER_VERSION,
+      evidence_integrity: integrity,
+      recorded_result: receipt.status,
+      replay_result: evaluation.results.task_success ? 'verified' : 'failed_checks',
+      outcomes_match: differences.length === 0,
+      differences,
+      replayed_at: probe.fetched_at,
+    };
+  }
+
   function getReceipt(receiptId) {
     const receipt = store.getReceipt(receiptId);
     if (!receipt) throw new ServiceError(404, `unknown receipt: ${receiptId}`);
@@ -303,6 +455,10 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     verifyAll,
     search,
     route,
+    resolve,
+    resolveAndFetch,
+    replay,
+    policies: POLICIES,
     getReceipt,
     getEvidence,
     compare,

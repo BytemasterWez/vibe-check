@@ -24,12 +24,20 @@ const VALID_CHECK_TYPES = [
   'json',
   'max_latency',
   'min_rows',
+  'unique_field',
   'fields_present',
   'field_pattern',
   'value_range',
   'known_answer',
   'freshness',
 ];
+
+// A capability is experimental when it entered the catalogue via the Scout
+// and no human has explicitly approved it. Trust policies gate on this:
+// the Scout generates candidate contracts, it never certifies a source.
+export function isExperimental(manifest) {
+  return Boolean(manifest.scouted) && manifest.approved !== true;
+}
 
 export function validateManifest(m) {
   const errors = [];

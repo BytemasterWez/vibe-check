@@ -10,12 +10,17 @@
 //   GET  /health
 //   GET  /v1/public-key
 //   GET  /v1/capabilities
+//   GET  /v1/policies
 //   POST /v1/capabilities/search   { task, constraints?, limit? }
 //   POST /v1/capabilities/verify   { capability_id, force_live_probe?, ttl_hours? }
 //   POST /v1/capabilities/route    { task, constraints?, verify_mode?, max_live_probes? }
+//   POST /v1/resolve               { task | capability_id, policy? }
+//   POST /v1/resolve-and-fetch     { task | capability_id, policy?, params? }
 //   POST /v1/capabilities/compare  { capability_ids, force_live_probe? }
 //   GET  /v1/receipts/:id
 //   GET  /v1/receipts/:id/evidence
+//   POST /v1/receipts/:id/replay
+//   GET  /v1/capabilities/:id/contract
 //   GET  /v1/capabilities/:id/failure
 //   GET  /v1/capabilities/:id/fallbacks
 
@@ -105,6 +110,17 @@ const server = http.createServer(async (req, res) => {
         max_live_probes: body.max_live_probes,
       }));
     }
+    if (route === 'GET /v1/policies') {
+      return send(res, 200, { policies: service.policies });
+    }
+    if (route === 'POST /v1/resolve') {
+      const body = await readBody(req);
+      return send(res, 200, await service.resolve({ task: body.task, capability_id: body.capability_id, policy: body.policy }));
+    }
+    if (route === 'POST /v1/resolve-and-fetch') {
+      const body = await readBody(req);
+      return send(res, 200, await service.resolveAndFetch({ task: body.task, capability_id: body.capability_id, policy: body.policy, params: body.params }));
+    }
     if (route === 'POST /v1/capabilities/compare') {
       const body = await readBody(req);
       if (!Array.isArray(body.capability_ids) || body.capability_ids.length === 0) {
@@ -119,6 +135,14 @@ const server = http.createServer(async (req, res) => {
     }
     if ((m = url.pathname.match(/^\/v1\/receipts\/(cpr_[A-Za-z0-9_-]+)\/evidence$/)) && req.method === 'GET') {
       return send(res, 200, service.getEvidence(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/receipts\/(cpr_[A-Za-z0-9_-]+)\/replay$/)) && req.method === 'POST') {
+      return send(res, 200, await service.replay(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/capabilities\/([a-z0-9_.-]+)\/contract$/)) && req.method === 'GET') {
+      const manifest = service.getManifest(m[1]);
+      if (!manifest) return send(res, 404, { error: `unknown capability: ${m[1]}` });
+      return send(res, 200, { capability_id: m[1], contract_version: manifest.test_pack.contract_version || '1.0.0', contract: manifest.test_pack });
     }
     if ((m = url.pathname.match(/^\/v1\/capabilities\/([a-z0-9_.-]+)\/failure$/)) && req.method === 'GET') {
       return send(res, 200, service.explainFailure(m[1]));

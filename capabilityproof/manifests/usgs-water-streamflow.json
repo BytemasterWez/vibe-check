@@ -8,22 +8,42 @@
   },
   "protocol": "rest",
   "category": "environment",
-  "tags": ["water", "river", "streamflow", "discharge", "gauge", "hydrology", "real-time", "united-states"],
+  "tags": [
+    "water",
+    "river",
+    "streamflow",
+    "discharge",
+    "gauge",
+    "hydrology",
+    "real-time",
+    "united-states"
+  ],
   "tasks": [
     "get current river flow at a gauge station",
     "near-real-time hydrology readings",
     "flood monitoring data by site code"
   ],
   "coverage": {
-    "countries": ["US"],
+    "countries": [
+      "US"
+    ],
     "granularity": "individual gauge sites",
     "temporal": "instantaneous values, typically 15-minute intervals"
   },
-  "join_keys": ["site_code", "parameter_code", "datetime"],
+  "join_keys": [
+    "site_code",
+    "parameter_code",
+    "datetime"
+  ],
   "update_frequency": "every 15-60 minutes per site",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished; be polite",
   "pagination": "none — filter by sites/period parameters",
   "risk_class": "read_only",
@@ -40,15 +60,46 @@
       "url": "https://waterservices.usgs.gov/nwis/iv/?format=json&sites=01646500&parameterCd=00060"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "value.timeSeries", "min": 1 },
-      { "type": "known_answer", "path": "value.timeSeries.0.sourceInfo.siteCode.0.value", "equals": "01646500" },
-      { "type": "min_rows", "path": "value.timeSeries.0.values.0.value", "min": 1 },
-      { "type": "value_range", "path": "value.timeSeries.0.values.0.value", "field": "value", "min": 0, "max": 1000000 },
-      { "type": "freshness", "path": "value.timeSeries.0.values.0.value.0.dateTime", "max_age_hours": 24 }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "value.timeSeries",
+        "min": 1
+      },
+      {
+        "type": "known_answer",
+        "path": "value.timeSeries.0.sourceInfo.siteCode.0.value",
+        "equals": "01646500"
+      },
+      {
+        "type": "min_rows",
+        "path": "value.timeSeries.0.values.0.value",
+        "min": 1
+      },
+      {
+        "type": "value_range",
+        "path": "value.timeSeries.0.values.0.value",
+        "field": "value",
+        "min": 0,
+        "max": 1000000
+      },
+      {
+        "type": "freshness",
+        "path": "value.timeSeries.0.values.0.value.0.dateTime",
+        "max_age_hours": 24
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

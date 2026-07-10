@@ -8,22 +8,41 @@
   },
   "protocol": "rest",
   "category": "hazards",
-  "tags": ["disaster", "fema", "declarations", "hazard", "emergency", "united-states", "state"],
+  "tags": [
+    "disaster",
+    "fema",
+    "declarations",
+    "hazard",
+    "emergency",
+    "united-states",
+    "state"
+  ],
   "tasks": [
     "list federal disaster declarations",
     "disaster history by US state",
     "emergency declaration records"
   ],
   "coverage": {
-    "countries": ["US"],
+    "countries": [
+      "US"
+    ],
     "granularity": "state and county (designated areas)",
     "temporal": "1953 to present"
   },
-  "join_keys": ["state", "fips_state_code", "declaration_date"],
+  "join_keys": [
+    "state",
+    "fips_state_code",
+    "declaration_date"
+  ],
   "update_frequency": "daily",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished; OData-style paging",
   "pagination": "$top/$skip OData parameters, metadata.count for totals",
   "risk_class": "read_only",
@@ -40,14 +59,45 @@
       "url": "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?$top=25"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "DisasterDeclarationsSummaries", "min": 25 },
-      { "type": "fields_present", "path": "DisasterDeclarationsSummaries", "fields": ["femaDeclarationString", "state", "declarationDate", "incidentType"] },
-      { "type": "field_pattern", "path": "DisasterDeclarationsSummaries", "field": "state", "pattern": "^[A-Z]{2}$" },
-      { "type": "freshness", "path": "metadata.rundate", "max_age_hours": 72 }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "DisasterDeclarationsSummaries",
+        "min": 25
+      },
+      {
+        "type": "fields_present",
+        "path": "DisasterDeclarationsSummaries",
+        "fields": [
+          "femaDeclarationString",
+          "state",
+          "declarationDate",
+          "incidentType"
+        ]
+      },
+      {
+        "type": "field_pattern",
+        "path": "DisasterDeclarationsSummaries",
+        "field": "state",
+        "pattern": "^[A-Z]{2}$"
+      },
+      {
+        "type": "freshness",
+        "path": "metadata.rundate",
+        "max_age_hours": 72
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

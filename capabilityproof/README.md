@@ -6,10 +6,14 @@ registries and catalogues don't:
 > "Can this data source reliably perform this specific task **right now** —
 > and what evidence proves it?"
 
-Registries list claims. CapabilityProof runs a **live probe** against a
-declared test pack, validates the response **semantically** (not just
-HTTP 200), and issues a **signed, short-lived capability receipt** that other
-software can consume and verify.
+Positioning, precisely: existing monitoring verifies infrastructure the
+customer owns or configures. CapabilityProof **independently verifies
+external data capabilities** — sources you depend on but don't control — and
+publishes **portable, machine-verifiable evidence** that software and agents
+can consult *before* selecting a source. It runs a live probe against a
+versioned verification contract, validates the response semantically (not
+just HTTP 200), and issues a signed, short-lived, tamper-evident capability
+receipt hash-linked to retained evidence.
 
 This is the constrained validation version: read-only public data sources
 only (the SourceProof wedge), deterministic checks only (no LLM evaluator),
@@ -196,6 +200,79 @@ Receipt statuses: `verified` (all critical checks passed), `failed_checks`
 (endpoint answered but the evidence contradicts the claim), `unreachable`
 (transport failure).
 
+What the signature does and does not prove: it proves this system issued the
+receipt and that it has not been altered since (tamper-evident, not
+"tamper-proof"), and the `evidence_hash` binds it to a retained raw sample.
+It does not by itself prove the test was well designed or that the source is
+still healthy after expiry — which is why receipts carry a
+`contract_version` (exactly what was asserted), a `runner_version` (exactly
+what code ran), short expiries, and replayable evidence.
+
+## Contracts, policies and the resolver
+
+**Versioned contracts.** Each capability's test pack is its verification
+contract, with an explicit `contract_version` named in every receipt.
+`GET /v1/capabilities/:id/contract` shows exactly what "verified" asserts —
+the contract is transparent, not proprietary magic.
+
+**Evidence replay.** Every receipt can be reproduced:
+`node capabilityproof/cli.mjs replay <receipt_id>` (or
+`POST /v1/receipts/:id/replay`) checks the stored evidence is still
+hash-bound to the receipt, re-runs the recorded contract against the live
+source, and diffs the outcomes. A receipt is a reproducible measurement, not
+an attractive signed claim.
+
+**Trust policies.** Different consumers, different risk tolerances. Named
+policies (`production`, `standard`, `permissive` — see `GET /v1/policies`)
+or custom rules gate on receipt age, consecutive clean passes, 30-day
+success rate, confidence, and whether experimental (Scout-admitted,
+not-yet-human-approved) sources are acceptable. Confidence is a documented
+formula (60% latest check ratio, 40% 30-day success rate), not a mystery
+score.
+
+**The resolver — the machine decision.** `POST /v1/resolve`:
+
+```json
+{
+  "decision": "approved",
+  "capability_id": "source.census.acs5_county_population",
+  "receipt_id": "cpr_...",
+  "receipt_valid_until": "2026-07-10T23:42:00Z",
+  "contract_version": "1.0.0",
+  "confidence": 0.97,
+  "instructions": { "request": { "...": "..." } },
+  "fallbacks": [{ "capability_id": "source.worldbank.country_population", "confidence": 0.92 }],
+  "policy": { "name": "production" }
+}
+```
+
+Rejections list every violated rule per candidate. `POST /v1/resolve-and-fetch`
+goes one step further: resolve, then execute the call against the approved
+source and return the data with the receipt attached (caller params only fill
+`{placeholders}` in the manifest's own endpoint template — hosts are never
+caller-controlled).
+
+**SDK.** `sdk/client.mjs` is a zero-dependency client:
+
+```js
+import { CapabilityProof } from './capabilityproof/sdk/client.mjs';
+const cp = new CapabilityProof('http://localhost:3200');
+const { resolution, fetch } = await cp.resolveAndFetch({
+  task: 'county population',
+  policy: 'production',
+});
+```
+
+## Failure-injection benchmark
+
+`npm run capabilityproof:bench` injects ten realistic failure modes (HTTP-200
+HTML, 25% truncation, stale timestamps, renamed fields, duplicated rows,
+impossible values, rate-limit-as-200, partial geography, wrong vintage,
+broken join keys) plus two healthy controls, and scores detection rate,
+false positives and per-dimension classification. Current score: **10/10
+detected, 0 false positives, 10/10 correctly classified.** Runs offline and
+in CI.
+
 ## Verification model
 
 Checks are deterministic and each feeds a named dimension rather than one
@@ -273,6 +350,8 @@ capabilityproof/
   report.mjs          daily key-metrics digest (Telegram + markdown)
   doctor.mjs          self-healing watchdog for unattended operation
   ops/install.sh      one-command 24/7 VPS installer (systemd, optional Ollama)
+  sdk/client.mjs      zero-dependency JS client (resolve, resolve-and-fetch, receipts)
+  bench/              failure-injection benchmark (detection scorecard)
   manifests/          verified capability manifests
   manifests-proposed/ quarantine for scouted, not-yet-promoted sources
   lib/
@@ -282,6 +361,7 @@ capabilityproof/
     receipts.mjs      ed25519-signed, short-lived receipts
     store.mjs         file-based receipts/evidence/history store
     registry.mjs      task search, constraint filtering, evidence-first ranking
+    policy.mjs        trust policies, transparent confidence, decision gating
     service.mjs       orchestration shared by REST, MCP and CLI
     notify.mjs        status-change and schema-drift webhooks
     dashboard.mjs     server-rendered HTML status page with fleet metrics
@@ -307,6 +387,10 @@ node capabilityproof/scout.mjs status       # quarantine streaks
 node capabilityproof/scout.mjs verify-proposed   # re-verify quarantined sources
 node capabilityproof/scout.mjs promote --ready   # graduate clean-streak sources
 ```
+
+The Scout **generates candidate contracts; it never certifies a source.**
+Promoted sources stay marked *experimental* — excluded by strict trust
+policies — until a human runs `node capabilityproof/scout.mjs approve <id>`.
 
 Manifest drafting uses a **local LLM when one is running** — any
 OpenAI-compatible server works, e.g. LM Studio serving Gemma at

@@ -32,6 +32,9 @@ jobs:
       - name: Offline smoke test
         run: npm run capabilityproof:test
 
+      - name: Failure-injection benchmark
+        run: npm run capabilityproof:bench
+
       - name: Live verification sweep
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}

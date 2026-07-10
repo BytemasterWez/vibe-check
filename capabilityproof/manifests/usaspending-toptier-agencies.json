@@ -8,22 +8,40 @@
   },
   "protocol": "rest",
   "category": "government",
-  "tags": ["spending", "budget", "federal", "agencies", "procurement", "government", "united-states"],
+  "tags": [
+    "spending",
+    "budget",
+    "federal",
+    "agencies",
+    "procurement",
+    "government",
+    "united-states"
+  ],
   "tasks": [
     "list federal agencies with budget data",
     "federal spending and award records",
     "government procurement data"
   ],
   "coverage": {
-    "countries": ["US"],
+    "countries": [
+      "US"
+    ],
     "granularity": "agency; deeper endpoints cover awards and transactions",
     "temporal": "fiscal year 2001 to present"
   },
-  "join_keys": ["toptier_code", "agency_id"],
+  "join_keys": [
+    "toptier_code",
+    "agency_id"
+  ],
   "update_frequency": "nightly",
   "license": "Public domain (US federal data)",
-  "auth": { "type": "none", "paid": false },
-  "cost": { "per_call_usd": 0 },
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
   "rate_limit": "unpublished",
   "pagination": "endpoint-specific; this reference endpoint returns all rows",
   "risk_class": "read_only",
@@ -40,13 +58,40 @@
       "url": "https://api.usaspending.gov/api/v2/references/toptier_agencies/"
     },
     "checks": [
-      { "type": "status", "equals": 200 },
-      { "type": "json" },
-      { "type": "max_latency", "ms": 15000 },
-      { "type": "min_rows", "path": "results", "min": 90 },
-      { "type": "fields_present", "path": "results", "fields": ["agency_id", "toptier_code", "agency_name", "active_fy"] },
-      { "type": "field_pattern", "path": "results", "field": "toptier_code", "pattern": "^[0-9]{3,4}$" }
-    ]
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 15000
+      },
+      {
+        "type": "min_rows",
+        "path": "results",
+        "min": 90
+      },
+      {
+        "type": "fields_present",
+        "path": "results",
+        "fields": [
+          "agency_id",
+          "toptier_code",
+          "agency_name",
+          "active_fy"
+        ]
+      },
+      {
+        "type": "field_pattern",
+        "path": "results",
+        "field": "toptier_code",
+        "pattern": "^[0-9]{3,4}$"
+      }
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

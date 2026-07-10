@@ -55,7 +55,8 @@
         "path": "hourly.time",
         "min": 12
       }
-    ]
+    ],
+    "contract_version": "1.0.0"
   },
   "fallback_capability_ids": []
 }

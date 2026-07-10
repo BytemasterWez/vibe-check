@@ -25,6 +25,7 @@ import { createLlmClient, extractJson } from '../lib/llm.mjs';
 import { findRowArray, draftManifestFallback, draftManifestLlm } from '../scout.mjs';
 import { validateManifest } from '../lib/manifest.mjs';
 import { sendTelegram, formatEventMessage } from '../lib/telegram.mjs';
+import { applyPolicy, POLICIES } from '../lib/policy.mjs';
 import { spawnSync } from 'child_process';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'capabilityproof-test-'));
@@ -231,6 +232,64 @@ ok('value_range tolerates declared sentinels but rejects undeclared junk', () =>
   assert.strictEqual(withSentinel.results.task_success, true, withSentinel.failures.join('; '));
   const withoutSentinel = runChecks(probeLike, { checks: [{ type: 'value_range', path: 'data', field: 'v', min: 0, max: 25 }] });
   assert.strictEqual(withoutSentinel.results.task_success, false);
+});
+
+// --- Contracts, policies, resolver, replay ------------------------------------
+ok('unique_field check catches duplicated rows', () => {
+  const probeDup = { ok: true, status: 200, latency_ms: 1, body: { rows: [{ id: 'a' }, { id: 'b' }, { id: 'a' }] }, body_text: '' };
+  const outcome = runChecks(probeDup, { checks: [{ type: 'unique_field', path: 'rows', field: 'id' }] });
+  assert.strictEqual(outcome.results.task_success, false);
+  assert(outcome.failures[0].includes('duplicated'));
+});
+
+ok('receipts carry contract and runner versions', () => {
+  const latest = service.store.latestReceiptFor('mock.good.population');
+  assert.strictEqual(latest.contract_version, '1.0.0');
+  assert.match(latest.runner_version, /^\d+\.\d+\.\d+$/);
+});
+
+ok('production policy blocks experimental (Scout-admitted) sources', () => {
+  const experimentalManifest = { capability_id: 'x', scouted: { drafted_by: 'llm' } };
+  const receiptLike = { status: 'verified', verified_at: new Date().toISOString(), expires_at: new Date(Date.now() + 3600000).toISOString(), results: { checks_passed: 5, checks_total: 5 } };
+  const strict = applyPolicy({ manifest: experimentalManifest, receipt: receiptLike, stats: { success_rate_30d: 1 }, streak: 10 }, POLICIES.production);
+  assert.strictEqual(strict.allowed, false);
+  assert(strict.reasons.some((r) => r.includes('experimental')));
+  const loose = applyPolicy({ manifest: experimentalManifest, receipt: receiptLike, stats: { success_rate_30d: 1 }, streak: 10 }, POLICIES.permissive);
+  assert.strictEqual(loose.allowed, true);
+  const approvedManifest = { ...experimentalManifest, approved: true };
+  assert.strictEqual(applyPolicy({ manifest: approvedManifest, receipt: receiptLike, stats: { success_rate_30d: 1 }, streak: 10 }, POLICIES.production).allowed, true);
+});
+
+// Build a clean history: the earlier injected drift failure drags the 30d
+// success rate to 0.8, and the production policy (correctly) rejects that.
+// Nine clean probes against one failure clears the 0.9 bar.
+for (let i = 0; i < 7; i++) await service.verify('mock.good.population');
+const resolution = await service.resolve({ task: 'retrieve county population estimates', policy: 'production' });
+ok('resolver approves the healthy source under the production policy', () => {
+  assert.strictEqual(resolution.decision, 'approved', JSON.stringify(resolution.candidates ?? resolution));
+  assert.strictEqual(resolution.capability_id, 'mock.good.population');
+  assert(resolution.confidence > 0.8);
+  assert(resolution.receipt_id.startsWith('cpr_'));
+  assert.strictEqual(resolution.policy.name, 'production');
+});
+ok('resolver rejections are explained per candidate', async () => {
+  const rejected = await service.resolve({ capability_id: 'mock.liar.population', policy: 'production' });
+  assert.strictEqual(rejected.decision, 'rejected');
+  assert(rejected.candidates.every((c) => c.blocked_by.length > 0));
+});
+
+const raf = await service.resolveAndFetch({ task: 'retrieve county population estimates', policy: 'production' });
+ok('resolve-and-fetch returns live data with the receipt attached', () => {
+  assert.strictEqual(raf.resolution.decision, 'approved');
+  assert.strictEqual(raf.fetch.http_status, 200);
+  assert(Array.isArray(raf.fetch.data) && raf.fetch.data.length > 50);
+});
+
+const replayed = await service.replay(resolution.receipt_id);
+ok('receipts replay: evidence is hash-bound and outcomes reproduce', () => {
+  assert.strictEqual(replayed.evidence_integrity, true, 'evidence hash mismatch');
+  assert.strictEqual(replayed.outcomes_match, true, JSON.stringify(replayed.differences));
+  assert.strictEqual(replayed.replay_result, 'verified');
 });
 
 // Receipt retrieval round-trip

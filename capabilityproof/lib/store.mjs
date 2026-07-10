@@ -104,5 +104,17 @@ export function createStore(dataDir) {
     };
   }
 
-  return { dataDir, saveReceipt, getReceipt, latestReceiptFor, saveEvidence, getEvidence, appendHistory, getHistory, historyStats };
+  // Trailing run of consecutive successful probes — the "N clean passes in a
+  // row" input for trust policies and quarantine promotion.
+  function verifiedStreak(capabilityId) {
+    const entries = getHistory(capabilityId);
+    let streak = 0;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].task_success) streak++;
+      else break;
+    }
+    return streak;
+  }
+
+  return { dataDir, saveReceipt, getReceipt, latestReceiptFor, saveEvidence, getEvidence, appendHistory, getHistory, historyStats, verifiedStreak };
 }

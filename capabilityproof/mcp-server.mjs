@@ -90,6 +90,21 @@ const TOOLS = [
     },
   },
   {
+    name: 'resolve_task',
+    description: 'The machine decision: apply a trust policy (production/standard/permissive or custom rules) and get an approved capability with receipt, confidence, calling instructions and fallbacks — or an explained rejection.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'What you need, in plain language' },
+        capability_id: { type: 'string', description: 'Resolve a specific capability instead of searching by task' },
+        policy: {
+          description: 'Named policy ("production", "standard", "permissive") or an object of custom rules (maximum_receipt_age_minutes, minimum_consecutive_passes, minimum_success_rate_30d, minimum_confidence, allow_experimental_sources)',
+          anyOf: [{ type: 'string' }, { type: 'object' }],
+        },
+      },
+    },
+  },
+  {
     name: 'get_capability_receipt',
     description: 'Fetch a capability receipt by id, including a signature validity check.',
     inputSchema: {
@@ -138,6 +153,9 @@ const HANDLERS = {
   },
   async route_task(input) {
     return jsonContent(await service.route({ task: input.task, constraints: input.constraints, verify_mode: input.verify_mode }));
+  },
+  async resolve_task(input) {
+    return jsonContent(await service.resolve({ task: input.task, capability_id: input.capability_id, policy: input.policy }));
   },
   async get_capability_receipt(input) {
     const out = service.getReceipt(input.receipt_id);
