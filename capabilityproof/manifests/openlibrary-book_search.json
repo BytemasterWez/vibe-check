@@ -1,0 +1,71 @@
+{
+  "capability_id": "source.openlibrary.book_search",
+  "manifest_version": "1.0",
+  "claim": "Internet Archive's Open Library search: bibliographic records, keyless",
+  "publisher": {
+    "name": "Open Library book search"
+  },
+  "protocol": "rest",
+  "category": "reference",
+  "tags": [
+    "reference"
+  ],
+  "tasks": [
+    "Internet Archive's Open Library search: bibliographic records, keyless"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:39.795Z"
+  },
+  "test_pack": {
+    "id": "openlibrary.book_search_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://openlibrary.org/search.json?q=the+great+gatsby&limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "docs",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "docs",
+        "fields": [
+          "ebook_access",
+          "edition_count",
+          "first_publish_year",
+          "has_fulltext"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

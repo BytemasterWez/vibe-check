@@ -1,0 +1,68 @@
+{
+  "capability_id": "source.restcountries.country_reference",
+  "manifest_version": "1.0",
+  "claim": "Country reference data (names, codes, capitals, population), keyless",
+  "publisher": {
+    "name": "REST Countries reference data"
+  },
+  "protocol": "rest",
+  "category": "reference",
+  "tags": [
+    "reference"
+  ],
+  "tasks": [
+    "Country reference data (names, codes, capitals, population), keyless"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:12.302Z"
+  },
+  "test_pack": {
+    "id": "restcountries.country_reference_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://restcountries.com/v3.1/alpha/us?fields=name,cca2,cca3,population,capital,region"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "errors",
+        "min": 1
+      },
+      {
+        "type": "fields_present",
+        "path": "errors",
+        "fields": [
+          "message"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

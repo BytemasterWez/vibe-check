@@ -1,0 +1,71 @@
+{
+  "capability_id": "source.openfda.drug_events",
+  "manifest_version": "1.0",
+  "claim": "FDA adverse event reports, keyless up to 240 requests/min per IP",
+  "publisher": {
+    "name": "openFDA drug adverse events"
+  },
+  "protocol": "rest",
+  "category": "health",
+  "tags": [
+    "health"
+  ],
+  "tasks": [
+    "FDA adverse event reports, keyless up to 240 requests/min per IP"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:16.562Z"
+  },
+  "test_pack": {
+    "id": "openfda.drug_events_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.fda.gov/drug/event.json?limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "results",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "results",
+        "fields": [
+          "safetyreportid",
+          "transmissiondateformat",
+          "transmissiondate",
+          "serious"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

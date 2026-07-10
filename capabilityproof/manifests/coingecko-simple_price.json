@@ -1,0 +1,56 @@
+{
+  "capability_id": "source.coingecko.simple_price",
+  "manifest_version": "1.0",
+  "claim": "Crypto spot prices, keyless with strict rate limits — expect occasional 429s",
+  "publisher": {
+    "name": "CoinGecko simple price"
+  },
+  "protocol": "rest",
+  "category": "economic",
+  "tags": [
+    "economic"
+  ],
+  "tasks": [
+    "Crypto spot prices, keyless with strict rate limits — expect occasional 429s"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:18.601Z"
+  },
+  "test_pack": {
+    "id": "coingecko.simple_price_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

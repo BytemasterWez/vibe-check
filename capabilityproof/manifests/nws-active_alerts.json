@@ -1,0 +1,73 @@
+{
+  "capability_id": "source.nws.active_alerts",
+  "manifest_version": "1.0",
+  "claim": "Official NWS active watches/warnings feed, GeoJSON, keyless",
+  "publisher": {
+    "name": "NWS active weather alerts"
+  },
+  "protocol": "rest",
+  "category": "hazards",
+  "tags": [
+    "hazards"
+  ],
+  "tasks": [
+    "Official NWS active watches/warnings feed, GeoJSON, keyless"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:07.357Z"
+  },
+  "test_pack": {
+    "id": "nws.active_alerts_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.weather.gov/alerts/active",
+      "headers": {
+        "User-Agent": "CapabilityProof/0.1 (scout probe)",
+        "Accept": "application/geo+json"
+      }
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "features",
+        "min": 135
+      },
+      {
+        "type": "fields_present",
+        "path": "features",
+        "fields": [
+          "id",
+          "type"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

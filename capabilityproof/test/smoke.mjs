@@ -21,6 +21,9 @@ import assert from 'assert';
 import { createService } from '../lib/service.mjs';
 import { verifyReceiptSignature } from '../lib/receipts.mjs';
 import { runChecks } from '../lib/evaluate.mjs';
+import { createLlmClient, extractJson } from '../lib/llm.mjs';
+import { findRowArray, draftManifestFallback, draftManifestLlm } from '../scout.mjs';
+import { validateManifest } from '../lib/manifest.mjs';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'capabilityproof-test-'));
 const manifestDir = path.join(tmp, 'manifests');
@@ -239,6 +242,87 @@ ok('evidence sample is stored and hash-bound', () => {
   assert.strictEqual(evidence.capability_id, 'mock.good.population');
   assert(typeof evidence.body_sample === 'string' && evidence.body_sample.length > 0);
 });
+
+// --- Scout: drafting, row detection, and the LM Studio (OpenAI-compatible) path
+const probeLike = {
+  ok: true,
+  status: 200,
+  latency_ms: 40,
+  body: { meta: { n: 2 }, items: [{ id: 'a1', name: 'First', optional_note: 'x' }, { id: 'a2', name: 'Second' }] },
+  body_text: JSON.stringify({ meta: { n: 2 }, items: [{ id: 'a1', name: 'First', optional_note: 'x' }, { id: 'a2', name: 'Second' }] }),
+};
+const candidateLike = { name: 'Mock Directory', slug: 'mockdir.items', category: 'reference', probe_url: `${base}/unused`, notes: 'Returns mock items' };
+
+ok('scout finds the row array in a nested response', () => {
+  const found = findRowArray(probeLike.body);
+  assert.strictEqual(found.path, 'items');
+  assert.strictEqual(found.size, 2);
+});
+ok('fallback draft requires only fields present in every row', () => {
+  const draft = draftManifestFallback(candidateLike, probeLike);
+  assert.strictEqual(validateManifest(draft).valid, true);
+  const fp = draft.test_pack.checks.find((c) => c.type === 'fields_present');
+  assert.deepStrictEqual(fp.fields.sort(), ['id', 'name'], 'optional_note must not be required');
+});
+ok('extractJson tolerates prose and code fences around the object', () => {
+  const parsed = extractJson('Sure! Here is the manifest:\n```json\n{"claim": "test", "nested": {"a": [1, 2]}}\n```\nHope that helps.');
+  assert.strictEqual(parsed.claim, 'test');
+});
+
+// Fake LM Studio: OpenAI-compatible /models + /chat/completions.
+const llmMock = http.createServer((req, res) => {
+  if (req.url.endsWith('/models')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ data: [{ id: 'gemma-12b-mock' }] }));
+  }
+  if (req.url.endsWith('/chat/completions')) {
+    const draft = {
+      claim: 'Returns mock directory items with stable ids, no authentication required',
+      publisher: { name: 'Mock Directory', authority_url: 'https://example.test' },
+      tags: ['mock', 'directory'],
+      tasks: ['list mock items'],
+      coverage: { countries: ['global'], granularity: 'item', temporal: 'static' },
+      join_keys: ['id'],
+      update_frequency: 'static',
+      license: 'unknown',
+      usage_notes: 'Test fixture.',
+      checks: [
+        { type: 'status', equals: 200 },
+        { type: 'json' },
+        { type: 'min_rows', path: 'items', min: 1 },
+        { type: 'field_pattern', path: 'items', field: 'id', pattern: '^a[0-9]+$' },
+        { type: 'not_a_real_check', foo: 'must be filtered out' },
+      ],
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ choices: [{ message: { content: 'Here you go:\n```json\n' + JSON.stringify(draft) + '\n```' } }] }));
+  }
+  res.writeHead(404);
+  res.end();
+});
+await new Promise((resolve) => llmMock.listen(0, '127.0.0.1', resolve));
+const llm = createLlmClient({ baseUrl: `http://127.0.0.1:${llmMock.address().port}/v1` });
+
+await (async () => {
+  const upOk = await llm.available();
+  ok('scout detects a running OpenAI-compatible model server', () => assert.strictEqual(upOk, true));
+  const draft = await draftManifestLlm(llm, candidateLike, probeLike);
+  ok('LLM-drafted manifest is valid and normalised', () => {
+    assert.strictEqual(validateManifest(draft).valid, true);
+    assert.strictEqual(draft.capability_id, 'source.mockdir.items');
+    assert.strictEqual(draft.risk_class, 'read_only');
+    assert.strictEqual(draft.test_pack.request.url, candidateLike.probe_url, 'model must not control the probe URL');
+  });
+  ok('invalid check types from the model are filtered out', () => {
+    assert(!draft.test_pack.checks.some((c) => c.type === 'not_a_real_check'));
+    assert(draft.test_pack.checks.some((c) => c.type === 'field_pattern'));
+  });
+  ok('LLM-drafted checks pass against the sampled response', () => {
+    const outcome = runChecks(probeLike, draft.test_pack);
+    assert.strictEqual(outcome.results.task_success, true, outcome.failures.join('; '));
+  });
+})();
+llmMock.close();
 
 mock.close();
 hook.close();

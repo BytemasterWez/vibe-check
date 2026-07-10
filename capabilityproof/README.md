@@ -183,7 +183,8 @@ for a representative example. URLs may reference free keys as
 `required_env` and `verify-all --skip-missing-env` will skip (not fail) the
 source when they're absent.
 
-Seed inventory (16 sources, 7 categories, all read-only):
+Current inventory (26 sources, 9 categories, all read-only — rows marked ⚭
+were discovered and qualified automatically by the Scout):
 
 | Capability | Category | Auth |
 | --- | --- | --- |
@@ -203,6 +204,16 @@ Seed inventory (16 sources, 7 categories, all read-only):
 | `source.gbif.species_occurrences` | environment | none |
 | `source.nager.public_holidays` | government | none |
 | `source.usaspending.toptier_agencies` | government | none |
+| `source.nws.active_alerts` ⚭ | hazards | none |
+| `source.census.geocoder_address` ⚭ | geospatial | none |
+| `source.usgs.point_elevation` ⚭ | geospatial | none |
+| `source.frankfurter.ecb_rates` ⚭ | economic | none |
+| `source.coingecko.simple_price` ⚭ | economic | none |
+| `source.openmeteo.air_quality` ⚭ | environment | none |
+| `source.noaa.tides_water_level` ⚭ | environment | none |
+| `source.openlibrary.book_search` ⚭ | reference | none |
+| `source.restcountries.country_reference` ⚭ | reference | none |
+| `source.openfda.drug_events` ⚭ | health | none |
 
 Test packs also encode observed real-world quirks as evidence rather than
 noise: BLS publishes `"-"` for months lost to the 2025 appropriations lapse
@@ -216,7 +227,10 @@ capabilityproof/
   api.mjs             REST API (node:http, no framework)
   mcp-server.mjs      MCP server (stdio)
   cli.mjs             local verification sweeps and inspection
-  manifests/          seed capability manifests
+  scout.mjs           automated source discovery + quarantine + promotion
+  scout/              candidate leads for the Scout
+  manifests/          verified capability manifests
+  manifests-proposed/ quarantine for scouted, not-yet-promoted sources
   lib/
     manifest.mjs      manifest schema, validation, env substitution
     probe.mjs         live HTTP probes
@@ -227,9 +241,40 @@ capabilityproof/
     service.mjs       orchestration shared by REST, MCP and CLI
     notify.mjs        status-change and schema-drift webhooks
     dashboard.mjs     server-rendered HTML status page
+    llm.mjs           OpenAI-compatible client for local models (LM Studio etc.)
   test/smoke.mjs      offline end-to-end test with mock sources
   data/               runtime state: keys, receipts, evidence, history (git-ignored)
 ```
+
+## Scout: automated source discovery
+
+The Scout qualifies new sources without letting anything unverified into the
+catalogue:
+
+```
+candidate lead -> live probe -> draft manifest -> validate -> live verify
+              -> quarantine (manifests-proposed/) -> promote after a clean streak
+```
+
+```bash
+npm run capabilityproof:scout               # discover: qualify new candidates
+node capabilityproof/scout.mjs status       # quarantine streaks
+node capabilityproof/scout.mjs verify-proposed   # re-verify quarantined sources
+node capabilityproof/scout.mjs promote --ready   # graduate clean-streak sources
+```
+
+Manifest drafting uses a **local LLM when one is running** — any
+OpenAI-compatible server works, e.g. LM Studio serving Gemma at
+`http://localhost:1234/v1` (override with `CAPABILITYPROOF_LLM_URL` /
+`CAPABILITYPROOF_LLM_MODEL`). Without a model it falls back to deterministic
+drafting (row detection, fields required only if present in every sampled
+row). Either way the model only *drafts*: it cannot set trust-relevant fields
+(auth, cost, risk class, probe URL), invalid check types are filtered, and
+live verification plus the quarantine streak (default 3, set
+`CAPABILITYPROOF_SCOUT_STREAK`) decide what gets promoted.
+
+Candidate leads live in `scout/candidates.json` — add entries there to give
+the Scout more ground to cover.
 
 ## Scheduled sweeps
 
