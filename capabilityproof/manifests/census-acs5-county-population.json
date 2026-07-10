@@ -28,6 +28,7 @@
     "notes": "Free key from https://api.census.gov/data/key_signup.html; set CENSUS_API_KEY. Without a key the API returns HTTP 200 with an HTML 'Missing Key' page — exactly the failure mode receipts exist to catch."
   },
   "cost": { "per_call_usd": 0 },
+  "required_env": ["CENSUS_API_KEY"],
   "rate_limit": "500 calls/day per key",
   "pagination": "none — full county table in one response",
   "risk_class": "read_only",

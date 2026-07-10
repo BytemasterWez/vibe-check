@@ -4,22 +4,42 @@
 //
 //   node capabilityproof/cli.mjs list
 //   node capabilityproof/cli.mjs verify <capability_id>
-//   node capabilityproof/cli.mjs verify-all
+//   node capabilityproof/cli.mjs verify-all [--skip-missing-env]
 //   node capabilityproof/cli.mjs search "<task>"
 //   node capabilityproof/cli.mjs route "<task>"
 //   node capabilityproof/cli.mjs receipt <receipt_id>
 //   node capabilityproof/cli.mjs explain <capability_id>
 
+import fs from 'fs';
 import { createService } from './lib/service.mjs';
 
-const [command, ...rest] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const flags = new Set(argv.filter((a) => a.startsWith('--')));
+const [command, ...rest] = argv.filter((a) => !a.startsWith('--'));
 const service = createService();
 
 function print(obj) {
   console.log(JSON.stringify(obj, null, 2));
 }
 
-const STATUS_ICON = { verified: 'PASS', failed_checks: 'FAIL', unreachable: 'DOWN', error: 'ERR ' };
+const STATUS_ICON = { verified: 'PASS', failed_checks: 'FAIL', unreachable: 'DOWN', error: 'ERR ', skipped: 'SKIP' };
+
+// In GitHub Actions, publish the sweep as a job summary table.
+function writeStepSummary(results) {
+  const file = process.env.GITHUB_STEP_SUMMARY;
+  if (!file) return;
+  const lines = [
+    '## CapabilityProof verification sweep',
+    '',
+    '| Capability | Status | Latency | Detail |',
+    '| --- | --- | --- | --- |',
+    ...results.map((r) => {
+      const detail = r.reason || r.error || (r.failures || []).slice(0, 2).join('<br>') || '';
+      return `| \`${r.capability_id}\` | ${r.status} | ${r.latency_ms != null ? r.latency_ms + 'ms' : ''} | ${detail} |`;
+    }),
+  ];
+  fs.appendFileSync(file, lines.join('\n') + '\n');
+}
 
 async function main() {
   switch (command) {
@@ -37,15 +57,18 @@ async function main() {
       break;
     }
     case 'verify-all': {
-      const results = await service.verifyAll();
+      const results = await service.verifyAll({ skipMissingEnv: flags.has('--skip-missing-env') });
       for (const r of results) {
         console.log(`[${STATUS_ICON[r.status] || r.status}] ${r.capability_id.padEnd(42)} ${r.latency_ms != null ? r.latency_ms + 'ms' : ''}`);
         for (const f of r.failures || []) console.log(`       - ${f}`);
         if (r.error) console.log(`       - ${r.error}`);
+        if (r.reason) console.log(`       - ${r.reason}`);
       }
       const verified = results.filter((r) => r.status === 'verified').length;
-      console.log(`\n${verified}/${results.length} capabilities verified`);
-      process.exitCode = verified === results.length ? 0 : 1;
+      const skipped = results.filter((r) => r.status === 'skipped').length;
+      console.log(`\n${verified}/${results.length} capabilities verified${skipped ? ` (${skipped} skipped)` : ''}`);
+      writeStepSummary(results);
+      process.exitCode = verified + skipped === results.length ? 0 : 1;
       break;
     }
     case 'search': {

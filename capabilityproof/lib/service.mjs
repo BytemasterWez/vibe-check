@@ -17,12 +17,13 @@ import {
 } from './receipts.mjs';
 import { createStore } from './store.mjs';
 import { searchCapabilities } from './registry.mjs';
+import { notify } from './notify.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_MANIFEST_DIR = path.join(HERE, '..', 'manifests');
 export const DEFAULT_DATA_DIR = path.join(HERE, '..', 'data');
 
-export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DEFAULT_DATA_DIR } = {}) {
+export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DEFAULT_DATA_DIR, webhookUrl } = {}) {
   const { manifests, problems } = loadManifests(manifestDir);
   if (problems.length) {
     for (const p of problems) console.error(`[capabilityproof] manifest problem: ${p}`);
@@ -56,9 +57,9 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     const manifest = manifests.get(capabilityId);
     if (!manifest) throw new ServiceError(404, `unknown capability: ${capabilityId}`);
 
-    if (!forceLiveProbe) {
-      const latest = store.latestReceiptFor(capabilityId);
-      if (latest && receiptIsFresh(latest)) return { receipt: latest, cached: true };
+    const previous = store.latestReceiptFor(capabilityId);
+    if (!forceLiveProbe && previous && receiptIsFresh(previous)) {
+      return { receipt: previous, cached: true };
     }
 
     const probe = await runProbe(manifest.test_pack.request);
@@ -105,12 +106,22 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
       schema_hash: bodySchemaHash,
     });
 
+    // Outage/recovery/drift webhooks; delivery failure never fails the verify.
+    await notify({ previous, receipt, webhookUrl });
+
     return { receipt, cached: false };
   }
 
   async function verifyAll(options = {}) {
     const out = [];
-    for (const id of manifests.keys()) {
+    for (const [id, manifest] of manifests.entries()) {
+      if (options.skipMissingEnv) {
+        const missing = (manifest.required_env || []).filter((v) => !process.env[v]);
+        if (missing.length) {
+          out.push({ capability_id: id, status: 'skipped', reason: `missing env: ${missing.join(', ')}` });
+          continue;
+        }
+      }
       try {
         const { receipt } = await verify(id, options);
         out.push({ capability_id: id, status: receipt.status, receipt_id: receipt.receipt_id, latency_ms: receipt.results.latency_ms, failures: receipt.failures });

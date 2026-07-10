@@ -61,6 +61,7 @@ node capabilityproof/cli.mjs receipt cpr_...
 
 | Route | Purpose |
 | --- | --- |
+| `GET /` | Human status dashboard (auto-refreshing HTML; no auth) |
 | `POST /v1/capabilities/search` | Find capabilities by task + constraints, ranked by verified evidence |
 | `POST /v1/capabilities/verify` | Live-probe one capability now; returns a signed receipt |
 | `POST /v1/capabilities/route` | Pick the best verified provider + calling instructions + fallbacks |
@@ -88,6 +89,18 @@ curl -s localhost:3200/v1/capabilities/search -d '{
 ```
 
 Set `CAPABILITYPROOF_API_KEY` to require an `x-api-key` header on `/v1/*`.
+
+## Webhooks
+
+Set `CAPABILITYPROOF_WEBHOOK_URL` and every verification that changes a
+capability's state POSTs a JSON event to it:
+
+- `capability_status_changed` — outage, recovery, or first verification
+  (`from`/`to` status, the failing checks, and the fallback order)
+- `capability_schema_drift` — the response shape hash changed between probes,
+  even if all checks still pass
+
+Delivery failures are logged and never fail the verification itself.
 
 ## MCP tools
 
@@ -166,7 +179,9 @@ publisher, coverage, join keys, licensing, auth, cost, calling instructions,
 declared fallbacks, and the test pack that proves the claim. See
 `lib/manifest.mjs` for the schema and `manifests/usgs-earthquakes-all-day.json`
 for a representative example. URLs may reference free keys as
-`${ENV:VAR_NAME}` so secrets stay out of the repo.
+`${ENV:VAR_NAME}` so secrets stay out of the repo; list those variables in
+`required_env` and `verify-all --skip-missing-env` will skip (not fail) the
+source when they're absent.
 
 Seed inventory (8 sources, 5 categories, all read-only):
 
@@ -197,9 +212,20 @@ capabilityproof/
     store.mjs         file-based receipts/evidence/history store
     registry.mjs      task search, constraint filtering, evidence-first ranking
     service.mjs       orchestration shared by REST, MCP and CLI
+    notify.mjs        status-change and schema-drift webhooks
+    dashboard.mjs     server-rendered HTML status page
   test/smoke.mjs      offline end-to-end test with mock sources
   data/               runtime state: keys, receipts, evidence, history (git-ignored)
 ```
+
+## Scheduled sweeps
+
+`.github/workflows/capabilityproof-sweep.yml` runs the offline smoke test and
+a live `verify-all --skip-missing-env` daily (and on manual dispatch),
+publishes the sweep as the job summary, and uploads receipts + evidence as a
+30-day artifact. A red run means a source genuinely broke, drifted or started
+lying — not that the workflow is flaky. Add `CENSUS_API_KEY` as a repo secret
+to include the Census source instead of skipping it.
 
 ## Scope guardrails (by design, for the validation phase)
 

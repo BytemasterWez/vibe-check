@@ -11,6 +11,7 @@
 //      falls back away from the liar
 //   6. schema drift between probes is counted in history stats
 //   7. cached verification honours receipt TTL
+//   8. webhooks fire on status changes and schema drift
 
 import http from 'http';
 import fs from 'fs';
@@ -57,6 +58,20 @@ const mock = http.createServer((req, res) => {
 await new Promise((resolve) => mock.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${mock.address().port}`;
 
+// Webhook receiver: collects status-change and drift events.
+const webhookEvents = [];
+const hook = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (c) => (body += c));
+  req.on('end', () => {
+    webhookEvents.push(JSON.parse(body));
+    res.writeHead(204);
+    res.end();
+  });
+});
+await new Promise((resolve) => hook.listen(0, '127.0.0.1', resolve));
+const webhookUrl = `http://127.0.0.1:${hook.address().port}/events`;
+
 // --- Test manifests ----------------------------------------------------------
 const commonChecks = [
   { type: 'status', equals: 200 },
@@ -100,7 +115,7 @@ writeManifest('mock.dead.population', '/population', {
   },
 });
 
-const service = createService({ manifestDir, dataDir });
+const service = createService({ manifestDir, dataDir, webhookUrl });
 let passed = 0;
 function ok(name, fn) {
   try {
@@ -190,6 +205,19 @@ ok('fresh receipt is served from cache when live probe not forced', () => {
   assert.strictEqual(cachedRun.receipt.receipt_id, first.receipt.receipt_id);
 });
 
+// 8. Webhooks
+ok('status-change webhook fired when the liar failed', () => {
+  const e = webhookEvents.find((e) => e.event === 'capability_status_changed' && e.capability_id === 'mock.liar.population');
+  assert(e, 'no status-change event for liar');
+  assert.strictEqual(e.to, 'failed_checks');
+  assert(e.failures.length > 0);
+});
+ok('schema-drift webhook fired when the good source changed shape', () => {
+  const e = webhookEvents.find((e) => e.event === 'capability_schema_drift' && e.capability_id === 'mock.good.population');
+  assert(e, 'no drift event');
+  assert.notStrictEqual(e.previous_schema_hash, e.new_schema_hash);
+});
+
 // Receipt retrieval round-trip
 const fetched = service.getReceipt(good.receipt_id);
 ok('receipt retrieval round-trips with valid signature', () => {
@@ -203,6 +231,7 @@ ok('evidence sample is stored and hash-bound', () => {
 });
 
 mock.close();
+hook.close();
 fs.rmSync(tmp, { recursive: true, force: true });
 
 console.log(`\n${passed} assertions passed${process.exitCode ? ' (with failures)' : ''}`);

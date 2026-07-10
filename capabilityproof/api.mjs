@@ -6,6 +6,7 @@
 // Auth:  optional — set CAPABILITYPROOF_API_KEY to require an x-api-key header.
 //
 // Routes:
+//   GET  /                  human status dashboard (no auth)
 //   GET  /health
 //   GET  /v1/public-key
 //   GET  /v1/capabilities
@@ -20,6 +21,7 @@
 
 import http from 'http';
 import { createService, ServiceError } from './lib/service.mjs';
+import { renderDashboard } from './lib/dashboard.mjs';
 
 const args = process.argv.slice(2);
 function getArg(name) {
@@ -60,6 +62,11 @@ const server = http.createServer(async (req, res) => {
   const route = `${req.method} ${url.pathname}`;
 
   try {
+    if ((route === 'GET /' || route === 'GET /dashboard')) {
+      const html = renderDashboard(service);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
+    }
     if (route === 'GET /health') {
       return send(res, 200, { status: 'ok', capabilities: service.manifests.size, manifest_problems: service.manifestProblems });
     }
