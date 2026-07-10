@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { Datastore } from './datastore.js';
 import { assessAircraft } from './assess.js';
 import { renderReport } from './report.js';
+import { renderHtmlReport } from './reportHtml.js';
 import { SOURCES, fetchSource } from './sources/fetch.js';
 import { transformReleasableAircraft } from './sources/transformFaaRegistry.js';
 import { ADAPTERS, buildContext, runIngestion } from './ingest/runner.js';
@@ -16,8 +17,10 @@ const DEFAULT_DATA_DIR = join(HERE, '..', 'data', 'sample');
 const USAGE = `AeroRisk Due Diligence — public-record aircraft risk intelligence
 
 Usage:
-  aerorisk report <N-NUMBER> [--data <dir>] [--out <file>] [--json]
-      Generate the Aircraft Due-Diligence Pack for one aircraft.
+  aerorisk report <N-NUMBER> [--data <dir>] [--out <file>] [--json] [--format md|html]
+      Generate the Aircraft Due-Diligence Pack for one aircraft. --format html
+      (or --html) writes a self-contained styled page that prints to PDF from
+      any browser; every report opens with a plain-language verdict.
 
   aerorisk list [--data <dir>]
       List aircraft present in the loaded dataset.
@@ -89,9 +92,13 @@ export async function run(argv) {
       if (!target) return fail('report requires an N-number, e.g. `aerorisk report N123AB`');
       const store = new Datastore(dataDir);
       const assessment = assessAircraft(store, target);
+      // --format html|md (default md); --json overrides to JSON.
+      const format = args.flags.html ? 'html' : (args.flags.format ?? 'md');
       const output = args.flags.json
         ? JSON.stringify(assessment, null, 2)
-        : renderReport(assessment);
+        : format === 'html'
+          ? renderHtmlReport(assessment)
+          : renderReport(assessment);
       if (args.flags.out) {
         writeFileSync(args.flags.out, `${output}\n`);
         console.log(`Wrote ${args.flags.out}`);

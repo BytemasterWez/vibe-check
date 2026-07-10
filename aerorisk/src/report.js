@@ -47,6 +47,8 @@ export function renderReport(assessment) {
     '',
     `**Overall review priority:** ${assessment.score}/100 — ${assessment.band.label}`,
     '',
+    `**In plain terms:** ${assessment.plainVerdict}`,
+    '',
     `${assessment.summaryLanguage}`,
     '',
     `**Report confidence:** ${assessment.reportConfidence} (identity confidence: ${identity.confidence})`,
@@ -138,7 +140,7 @@ function renderFindings(m) {
   return out;
 }
 
-function buyerChecklist(assessment) {
+export function buyerChecklist(assessment) {
   const items = [];
   const mod = (key) => assessment.modules.find((m) => m.key === key);
 

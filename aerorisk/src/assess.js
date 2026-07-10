@@ -13,16 +13,19 @@ import { assessHumanFactors } from './modules/humanFactors.js';
 import { assessAirportContext } from './modules/airportContext.js';
 import { compositeScore, bandFor, reviewPriorityLanguage, reportConfidence } from './scoring.js';
 import { buildScoreBreakdown } from './scoreBreakdown.js';
+import { buildPlainVerdict } from './plainVerdict.js';
 
 const SEVERITY_RANK = { priority: 0, review: 1, info: 2 };
 
 export function assessAircraft(store, rawNNumber, { now = new Date() } = {}) {
   const identity = resolveIdentity(store, rawNNumber);
   if (!identity.registry) {
-    return {
+    const unresolved = {
       identity, modules: [], score: null, band: null, findings: [],
       scoreBreakdown: [], generatedAt: now.toISOString(),
     };
+    unresolved.plainVerdict = buildPlainVerdict(unresolved);
+    return unresolved;
   }
 
   const registry = identity.registry;
@@ -62,5 +65,6 @@ export function assessAircraft(store, rawNNumber, { now = new Date() } = {}) {
     generatedAt: now.toISOString(),
   };
   assessment.scoreBreakdown = buildScoreBreakdown(assessment);
+  assessment.plainVerdict = buildPlainVerdict(assessment);
   return assessment;
 }
