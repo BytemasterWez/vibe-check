@@ -8,6 +8,7 @@ import { SOURCES, fetchSource } from './sources/fetch.js';
 import { transformReleasableAircraft } from './sources/transformFaaRegistry.js';
 import { ADAPTERS, buildContext, runIngestion } from './ingest/runner.js';
 import { runBatch, recordsCsv, renderBatchReport } from './batch.js';
+import { runDoctor, renderDoctor } from './ingest/doctor.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = join(HERE, '..', 'data', 'sample');
@@ -28,6 +29,11 @@ Usage:
 
   aerorisk sources
       Show the public data sources and how each feed is acquired.
+
+  aerorisk doctor
+      Preflight: probe every real endpoint, check reachability AND that the
+      response parses into the shape each adapter expects. Run this first on
+      a new network. Exits non-zero if any network source is not ready.
 
   aerorisk fetch <source-id> [--dest <dir>]
       Download a source with a stable bulk endpoint (e.g. faa-registry).
@@ -130,6 +136,11 @@ export async function run(argv) {
       console.log(`Submitted ${c.submitted}; resolved ${c.resolved}; scored ${c.scored}; with evidence ${c.withEvidence}; direct signal ${c.withDirectSignal}.`);
       console.log(`Wrote records.csv, records.json, report.md to ${outDir}`);
       return c.submitted > 0 && c.resolved === 0 ? 1 : 0;
+    }
+    case 'doctor': {
+      const outcome = await runDoctor();
+      console.log(renderDoctor(outcome));
+      return outcome.ready ? 0 : 1;
     }
     case 'sources': {
       for (const s of SOURCES) {

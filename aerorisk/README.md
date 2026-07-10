@@ -159,6 +159,10 @@ node bin/aerorisk.js ingest asrs --offline ./exports/asrs
 # faa_enforcement/ asrs/)
 node bin/aerorisk.js ingest all --offline ./exports --base ./data/ingest
 
+# Preflight FIRST on any new network: probes every real endpoint and checks
+# each response parses into the shape the adapter expects (see LIVE_RUN.md)
+node bin/aerorisk.js doctor
+
 # Reports read straight from the promoted production tables
 node bin/aerorisk.js report N789EF --data ./data/ingest/db/production
 
