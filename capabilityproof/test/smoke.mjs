@@ -24,6 +24,8 @@ import { runChecks } from '../lib/evaluate.mjs';
 import { createLlmClient, extractJson } from '../lib/llm.mjs';
 import { findRowArray, draftManifestFallback, draftManifestLlm } from '../scout.mjs';
 import { validateManifest } from '../lib/manifest.mjs';
+import { sendTelegram, formatEventMessage } from '../lib/telegram.mjs';
+import { spawnSync } from 'child_process';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'capabilityproof-test-'));
 const manifestDir = path.join(tmp, 'manifests');
@@ -323,6 +325,58 @@ await (async () => {
   });
 })();
 llmMock.close();
+
+// --- Telegram transport (against a mock Bot API) and doctor -------------------
+const tgCalls = [];
+const tgMock = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (c) => (body += c));
+  req.on('end', () => {
+    tgCalls.push({ url: req.url, body: body ? JSON.parse(body) : null });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+  });
+});
+await new Promise((resolve) => tgMock.listen(0, '127.0.0.1', resolve));
+const tgEnv = {
+  TELEGRAM_BOT_TOKEN: 'test-token',
+  TELEGRAM_CHAT_ID: '12345',
+  TELEGRAM_API_URL: `http://127.0.0.1:${tgMock.address().port}`,
+};
+
+await (async () => {
+  const result = await sendTelegram('hello from smoke test', { env: tgEnv });
+  ok('telegram messages are delivered to the Bot API', () => {
+    assert.strictEqual(result.sent, true, result.reason);
+    assert.strictEqual(tgCalls[0].url, '/bottest-token/sendMessage');
+    assert.strictEqual(tgCalls[0].body.chat_id, '12345');
+  });
+})();
+ok('alert formatting names the capability and the evidence', () => {
+  const msg = formatEventMessage({
+    event: 'capability_status_changed',
+    capability_id: 'source.mock.thing',
+    from: 'verified',
+    to: 'failed_checks',
+    failures: ['min_rows [completeness]: 1 rows (minimum 50)'],
+    fallback_capability_ids: ['source.mock.other'],
+  });
+  assert(msg.includes('source.mock.thing') && msg.includes('min_rows') && msg.includes('source.mock.other'));
+});
+ok('telegram send failure is reported, not thrown', async () => {
+  const result = await sendTelegram('x', { env: { ...tgEnv, TELEGRAM_API_URL: 'http://127.0.0.1:1' } });
+  assert.strictEqual(result.sent, false);
+});
+tgMock.close();
+
+// Doctor runs end to end in dry-run mode and reports each check
+const doctor = spawnSync('node', [new URL('../doctor.mjs', import.meta.url).pathname, '--dry-run'], { encoding: 'utf-8', timeout: 60000 });
+ok('doctor performs its checks and summarises', () => {
+  const out = doctor.stdout + doctor.stderr;
+  assert(out.includes('manifests'), 'manifest check missing');
+  assert(out.includes('signing_keys'), 'keys check missing');
+  assert(out.includes('doctor:'), 'summary missing');
+});
 
 mock.close();
 hook.close();
