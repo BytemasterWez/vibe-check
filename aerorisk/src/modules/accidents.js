@@ -7,6 +7,20 @@ import { daysAgo } from '../identity.js';
 const INJURY_WEIGHT = { fatal: 45, serious: 35, minor: 25, none: 18 };
 const DAMAGE_WEIGHT = { destroyed: 15, substantial: 10, minor: 5, none: 0 };
 
+function isTrue(v) {
+  return /^(y|yes|true|1)$/i.test(String(v ?? '').trim());
+}
+
+// Human-readable injury counts when present (CAROL exposes onboard/onground).
+function injurySummary(ev) {
+  const onboard = Number.parseInt(ev.INJURY_ONBOARD, 10);
+  const onground = Number.parseInt(ev.INJURY_ONGROUND, 10);
+  const parts = [];
+  if (Number.isInteger(onboard) && onboard > 0) parts.push(`${onboard} onboard`);
+  if (Number.isInteger(onground) && onground > 0) parts.push(`${onground} on ground`);
+  return parts.length ? `injuries: ${parts.join(', ')}` : '';
+}
+
 export function assessAccidents(store, { registry, now }) {
   const findings = [];
   const allDirect = store.ntsbForTail(registry.N_NUMBER, registry.SERIAL_NUMBER);
@@ -39,20 +53,30 @@ export function assessAccidents(store, { registry, now }) {
     const injury = (ev.HIGHEST_INJURY ?? 'none').toLowerCase();
     const damage = (ev.DAMAGE ?? 'none').toLowerCase();
     let w = (INJURY_WEIGHT[injury] ?? 18) + (DAMAGE_WEIGHT[damage] ?? 0);
+    // An "Accident" is, by NTSB definition, more serious than an "Incident".
+    const isAccident = /accident/i.test(ev.EVENT_TYPE ?? '');
+    if (isAccident) w += 8;
+    // Safety recommendations mark a systemically significant event.
+    if (isTrue(ev.HAS_SAFETY_REC)) w += 6;
     const age = daysAgo(ev.DATE, now);
     if (age !== null && age > 10 * 365) w = Math.round(w * 0.6);
     directScore += w;
 
-    const open = (ev.STATUS ?? '').toLowerCase() !== 'closed';
+    const finalReport = /final/i.test(ev.REPORT_TYPE ?? '');
+    const injuries = injurySummary(ev);
     findings.push({
       severity: 'priority',
       text:
-        `Direct NTSB match: ${ev.DATE} event at ${ev.CITY}, ${ev.STATE}` +
-        ` (highest injury: ${ev.HIGHEST_INJURY || 'none'}; damage: ${ev.DAMAGE || 'unknown'}; ${open ? 'investigation open' : 'closed'}).` +
-        (ev.PROBABLE_CAUSE ? ` Probable cause: ${ev.PROBABLE_CAUSE}` : ' Probable cause not yet published.'),
-      evidence: [`NTSB ${ev.EVENT_ID}`],
+        `Direct NTSB ${ev.EVENT_TYPE || 'event'} — ${ev.DATE} at ${ev.CITY}, ${ev.STATE}` +
+        ` (highest injury: ${ev.HIGHEST_INJURY || 'none'}${injuries ? `; ${injuries}` : ''}; ` +
+        `${finalReport ? 'final report published' : `report status: ${ev.REPORT_TYPE || ev.STATUS || 'unknown'}`}` +
+        `${isTrue(ev.HAS_SAFETY_REC) ? '; NTSB issued safety recommendation(s)' : ''}).` +
+        (ev.PROBABLE_CAUSE
+          ? ` Probable cause: ${ev.PROBABLE_CAUSE}`
+          : ' Read the full NTSB report for probable cause and damage detail.'),
+      evidence: [`NTSB ${ev.EVENT_ID}`, ...(ev.REPORT_URL ? [`Full report: ${ev.REPORT_URL}`] : [])],
     });
-    if (open) directScore += 10;
+    if (!finalReport && (ev.STATUS ?? '').toLowerCase() !== 'completed') directScore += 10;
   }
 
   const themes = causeThemes(modelEvents);

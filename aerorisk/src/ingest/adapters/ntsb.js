@@ -36,6 +36,12 @@ const CAROL_FIELD_MAP = {
   State: 'STATE',
   HighestInjuryLevel: 'HIGHEST_INJURY',
   CompletionStatus: 'STATUS',
+  EventType: 'EVENT_TYPE',
+  Mkey: 'MKEY',
+  InjuryOnboardCount: 'INJURY_ONBOARD',
+  InjuryOngroundCount: 'INJURY_ONGROUND',
+  HasSafetyRec: 'HAS_SAFETY_REC',
+  MostRecentReportType: 'REPORT_TYPE',
 };
 
 // The exact query body the live CAROL API accepts (a null SortColumn or missing
@@ -86,6 +92,7 @@ export function transformCarolResponse(jsonText, mode = 'api') {
     if (!ev.EVENT_ID && !ev.DATE) continue;
     ev.N_NUMBER = ev.N_NUMBER ? normalizeNNumber(ev.N_NUMBER) : '';
     ev.DATE = (ev.DATE ?? '').slice(0, 10);
+    ev.REPORT_URL = ntsbReportUrl(ev.MKEY);
     ev.SOURCE_MODE = mode;
     events.push(ev);
   }
@@ -95,8 +102,19 @@ export function transformCarolResponse(jsonText, mode = 'api') {
 export const NTSB_COLUMNS = [
   'EVENT_ID', 'DATE', 'N_NUMBER', 'SERIAL_NUMBER', 'MFR', 'MODEL',
   'OPERATOR', 'CITY', 'STATE', 'AIRPORT', 'HIGHEST_INJURY', 'DAMAGE',
-  'STATUS', 'PROBABLE_CAUSE', 'SOURCE_MODE',
+  'STATUS', 'PROBABLE_CAUSE', 'EVENT_TYPE', 'INJURY_ONBOARD',
+  'INJURY_ONGROUND', 'HAS_SAFETY_REC', 'REPORT_TYPE', 'MKEY', 'REPORT_URL',
+  'SOURCE_MODE',
 ];
+
+// Public NTSB report PDF for a case (probable cause + full narrative live here;
+// the JSON API exposes only summary fields, so we link the report rather than
+// scrape the PDF).
+export function ntsbReportUrl(mkey) {
+  return mkey
+    ? `https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/${mkey}/pdf`
+    : '';
+}
 
 // CSV bulk-export header candidates (normalised).
 const CSV_CANDIDATES = {

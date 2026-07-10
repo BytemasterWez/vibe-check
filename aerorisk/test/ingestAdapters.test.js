@@ -357,6 +357,29 @@ test('CAROL query body has the fields the live API requires', () => {
   assert.equal(q.QueryGroups[0].QueryRules[0].Values[0], 'N106US');
 });
 
+test('CAROL transform captures enriched fields and builds a report link', () => {
+  const payload = JSON.stringify({
+    Results: [{
+      EntryId: 'x',
+      Fields: [
+        { FieldName: 'NtsbNo', Values: ['CEN11CA524'] },
+        { FieldName: 'EventDate', Values: ['2011-07-27T00:00:00Z'] },
+        { FieldName: 'N#', Values: ['N10009'] },
+        { FieldName: 'EventType', Values: ['Accident'] },
+        { FieldName: 'Mkey', Values: ['81264'] },
+        { FieldName: 'InjuryOnboardCount', Values: ['1'] },
+        { FieldName: 'HasSafetyRec', Values: ['false'] },
+        { FieldName: 'MostRecentReportType', Values: ['Final'] },
+      ],
+    }],
+  });
+  const ev = transformCarolResponse(payload)[0];
+  assert.equal(ev.EVENT_TYPE, 'Accident');
+  assert.equal(ev.INJURY_ONBOARD, '1');
+  assert.equal(ev.REPORT_TYPE, 'Final');
+  assert.equal(ev.REPORT_URL, 'https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/81264/pdf');
+});
+
 test('CAROL response transform maps the live Fields schema', () => {
   // Shape captured verbatim from the live CAROL API for N106US (Hudson).
   const payload = JSON.stringify({

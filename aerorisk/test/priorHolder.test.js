@@ -50,6 +50,24 @@ test('event with a mismatched manufacturer is excluded (covers blank year)', () 
   assert.ok(accidents.findings.some((f) => /different manufacturer/i.test(f.text)));
 });
 
+test('enriched NTSB fields sharpen the finding and cite the report link', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'aerorisk-enrich-'));
+  writeFileSync(join(dir, 'registry.csv'),
+    'N_NUMBER,SERIAL_NUMBER,MFR,MODEL,ENG_MFR,ENG_MODEL,YEAR_MFR,REGISTRANT_TYPE,REGISTRANT_NAME,CITY,STATE,CERT_ISSUE_DATE,AIRWORTHINESS_CLASS,STATUS,MODE_S_HEX,EXPIRATION_DATE\n' +
+    'N700P,SN7,PIPER,PA-46,CONT,TSIO,2005,LLC,OWNER,CITY,FL,2010-01-01,Standard,Valid,ABC,2030-01-01\n');
+  // Enriched NTSB row with EVENT_TYPE, injury counts, safety rec, report url.
+  writeFileSync(join(dir, 'ntsb.csv'),
+    'EVENT_ID,DATE,N_NUMBER,SERIAL_NUMBER,MFR,MODEL,OPERATOR,CITY,STATE,AIRPORT,HIGHEST_INJURY,DAMAGE,STATUS,PROBABLE_CAUSE,EVENT_TYPE,INJURY_ONBOARD,INJURY_ONGROUND,HAS_SAFETY_REC,REPORT_TYPE,MKEY,REPORT_URL\n' +
+    'ERA10FA100,2019-05-01,N700P,,PIPER,PA-46,,TOWN,FL,,Fatal,,Completed,,Accident,2,0,true,Final,55555,https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/55555/pdf\n');
+  const a = assessAircraft(new Datastore(dir), 'N700P', { now: NOW });
+  const accidents = a.modules.find((m) => m.key === 'accidents');
+  const f = accidents.findings.find((x) => x.severity === 'priority');
+  assert.match(f.text, /Direct NTSB Accident/);
+  assert.match(f.text, /2 onboard/);
+  assert.match(f.text, /safety recommendation/i);
+  assert.ok(f.evidence.some((e) => /GenerateNewestReport\/55555/.test(e)), 'report link cited as evidence');
+});
+
 test('genuine same-airframe events are retained and scored', () => {
   const store = storeWith(
     ['N900H,SN9,TEXAS HELICOPTER CORP,OH-13H,LYC,VO-435,1979,Corporation,OWNER,CITY,IL,2010-01-01,Standard,Valid,ABC777,2030-01-01'],

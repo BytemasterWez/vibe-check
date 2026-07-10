@@ -194,9 +194,12 @@ Adapter status:
   `--offline` with a manual export today (see `LIVE_RUN.md`).
 - **ntsb** — API mode POSTs the verified NTSB CAROL query (`Query/Main`) and
   maps the live `Results[].Fields[]` schema; bulk/offline modes ingest CAROL
-  and CSV exports. **Validated live** against real tails. The CAROL summary
-  carries event identity, location, make/model and injury level, but not
-  damage/probable-cause/operator/serial (those live in the full docket).
+  and CSV exports. **Validated live** against real tails. Captures event
+  identity, location, make/model, injury level + onboard/onground counts,
+  accident-vs-incident type, safety-recommendation flag, and report finality,
+  and attaches a direct link to the full NTSB report PDF (probable cause and
+  damage live only in that report, not the JSON API, so it is linked rather
+  than scraped). Recycled tail numbers are guarded (see the accidents module).
 - **faa-ad** — api mode discovers FAA AD final rules via the Federal Register
   public JSON API; offline mode loads a structured AD CSV as authoritative.
   Text-match applicability from AD prose is tagged `TEXT_MATCH` and reported
