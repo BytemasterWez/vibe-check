@@ -26,3 +26,13 @@ test('skips blank lines and handles CRLF and missing trailing newline', () => {
 test('empty input yields empty array', () => {
   assert.deepEqual(parseCsv(''), []);
 });
+
+test('strips a leading UTF-8 BOM so the first header is usable', () => {
+  // Real FAA MASTER.txt ships a BOM; without stripping, the first column key
+  // is corrupted and every row is dropped.
+  const utf8Bom = parseCsv('﻿N-NUMBER,MFR\n100,PIPER\n');
+  assert.equal(utf8Bom[0]['N-NUMBER'], '100');
+  // latin1-decoded BOM (how the registry bundle is read).
+  const latin1Bom = parseCsv('ï»¿N-NUMBER,MFR\n100,PIPER\n');
+  assert.equal(latin1Bom[0]['N-NUMBER'], '100');
+});

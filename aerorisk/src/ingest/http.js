@@ -17,6 +17,18 @@ export async function httpGetText(fetchImpl, url, opts) {
   return { text: buffer.toString('utf8'), status };
 }
 
+export async function httpPostJson(fetchImpl, url, body, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  const res = await fetchImpl(url, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+  return { text: Buffer.from(await res.arrayBuffer()).toString('utf8'), status: res.status };
+}
+
 // Extracts hrefs from an HTML page, resolved against the page URL.
 export function extractLinks(html, pageUrl) {
   const links = [];

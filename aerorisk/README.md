@@ -186,13 +186,17 @@ Adapter status:
 - **faa-registry** — page-discovers the zip link (canonical URL fallback);
   parses the full bundle (MASTER, ACFTREF, ENGINE, DEREG, DOCINDEX, DEALER,
   RESERVED) and derives a registration-history view from deregistrations.
-- **faa-sdr** — crawls yearly CSV links, downloads missing/changed years only,
-  flexible column mapping across year layouts, aircraft match layer with
-  confidence tiers `EXACT_N_NUMBER → SERIAL_MATCH → MAKE_MODEL_ENGINE_MATCH →
-  MODEL_ONLY → WEAK_TEXT_MATCH → NO_MATCH`, JASC model-pattern summaries.
-- **ntsb** — API mode (targeted N-number queries) and bulk mode; defensive
-  field extraction over CAROL-style JSON/CSV. The exact live API shape is
-  unverified from this sandbox; unmapped shapes surface as warnings.
+- **faa-sdr** — flexible column mapping across year layouts, aircraft match
+  layer with confidence tiers `EXACT_N_NUMBER → SERIAL_MATCH →
+  MAKE_MODEL_ENGINE_MATCH → MODEL_ONLY → WEAK_TEXT_MATCH → NO_MATCH`, JASC
+  model-pattern summaries. **Live note:** the modern `sdrs.faa.gov` is a query
+  app, not static yearly-CSV links, so auto-discovery needs rework; use
+  `--offline` with a manual export today (see `LIVE_RUN.md`).
+- **ntsb** — API mode POSTs the verified NTSB CAROL query (`Query/Main`) and
+  maps the live `Results[].Fields[]` schema; bulk/offline modes ingest CAROL
+  and CSV exports. **Validated live** against real tails. The CAROL summary
+  carries event identity, location, make/model and injury level, but not
+  damage/probable-cause/operator/serial (those live in the full docket).
 - **faa-ad** — api mode discovers FAA AD final rules via the Federal Register
   public JSON API; offline mode loads a structured AD CSV as authoritative.
   Text-match applicability from AD prose is tagged `TEXT_MATCH` and reported

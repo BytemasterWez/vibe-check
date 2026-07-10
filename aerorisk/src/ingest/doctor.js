@@ -8,11 +8,11 @@
 // It degrades honestly: on a policy-blocked network every network source
 // reports BLOCKED with the gateway's reason, and the command exits non-zero.
 
-import { httpGetText, httpGetBuffer, extractLinks } from './http.js';
+import { httpGetText, httpPostJson, extractLinks } from './http.js';
 import { transformFrPayload, FEDERAL_REGISTER_API } from './adapters/faaAd.js';
 import { DISCOVERY_PAGE, CANONICAL_ZIP_URL } from './adapters/faaRegistry.js';
 import { SDR_PAGE } from './adapters/faaSdr.js';
-import { NTSB_API_ROOT } from './adapters/ntsb.js';
+import { NTSB_API_ROOT, buildCarolQuery, transformCarolResponse } from './adapters/ntsb.js';
 
 export const DOCTOR = {
   OK: 'REACHABLE_SHAPE_OK',
@@ -90,14 +90,19 @@ const PROBES = [
     kind: 'network',
     endpoint: NTSB_API_ROOT,
     async probe(fetchImpl) {
-      const { buffer } = await httpGetBuffer(fetchImpl, `${NTSB_API_ROOT}?RegistrationNumber=N789EF`, { timeoutMs: 30_000 });
-      const text = buffer.toString('utf8');
+      // N106US = US Airways 1549 (Hudson) — a known real event, so a healthy
+      // CAROL API must return exactly one parseable result.
+      const { text } = await httpPostJson(fetchImpl, NTSB_API_ROOT, buildCarolQuery('N106US', 3), { timeoutMs: 30_000 });
+      let events;
       try {
-        JSON.parse(text);
-      } catch {
-        return { status: DOCTOR.MISMATCH, detail: 'reachable but response is not JSON — API shape may differ; check ntsb adapter field paths' };
+        events = transformCarolResponse(text);
+      } catch (err) {
+        return { status: DOCTOR.MISMATCH, detail: `reachable but response did not parse as CAROL JSON: ${err.message}` };
       }
-      return { status: DOCTOR.OK, detail: 'API reachable and returned JSON (verify field paths against a known tail on first ingest)' };
+      if (events.length === 0) {
+        return { status: DOCTOR.MISMATCH, detail: 'reachable but 0 events parsed for a known tail — CAROL field names may have changed (see CAROL_FIELD_MAP)' };
+      }
+      return { status: DOCTOR.OK, detail: `CAROL query OK; parsed event ${events[0].EVENT_ID} (${events[0].MFR} ${events[0].MODEL})` };
     },
   },
   // Offline/structured sources: no live endpoint to probe.

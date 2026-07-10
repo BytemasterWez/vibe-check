@@ -1,21 +1,22 @@
 // Adapter 3 — NTSB accidents/incidents.
 //
 // Two modes per the ingestion spec:
-//   api  — targeted queries against the NTSB public developer API
+//   api  — targeted queries against the NTSB CAROL public API
 //          (data.ntsb.gov) for a list of registration numbers
-//   bulk — the downloadable aviation accident datasets (1962–1981 and
-//          1982–present), or any CAROL JSON/CSV export
+//   bulk — the downloadable aviation accident datasets, or any CAROL/CSV export
 // Offline mode ingests local .json/.csv exports with the same transforms.
 //
-// The NTSB API's exact response shape has NOT been verified from this
-// sandbox (network-blocked); field extraction is therefore defensive
-// (candidate paths per field) and unmapped shapes surface as warnings, not
-// silent empties.
+// The CAROL query body and response shape below were verified against the live
+// API: it is a POST to Query/Main; results arrive as Results[].Fields[] where
+// each field is { FieldName, Values:[...] }. The summary response carries event
+// identity, location, make/model and highest injury, but NOT damage level,
+// probable cause, operator, or serial (those live in the full docket), so those
+// columns are left blank rather than guessed.
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseCsv } from '../../csv.js';
-import { httpGetBuffer } from '../http.js';
+import { httpPostJson } from '../http.js';
 import { STATUS, healthRecord, statusForFetchError } from '../health.js';
 import { normalizeRowKeys, buildColumnMapping, applyMapping } from '../columnMap.js';
 import { normalizeNNumber } from '../../identity.js';
@@ -23,6 +24,73 @@ import { normalizeNNumber } from '../../identity.js';
 const SOURCE = 'ntsb';
 export const NTSB_API_ROOT = 'https://data.ntsb.gov/carol-main-public/api/Query/Main';
 export const NTSB_BULK_PAGE = 'https://data.ntsb.gov/avdata';
+
+// CAROL "cases" collection field names → our NTSB_COLUMNS. Verified live.
+const CAROL_FIELD_MAP = {
+  NtsbNo: 'EVENT_ID',
+  EventDate: 'DATE',
+  'N#': 'N_NUMBER',
+  VehicleMake: 'MFR',
+  VehicleModel: 'MODEL',
+  City: 'CITY',
+  State: 'STATE',
+  HighestInjuryLevel: 'HIGHEST_INJURY',
+  CompletionStatus: 'STATUS',
+};
+
+// The exact query body the live CAROL API accepts (a null SortColumn or missing
+// SessionId returns 500; GET returns 405 — both learned from the live API).
+export function buildCarolQuery(tail, resultSetSize = 50) {
+  return {
+    ResultSetSize: resultSetSize,
+    ResultSetOffset: 0,
+    AndOr: 'and',
+    TargetCollection: 'cases',
+    SortColumn: 'Event.EventDate',
+    SortDescending: true,
+    SessionId: 0,
+    QueryGroups: [
+      {
+        AndOr: 'and',
+        inLastSearch: false,
+        editedSinceLastSearch: false,
+        QueryRules: [
+          {
+            RuleType: 'Simple',
+            Values: [tail],
+            Columns: ['Aircraft.RegistrationNumber'],
+            Operator: 'is',
+            selectedOption: {},
+            overrideColumn: '',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+// Parse a CAROL Results[].Fields[] payload into our event rows.
+export function transformCarolResponse(jsonText, mode = 'api') {
+  const parsed = JSON.parse(jsonText);
+  const results = parsed.Results ?? [];
+  const events = [];
+  for (const r of results) {
+    const fields = r.Fields ?? [];
+    const ev = {};
+    for (const f of fields) {
+      const col = CAROL_FIELD_MAP[f.FieldName];
+      if (!col) continue;
+      const value = Array.isArray(f.Values) ? f.Values[0] : f.Values;
+      if (value != null && value !== '') ev[col] = String(value);
+    }
+    if (!ev.EVENT_ID && !ev.DATE) continue;
+    ev.N_NUMBER = ev.N_NUMBER ? normalizeNNumber(ev.N_NUMBER) : '';
+    ev.DATE = (ev.DATE ?? '').slice(0, 10);
+    ev.SOURCE_MODE = mode;
+    events.push(ev);
+  }
+  return events;
+}
 
 export const NTSB_COLUMNS = [
   'EVENT_ID', 'DATE', 'N_NUMBER', 'SERIAL_NUMBER', 'MFR', 'MODEL',
@@ -80,7 +148,13 @@ function pick(obj, paths) {
 
 export function transformNtsbJson(jsonText, mode = 'api') {
   const parsed = JSON.parse(jsonText);
-  const items = Array.isArray(parsed) ? parsed : parsed.results ?? parsed.Results ?? parsed.cases ?? [];
+  // Live CAROL responses are { Results: [{ Fields: [...] }] }; delegate those
+  // to the verified CAROL extractor. Fall back to the generic path for other
+  // JSON exports.
+  if (parsed && Array.isArray(parsed.Results) && parsed.Results.some((r) => Array.isArray(r?.Fields))) {
+    return transformCarolResponse(jsonText, mode);
+  }
+  const items = Array.isArray(parsed) ? parsed : parsed.results ?? parsed.cases ?? [];
   const events = [];
   for (const item of items) {
     const ev = {};
@@ -139,10 +213,9 @@ export const ntsbAdapter = {
         }
         const queryUrl = ctx.options.ntsbApi ?? NTSB_API_ROOT;
         for (const tail of tails) {
-          // Registration-number query; response stored raw before transform.
-          const url = `${queryUrl}?RegistrationNumber=${encodeURIComponent(tail)}`;
-          const { buffer } = await httpGetBuffer(ctx.fetchImpl, url);
-          ctx.artifactStore.save(SOURCE, `api_${tail}.json`, buffer, { sourceUrl: url });
+          // CAROL is a POST API; registration-number query, raw response stored.
+          const { text } = await httpPostJson(ctx.fetchImpl, queryUrl, buildCarolQuery(tail));
+          ctx.artifactStore.save(SOURCE, `api_${tail}.json`, Buffer.from(text), { sourceUrl: queryUrl });
           downloaded += 1;
         }
       } else {

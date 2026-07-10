@@ -12,7 +12,7 @@ import { buildContext, runIngestion } from '../src/ingest/runner.js';
 import { TableStore } from '../src/ingest/tableStore.js';
 import { faaRegistryAdapter } from '../src/ingest/adapters/faaRegistry.js';
 import { faaSdrAdapter, yearRange, classifyMatch } from '../src/ingest/adapters/faaSdr.js';
-import { ntsbAdapter, transformNtsbJson } from '../src/ingest/adapters/ntsb.js';
+import { ntsbAdapter, transformNtsbJson, buildCarolQuery, transformCarolResponse } from '../src/ingest/adapters/ntsb.js';
 import { Datastore } from '../src/datastore.js';
 import { assessAircraft } from '../src/assess.js';
 
@@ -344,6 +344,48 @@ test('NTSB JSON transform extracts events defensively from CAROL-style shapes', 
   assert.equal(events[0].N_NUMBER, 'N789EF');
   assert.equal(events[0].DATE, '2021-03-18');
   assert.equal(events[0].DAMAGE, 'substantial');
+});
+
+test('CAROL query body has the fields the live API requires', () => {
+  const q = buildCarolQuery('N106US', 5);
+  // A null SortColumn or missing SessionId returns 500 live; guard against
+  // regressions that would silently reintroduce those.
+  assert.equal(q.SortColumn, 'Event.EventDate');
+  assert.equal(q.SessionId, 0);
+  assert.equal(q.TargetCollection, 'cases');
+  assert.equal(q.QueryGroups[0].QueryRules[0].Columns[0], 'Aircraft.RegistrationNumber');
+  assert.equal(q.QueryGroups[0].QueryRules[0].Values[0], 'N106US');
+});
+
+test('CAROL response transform maps the live Fields schema', () => {
+  // Shape captured verbatim from the live CAROL API for N106US (Hudson).
+  const payload = JSON.stringify({
+    Results: [{
+      EntryId: 'abc',
+      Fields: [
+        { FieldName: 'NtsbNo', Values: ['DCA09MA026'] },
+        { FieldName: 'EventDate', Values: ['2009-01-15T16:30:00Z'] },
+        { FieldName: 'N#', Values: ['N106US'] },
+        { FieldName: 'VehicleMake', Values: ['Airbus'] },
+        { FieldName: 'VehicleModel', Values: ['A320'] },
+        { FieldName: 'HighestInjuryLevel', Values: ['Serious'] },
+        { FieldName: 'City', Values: ['Weehawken'] },
+        { FieldName: 'State', Values: ['New Jersey'] },
+        { FieldName: 'CompletionStatus', Values: ['Completed'] },
+      ],
+    }],
+  });
+  const events = transformCarolResponse(payload, 'api');
+  assert.equal(events.length, 1);
+  const ev = events[0];
+  assert.equal(ev.EVENT_ID, 'DCA09MA026');
+  assert.equal(ev.DATE, '2009-01-15');
+  assert.equal(ev.N_NUMBER, 'N106US');
+  assert.equal(ev.MFR, 'Airbus');
+  assert.equal(ev.MODEL, 'A320');
+  assert.equal(ev.HIGHEST_INJURY, 'Serious');
+  // transformNtsbJson auto-detects and delegates CAROL payloads.
+  assert.equal(transformNtsbJson(payload).length, 1);
 });
 
 test('NTSB api mode with no tails and no registry → PARTIAL, honestly', async () => {

@@ -23,6 +23,15 @@ const FR_OK = JSON.stringify({
 });
 const REGISTRY_PAGE_OK = '<a href="https://registry.faa.gov/database/ReleasableAircraft.zip">DB</a>';
 const SDR_PAGE_OK = '<a href="/f/sdr_2024.csv">2024</a><a href="/f/sdr_1995.csv">1995</a>';
+const NTSB_OK = JSON.stringify({
+  Results: [{ EntryId: 'x', Fields: [
+    { FieldName: 'NtsbNo', Values: ['DCA09MA026'] },
+    { FieldName: 'EventDate', Values: ['2009-01-15T16:30:00Z'] },
+    { FieldName: 'N#', Values: ['N106US'] },
+    { FieldName: 'VehicleMake', Values: ['Airbus'] },
+    { FieldName: 'VehicleModel', Values: ['A320'] },
+  ] }],
+});
 
 function route(map) {
   return stub((url) => {
@@ -38,7 +47,7 @@ test('all network sources reachable with good shape → READY', async () => {
     ['federalregister.gov', { body: FR_OK }],
     ['releasable_aircraft_download', { body: REGISTRY_PAGE_OK }],
     ['sdrs.faa.gov', { body: SDR_PAGE_OK }],
-    ['data.ntsb.gov', { body: '{"results":[]}' }],
+    ['data.ntsb.gov', { body: NTSB_OK }],
   ]);
   const outcome = await runDoctor({ fetchImpl });
   assert.equal(outcome.ready, true);

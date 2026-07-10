@@ -5,15 +5,40 @@ the network allows, against the real endpoints. The one step that cannot be
 done from a locked-down network is the live ingest. This runbook makes that
 step turnkey and self-diagnosing.
 
+## Live validation status
+
+A first live run has been completed against the real endpoints. Results:
+
+| Source | Live status | Notes |
+| --- | --- | --- |
+| **faa-ad** | ✅ validated | 100 real ADs ingested from the Federal Register API |
+| **faa-registry** | ✅ validated | 314,611 real aircraft parsed (after a UTF-8 BOM fix) |
+| **ntsb** | ✅ validated | CAROL is a POST API; real events ingested for real tails |
+| **faa-sdr** | ⚠️ needs rework | the live site is a query app, not static yearly-CSV links |
+
+Three findings from that run are already fixed in the code: Node `fetch` now
+routes through `HTTP(S)_PROXY` automatically (`bin/aerorisk.js` re-execs with
+`NODE_USE_ENV_PROXY`); the CSV parser strips the FAA files' BOM; and the NTSB
+adapter POSTs the verified CAROL query body. The one open item is **faa-sdr**
+(see below).
+
 ## Why a runbook is needed
 
-The automated-discovery adapters (registry, SDR, NTSB, AD) are built against
-the **documented** shapes of public U.S. aviation data. They have not been run
-against the live bytes because the build/CI environment's egress policy blocks
-the government hosts (`aerorisk doctor` reports this honestly — see below). The
-adapters are built to **fail loudly** — a naming mismatch surfaces as a named
-unmapped column and an honest health status, never as silently empty data — so
-the first live run is low-risk and the fixes (if any) are small and localised.
+The automated-discovery adapters are built against the shapes of public U.S.
+aviation data. They **fail loudly** — a naming mismatch surfaces as a named
+unmapped column or a `SHAPE_MISMATCH`, never as silently empty data — so
+remaining fixes are small and localised. `aerorisk doctor` tells you the
+current state per source in one command.
+
+## faa-sdr: the open item
+
+The modern `sdrs.faa.gov` is an ASP.NET query application (`Query.aspx`), not
+a page of static yearly-CSV links, so the SDR adapter's link-discovery no
+longer matches the live site and `doctor` reports it `SHAPE_MISMATCH`. Two ways
+forward: (a) load SDR data via `ingest faa-sdr --offline <dir>` from a manual
+export of `Query.aspx` results (works today), or (b) rework the adapter's
+discovery to drive the query form / find the current bulk endpoint (a real
+task, not a one-line mapping fix). Everything downstream of SDR is unaffected.
 
 ## Step 0 — network
 

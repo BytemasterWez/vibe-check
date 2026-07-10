@@ -4,6 +4,11 @@
 // feeds are plain CSV and the tool must run in restricted environments.
 
 export function parseCsv(text) {
+  // Strip a leading byte-order mark. Real FAA files ship a UTF-8 BOM; when a
+  // file is read as latin1 (the registry bundle is), the BOM decodes to the
+  // three-char sequence below instead of U+FEFF. Either would otherwise
+  // corrupt the first header cell and silently drop every row.
+  text = text.replace(/^﻿/, '').replace(/^ï»¿/, '');
   const rows = [];
   let row = [];
   let field = '';
