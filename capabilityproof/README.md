@@ -102,6 +102,47 @@ capability's state POSTs a JSON event to it:
 
 Delivery failures are logged and never fail the verification itself.
 
+## Telegram alerts + daily report
+
+Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` and you get:
+
+- **instant alerts** when a capability starts failing, recovers, or drifts
+  (🔴/🟢/🟡 messages with the failing checks and fallback order), plus doctor
+  escalations;
+- **a daily report** (`npm run capabilityproof:report`): verified counts,
+  quarantine size, fleet median/p95 latency, average 30-day success, drift —
+  also written as markdown to `data/reports/`.
+
+One-time setup: create a bot with @BotFather in Telegram, export the token,
+message your bot once, then `node capabilityproof/report.mjs setup-telegram`
+prints your chat id. Confirm with `node capabilityproof/report.mjs test`.
+
+## Doctor (24/7 watchdog)
+
+`npm run capabilityproof:doctor` distinguishes *a source is broken* (normal,
+covered by receipts and alerts) from *our system is broken* and only
+escalates the latter: manifests load, data dir writable, signing keys
+readable, disk space, sweep recency, API liveness (auto-restarts the systemd
+service when possible), LLM reachability (informational). Critical failures
+alert via Telegram and exit non-zero for systemd.
+
+## Run 24/7 on a VPS
+
+One command on a fresh Ubuntu/Debian server:
+
+```bash
+sudo bash capabilityproof/ops/install.sh                # verification system only (~$5/mo VPS)
+sudo bash capabilityproof/ops/install.sh --with-ollama  # + local LLM for Scout drafting (needs ~8GB RAM)
+```
+
+Installs Node, the app under `/opt/capabilityproof`, and systemd units: the
+API + dashboard on :3200 (auto-restart), a daily sweep + quarantine sweep +
+report timer, a doctor timer every 15 minutes, and (with `--with-ollama`)
+Ollama serving `qwen2.5:3b` — the smallest model that drafts reliable JSON —
+plus a weekly Scout discovery timer. Configuration lives in
+`/etc/capabilityproof.env`. The Scout code is endpoint-agnostic: LM Studio on
+a PC and Ollama on a VPS both speak the same OpenAI-compatible API.
+
 ## MCP tools
 
 `search_capabilities`, `verify_capability`, `compare_capabilities`,
@@ -229,6 +270,9 @@ capabilityproof/
   cli.mjs             local verification sweeps and inspection
   scout.mjs           automated source discovery + quarantine + promotion
   scout/              candidate leads for the Scout
+  report.mjs          daily key-metrics digest (Telegram + markdown)
+  doctor.mjs          self-healing watchdog for unattended operation
+  ops/install.sh      one-command 24/7 VPS installer (systemd, optional Ollama)
   manifests/          verified capability manifests
   manifests-proposed/ quarantine for scouted, not-yet-promoted sources
   lib/
@@ -240,8 +284,9 @@ capabilityproof/
     registry.mjs      task search, constraint filtering, evidence-first ranking
     service.mjs       orchestration shared by REST, MCP and CLI
     notify.mjs        status-change and schema-drift webhooks
-    dashboard.mjs     server-rendered HTML status page
-    llm.mjs           OpenAI-compatible client for local models (LM Studio etc.)
+    dashboard.mjs     server-rendered HTML status page with fleet metrics
+    llm.mjs           OpenAI-compatible client for local models (LM Studio, Ollama)
+    telegram.mjs      Telegram Bot API transport for alerts and reports
   test/smoke.mjs      offline end-to-end test with mock sources
   data/               runtime state: keys, receipts, evidence, history (git-ignored)
 ```

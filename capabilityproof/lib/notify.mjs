@@ -1,6 +1,11 @@
-// Webhook notifications: tell subscribers when a capability's verification
-// status changes (outage, recovery, first verification) or its response
-// schema drifts while remaining nominally healthy.
+// Notifications: tell subscribers when a capability's verification status
+// changes (outage, recovery, first verification) or its response schema
+// drifts while remaining nominally healthy.
+//
+// Transports: generic JSON webhook (CAPABILITYPROOF_WEBHOOK_URL) and
+// Telegram (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID). Either, both, or neither.
+
+import { telegramConfigured, sendTelegram, formatEventMessage } from './telegram.mjs';
 
 const WEBHOOK_TIMEOUT_MS = 5000;
 
@@ -40,20 +45,27 @@ export function buildEvents(previous, receipt) {
 export async function notify({ previous, receipt, webhookUrl }) {
   const url = webhookUrl ?? process.env.CAPABILITYPROOF_WEBHOOK_URL;
   const events = buildEvents(previous, receipt);
-  if (!url || events.length === 0) return { sent: 0, events };
+  if (events.length === 0) return { sent: 0, events };
 
   let sent = 0;
   for (const event of events) {
-    try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(event),
-        signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
-      });
-      sent++;
-    } catch (err) {
-      console.error(`[capabilityproof] webhook delivery failed (${event.event} for ${event.capability_id}): ${err.message}`);
+    if (url) {
+      try {
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(event),
+          signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
+        });
+        sent++;
+      } catch (err) {
+        console.error(`[capabilityproof] webhook delivery failed (${event.event} for ${event.capability_id}): ${err.message}`);
+      }
+    }
+    if (telegramConfigured()) {
+      const result = await sendTelegram(formatEventMessage(event));
+      if (result.sent) sent++;
+      else console.error(`[capabilityproof] telegram delivery failed (${event.event} for ${event.capability_id}): ${result.reason}`);
     }
   }
   return { sent, events };

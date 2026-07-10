@@ -3,6 +3,12 @@
 // convenience only — the receipts are the product; software should consume
 // the REST/MCP surfaces.
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const PROPOSED_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'manifests-proposed');
+
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -36,6 +42,38 @@ export function renderDashboard(service) {
     else if (c.latest_receipt.status === 'verified') counts.verified++;
     else counts.failed++;
   }
+
+  // Fleet-level key metrics.
+  const latencies = rows
+    .filter(({ c }) => c.latest_receipt?.status === 'verified')
+    .map(({ receipt }) => receipt?.results?.latency_ms)
+    .filter((n) => n != null)
+    .sort((a, b) => a - b);
+  const rates = rows.map(({ stats }) => stats.success_rate_30d).filter((n) => n != null);
+  const fleet = {
+    median_latency: latencies.length ? latencies[Math.floor(latencies.length / 2)] + 'ms' : '—',
+    p95_latency: latencies.length ? latencies[Math.floor(latencies.length * 0.95)] + 'ms' : '—',
+    success_30d: rates.length ? Math.round((rates.reduce((a, b) => a + b, 0) / rates.length) * 100) + '%' : '—',
+    drift_sources: rows.filter(({ stats }) => (stats.schema_changes_30d || 0) > 0).length,
+    categories: new Set(rows.map(({ c }) => c.category)).size,
+  };
+  let quarantined = 0;
+  try {
+    quarantined = fs.existsSync(PROPOSED_DIR) ? fs.readdirSync(PROPOSED_DIR).filter((f) => f.endsWith('.json')).length : 0;
+  } catch {}
+
+  const metricStrip = [
+    ['Verified', `${counts.verified}/${rows.length}`],
+    ['Failing', String(counts.failed)],
+    ['In quarantine', String(quarantined)],
+    ['Categories', String(fleet.categories)],
+    ['Median latency', fleet.median_latency],
+    ['p95 latency', fleet.p95_latency],
+    ['30d success', fleet.success_30d],
+    ['Drift sources 30d', String(fleet.drift_sources)],
+  ]
+    .map(([label, value]) => `<div class="metric"><div class="v">${esc(value)}</div><div class="l">${esc(label)}</div></div>`)
+    .join('\n');
 
   const tr = rows
     .map(({ c, receipt, stats }) => {
@@ -76,11 +114,17 @@ export function renderDashboard(service) {
   .s-verified { color: #1a7f37; } .s-failed_checks, .s-unreachable { color: #cf222e; } .s-never_verified { opacity: .6; }
   @media (prefers-color-scheme: dark) { .s-verified { color: #3fb950; } .s-failed_checks, .s-unreachable { color: #f85149; } }
   details ul { margin: .3rem 0 0; padding-left: 1.2rem; }
+  .metrics { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0 0 1.5rem; }
+  .metric { border: 1px solid color-mix(in srgb, currentColor 15%, transparent); border-radius: .5rem; padding: .5rem .9rem; min-width: 6.5rem; }
+  .metric .v { font-size: 1.15rem; font-weight: 600; } .metric .l { font-size: .7rem; opacity: .65; }
 </style>
 </head>
 <body>
 <h1>CapabilityProof — capability status</h1>
-<p class="sub">${counts.verified} verified · ${counts.failed} failing · ${counts.never} never verified · rendered ${new Date().toISOString()} · refreshes every 60s</p>
+<p class="sub">rendered ${new Date().toISOString()} · refreshes every 60s</p>
+<div class="metrics">
+${metricStrip}
+</div>
 <table>
 <thead><tr><th>Capability</th><th>Category</th><th>Status</th><th>Verified</th><th>Latency</th><th>Completeness</th><th>30d success</th><th>Drift 30d</th></tr></thead>
 <tbody>
