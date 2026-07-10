@@ -59,6 +59,12 @@ function csvField(value) {
   return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
+// Serials vary in spacing/case/leading zeros across the MASTER and DEREG files;
+// normalise before comparing so a genuine match isn't missed on formatting.
+function normalizeSerial(serial) {
+  return String(serial ?? '').toUpperCase().replace(/[\s-]/g, '').replace(/^0+/, '');
+}
+
 export const REGISTRY_COLUMNS = [
   'N_NUMBER', 'SERIAL_NUMBER', 'MFR', 'MODEL', 'ENG_MFR', 'ENG_MODEL',
   'YEAR_MFR', 'REGISTRANT_TYPE', 'REGISTRANT_NAME', 'CITY', 'STATE',
@@ -204,14 +210,36 @@ export function transformRegistryBundle(files) {
   if (files.dereg) {
     const deregRows = transformDereg(files.dereg, aircraftRef, engineRef);
     tables.push({ name: 'deregistered_aircraft', columns: DEREG_COLUMNS, rows: deregRows });
+
+    // US registration marks are recycled across different airframes over the
+    // decades, so a DEREG row sharing a tail number is NOT necessarily this
+    // aircraft's history. Only attribute a prior deregistration to the current
+    // aircraft when the serial number matches — otherwise a 1979 helicopter
+    // inherits a 1938 aircraft's cancellation and scores a false signal.
+    const currentSerialByN = new Map(
+      currentRows.map((r) => [r.N_NUMBER, normalizeSerial(r.SERIAL_NUMBER)]),
+    );
+    let droppedTailReuse = 0;
     for (const d of deregRows) {
       if (!d.CANCEL_DATE) continue;
+      const currentSerial = currentSerialByN.get(d.N_NUMBER);
+      // No current registration for this mark → keep (nothing to conflate with).
+      // Current registration exists → require a serial match.
+      if (currentSerial !== undefined && currentSerial !== '') {
+        if (normalizeSerial(d.SERIAL_NUMBER) !== currentSerial) {
+          droppedTailReuse += 1;
+          continue;
+        }
+      }
       historyRows.push({
         N_NUMBER: d.N_NUMBER,
         DATE: d.CANCEL_DATE,
         EVENT: 'Registration cancelled',
         DETAILS: `Previous registrant: ${d.REGISTRANT_NAME || 'unknown'}${d.STATUS_CODE ? ` (status ${d.STATUS_CODE})` : ''}`,
       });
+    }
+    if (droppedTailReuse > 0) {
+      warnings.push(`${droppedTailReuse} deregistration row(s) excluded as tail-number reuse (serial mismatch)`);
     }
   } else {
     warnings.push('DEREG.txt not present — deregistration history unavailable');

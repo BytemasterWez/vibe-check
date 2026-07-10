@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { transformReleasableAircraft } from '../src/sources/transformFaaRegistry.js';
+import { transformReleasableAircraft, transformRegistryBundle } from '../src/sources/transformFaaRegistry.js';
 import { Datastore } from '../src/datastore.js';
 import { assessAircraft } from '../src/assess.js';
 
@@ -79,4 +79,26 @@ test('transformed output feeds the assessment pipeline end to end', () => {
   // Registry-only data directory: every other feed degrades to "no data".
   const maintenance = a.modules.find((m) => m.key === 'maintenance');
   assert.equal(maintenance.detail.tailSdrCount, 0);
+});
+
+test('deregistration history excludes tail-number reuse by different serials', () => {
+  // Current N100Z is serial NEW-1. DEREG has two prior N100Z records: one with
+  // the SAME serial (genuine prior deregistration of this airframe) and one
+  // with a DIFFERENT serial (a different aircraft that once held the mark).
+  const master = [
+    'N-NUMBER,SERIAL NUMBER,MFR MDL CODE,ENG MFR MDL,YEAR MFR,TYPE REGISTRANT,NAME,STREET,STREET2,CITY,STATE,ZIP CODE,REGION,COUNTY,COUNTRY,LAST ACTION DATE,CERT ISSUE DATE,CERTIFICATION,TYPE AIRCRAFT,TYPE ENGINE,STATUS CODE,MODE S CODE,FRACT OWNER,AIR WORTH DATE,OTHER NAMES(1),OTHER NAMES(2),OTHER NAMES(3),OTHER NAMES(4),OTHER NAMES(5),EXPIRATION DATE,UNIQUE ID,KIT MFR,KIT MODEL,MODE S CODE HEX,',
+    '100Z    ,NEW-1           ,2072813,17003  ,2015,1,CURRENT OWNER,ST,,CITY,FL,00000,S,000,US,20200101,20200101,1N,4,1 ,V ,52603621,N,20200101,,,,,,20300101,01000001,,,A00001  ,',
+  ].join('\n');
+  const dereg = [
+    'N-NUMBER,SERIAL-NUMBER,MFR-MDL-CODE,STATUS-CODE,NAME,STREET,STREET2,CITY,STATE,ZIP-CODE,ENG-MFR-MDL,YEAR-MFR,CANCEL-DATE,MODE-S-CODE-HEX,',
+    '100Z    ,NEW-1           ,2072813,C ,CURRENT OWNER,ST,,CITY,FL,00000,17003,2015,20180101,A00001  ,',   // same airframe — keep
+    '100Z    ,OLD-9           ,2072813,C ,VINTAGE OWNER,ST,,CITY,FL,00000,17003,1948,19480101,A00001  ,',   // recycled mark — drop
+  ].join('\n');
+  const acftref = 'CODE,MFR,MODEL,TYPE-ACFT,TYPE-ENG,AC-CAT,BUILD-CERT-IND,NO-ENG,NO-SEATS,AC-WEIGHT,SPEED,TC-DATA-SHEET,TC-DATA-HOLDER,\n2072813,CESSNA                        ,172N                ,4,1,1,0,1,004,CLASS 1,0105,3A12,TEXTRON,\n';
+  const engine = 'CODE,MFR,MODEL,TYPE,HORSEPOWER,THRUST,\n17003  ,LYCOMING  ,O-320          ,1 ,00160,000000,\n';
+
+  const { tables } = transformRegistryBundle({ master, acftref, engine, dereg });
+  const history = tables.find((t) => t.name === 'registration_history').rows;
+  assert.equal(history.length, 1, 'only the serial-matched deregistration should remain');
+  assert.equal(history[0].DATE, '2018-01-01');
 });
