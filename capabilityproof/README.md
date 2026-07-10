@@ -268,10 +268,34 @@ const { resolution, fetch } = await cp.resolveAndFetch({
 `npm run capabilityproof:bench` injects ten realistic failure modes (HTTP-200
 HTML, 25% truncation, stale timestamps, renamed fields, duplicated rows,
 impossible values, rate-limit-as-200, partial geography, wrong vintage,
-broken join keys) plus two healthy controls, and scores detection rate,
-false positives and per-dimension classification. Current score: **10/10
-detected, 0 false positives, 10/10 correctly classified.** Runs offline and
-in CI.
+broken join keys) plus five healthy controls (baseline, extra optional
+fields, reordered fields, extra rows, unicode edge cases), and scores
+detection rate, false positives and per-dimension classification.
+
+Current result, stated precisely: **the current benchmark suite detects all
+ten injected failure classes with no false positives across five healthy
+controls, all classified in the expected dimension.** This is a reproducible
+engineering claim about this suite — not a universal "100% accurate failure
+detection" claim. Real-world false-positive rates come from live audit runs;
+the healthy-control set should keep growing as those accumulate. Runs
+offline and in CI.
+
+## The five-minute demo
+
+`npm run capabilityproof:demo` (add `--pause` to step through) tells the
+whole story against a self-contained mock source — no network, no live
+dependencies to embarrass you mid-pitch:
+
+1. a capability and its inspectable contract → 2. live verification and the
+signed receipt → 3. approval under the `production` policy → 4. real data
+fetched *through* the resolver → 5. the receipt attached to the result →
+6. replay proving the evidence binding → 7. the source silently degrades
+(stale + truncated + duplicated, still HTTP 200) → 8. the contract catches
+it with named evidence → 9. approval withdrawn with explicit reasons and the
+alert that fires → 10. automatic, verified, explained fallback.
+
+The demo self-checks and exits non-zero if its own story doesn't hold, so a
+broken build can't reach a prospect. It also runs in CI.
 
 ## Verification model
 
@@ -352,6 +376,8 @@ capabilityproof/
   ops/install.sh      one-command 24/7 VPS installer (systemd, optional Ollama)
   sdk/client.mjs      zero-dependency JS client (resolve, resolve-and-fetch, receipts)
   bench/              failure-injection benchmark (detection scorecard)
+  demo.mjs            self-contained five-minute prospect demo (self-checking)
+  docs/               audit offer + per-dependency intake template
   manifests/          verified capability manifests
   manifests-proposed/ quarantine for scouted, not-yet-promoted sources
   lib/

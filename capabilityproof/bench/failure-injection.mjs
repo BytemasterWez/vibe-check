@@ -30,8 +30,14 @@ const REFERENCE = Array.from({ length: 20 }, (_, i) => ({
 }));
 
 const CASES = [
+  // Healthy controls: legitimate variation that must NOT trigger false
+  // positives. Expand this set over time — real-world false-positive rates
+  // come from live audits, not from CI alone.
   { id: 'control_healthy', inject: 'none', expect: 'verified' },
   { id: 'control_extra_optional_fields', inject: 'extra_fields', expect: 'verified' },
+  { id: 'control_reordered_fields', inject: 'reordered_fields', expect: 'verified' },
+  { id: 'control_more_rows_than_minimum', inject: 'extra_rows', expect: 'verified' },
+  { id: 'control_unicode_and_edge_names', inject: 'unicode_names', expect: 'verified' },
   { id: 'html_200', inject: 'html_200', expect: 'failed_checks', dimension: 'availability' },
   { id: 'truncated_20pct', inject: 'truncated', expect: 'failed_checks', dimension: 'completeness' },
   { id: 'stale_timestamps', inject: 'stale', expect: 'failed_checks', dimension: 'freshness' },
@@ -51,6 +57,21 @@ function serveCase(inject) {
       break;
     case 'extra_fields':
       rows = rows.map((r) => ({ ...r, extra_note: 'harmless', another_optional: 42 }));
+      break;
+    case 'reordered_fields':
+      rows = rows.map(({ vintage, population, updated_at, name, geoid }) => ({ vintage, population, updated_at, name, geoid }));
+      break;
+    case 'extra_rows':
+      rows = rows.concat(Array.from({ length: 10 }, (_, i) => ({
+        geoid: `22${String(i + 21).padStart(3, '0')}`,
+        name: `Parish ${i + 21}`,
+        population: 5000 + i,
+        vintage: '2025',
+        updated_at: new Date().toISOString(),
+      })));
+      break;
+    case 'unicode_names':
+      rows = rows.map((r, i) => ({ ...r, name: i % 3 === 0 ? `Paroisse Œ–${i} 郡` : r.name }));
       break;
     case 'html_200':
       return { contentType: 'text/html', body: '<html><head><title>Maintenance</title></head><body>Back soon</body></html>' };
