@@ -1,0 +1,76 @@
+{
+  "comment": "Candidate sources for the Scout to qualify. These are leads, not trusted capabilities — each must pass a live probe, get a drafted manifest, and survive quarantine before promotion into manifests/.",
+  "candidates": [
+    {
+      "name": "Census Geocoder one-line address",
+      "slug": "census.geocoder_address",
+      "category": "geospatial",
+      "probe_url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1600+Pennsylvania+Ave+NW%2C+Washington%2C+DC&benchmark=Public_AR_Current&format=json",
+      "notes": "US Census geocoder: free, keyless address-to-coordinates with FIPS-bearing match data"
+    },
+    {
+      "name": "NWS active weather alerts",
+      "slug": "nws.active_alerts",
+      "category": "hazards",
+      "probe_url": "https://api.weather.gov/alerts/active",
+      "headers": { "User-Agent": "CapabilityProof/0.1 (scout probe)", "Accept": "application/geo+json" },
+      "notes": "Official NWS active watches/warnings feed, GeoJSON, keyless"
+    },
+    {
+      "name": "USGS EPQS point elevation",
+      "slug": "usgs.point_elevation",
+      "category": "geospatial",
+      "probe_url": "https://epqs.nationalmap.gov/v1/json?x=-77.0352&y=38.8894&units=Meters&wkid=4326&includeDate=false",
+      "notes": "US elevation for a coordinate from the USGS 3DEP elevation service, keyless"
+    },
+    {
+      "name": "Frankfurter ECB exchange rates",
+      "slug": "frankfurter.ecb_rates",
+      "category": "economic",
+      "probe_url": "https://api.frankfurter.app/latest?from=USD",
+      "notes": "European Central Bank reference FX rates, keyless, good fallback for source.erapi.exchange_rates"
+    },
+    {
+      "name": "Open Library book search",
+      "slug": "openlibrary.book_search",
+      "category": "reference",
+      "probe_url": "https://openlibrary.org/search.json?q=the+great+gatsby&limit=5",
+      "notes": "Internet Archive's Open Library search: bibliographic records, keyless"
+    },
+    {
+      "name": "REST Countries reference data",
+      "slug": "restcountries.country_reference",
+      "category": "reference",
+      "probe_url": "https://restcountries.com/v3.1/alpha/us?fields=name,cca2,cca3,population,capital,region",
+      "notes": "Country reference data (names, codes, capitals, population), keyless"
+    },
+    {
+      "name": "Open-Meteo air quality",
+      "slug": "openmeteo.air_quality",
+      "category": "environment",
+      "probe_url": "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=38.8894&longitude=-77.0352&hourly=pm2_5&forecast_days=1",
+      "notes": "Hourly air-quality forecast (PM2.5 etc.) for any coordinate, keyless"
+    },
+    {
+      "name": "NOAA tides and currents water level",
+      "slug": "noaa.tides_water_level",
+      "category": "environment",
+      "probe_url": "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=8594900&product=water_level&datum=MLLW&time_zone=gmt&units=english&format=json",
+      "notes": "Near-real-time water level at NOAA station 8594900 (Washington DC), keyless"
+    },
+    {
+      "name": "openFDA drug adverse events",
+      "slug": "openfda.drug_events",
+      "category": "health",
+      "probe_url": "https://api.fda.gov/drug/event.json?limit=5",
+      "notes": "FDA adverse event reports, keyless up to 240 requests/min per IP"
+    },
+    {
+      "name": "CoinGecko simple price",
+      "slug": "coingecko.simple_price",
+      "category": "economic",
+      "probe_url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+      "notes": "Crypto spot prices, keyless with strict rate limits — expect occasional 429s"
+    }
+  ]
+}

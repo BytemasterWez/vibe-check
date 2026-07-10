@@ -1,0 +1,56 @@
+{
+  "capability_id": "source.usgs.point_elevation",
+  "manifest_version": "1.0",
+  "claim": "US elevation for a coordinate from the USGS 3DEP elevation service, keyless",
+  "publisher": {
+    "name": "USGS EPQS point elevation"
+  },
+  "protocol": "rest",
+  "category": "geospatial",
+  "tags": [
+    "geospatial"
+  ],
+  "tasks": [
+    "US elevation for a coordinate from the USGS 3DEP elevation service, keyless"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:08.112Z"
+  },
+  "test_pack": {
+    "id": "usgs.point_elevation_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://epqs.nationalmap.gov/v1/json?x=-77.0352&y=38.8894&units=Meters&wkid=4326&includeDate=false"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

@@ -1,0 +1,56 @@
+{
+  "capability_id": "source.frankfurter.ecb_rates",
+  "manifest_version": "1.0",
+  "claim": "European Central Bank reference FX rates, keyless, good fallback for source.erapi.exchange_rates",
+  "publisher": {
+    "name": "Frankfurter ECB exchange rates"
+  },
+  "protocol": "rest",
+  "category": "economic",
+  "tags": [
+    "economic"
+  ],
+  "tasks": [
+    "European Central Bank reference FX rates, keyless, good fallback for source.erapi.exchange_rates"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:08.852Z"
+  },
+  "test_pack": {
+    "id": "frankfurter.ecb_rates_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.frankfurter.app/latest?from=USD"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

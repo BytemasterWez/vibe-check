@@ -1,0 +1,71 @@
+{
+  "capability_id": "source.noaa.tides_water_level",
+  "manifest_version": "1.0",
+  "claim": "Near-real-time water level at NOAA station 8594900 (Washington DC), keyless",
+  "publisher": {
+    "name": "NOAA tides and currents water level"
+  },
+  "protocol": "rest",
+  "category": "environment",
+  "tags": [
+    "environment"
+  ],
+  "tasks": [
+    "Near-real-time water level at NOAA station 8594900 (Washington DC), keyless"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:13.680Z"
+  },
+  "test_pack": {
+    "id": "noaa.tides_water_level_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=8594900&product=water_level&datum=MLLW&time_zone=gmt&units=english&format=json"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "data",
+        "min": 1
+      },
+      {
+        "type": "fields_present",
+        "path": "data",
+        "fields": [
+          "t",
+          "v",
+          "s",
+          "f"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

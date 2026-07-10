@@ -1,0 +1,68 @@
+{
+  "capability_id": "source.census.geocoder_address",
+  "manifest_version": "1.0",
+  "claim": "US Census geocoder: free, keyless address-to-coordinates with FIPS-bearing match data",
+  "publisher": {
+    "name": "Census Geocoder one-line address"
+  },
+  "protocol": "rest",
+  "category": "geospatial",
+  "tags": [
+    "geospatial"
+  ],
+  "tasks": [
+    "US Census geocoder: free, keyless address-to-coordinates with FIPS-bearing match data"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-10T11:11:06.569Z"
+  },
+  "test_pack": {
+    "id": "census.geocoder_address_scout_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=1600+Pennsylvania+Ave+NW%2C+Washington%2C+DC&benchmark=Public_AR_Current&format=json"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "result.addressMatches",
+        "min": 1
+      },
+      {
+        "type": "fields_present",
+        "path": "result.addressMatches",
+        "fields": [
+          "matchedAddress"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}
