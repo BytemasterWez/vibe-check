@@ -1,0 +1,52 @@
+{
+  "capability_id": "source.gbif.species_occurrences",
+  "manifest_version": "1.0",
+  "claim": "Returns georeferenced species occurrence records from the Global Biodiversity Information Facility, searchable by taxon and location, no authentication required for search",
+  "publisher": {
+    "name": "GBIF",
+    "authority_url": "https://techdocs.gbif.org/en/openapi/"
+  },
+  "protocol": "rest",
+  "category": "environment",
+  "tags": ["biodiversity", "species", "occurrence", "ecology", "environment", "geospatial", "global"],
+  "tasks": [
+    "find species occurrence records by location",
+    "biodiversity data for environmental analysis",
+    "georeferenced ecological observations"
+  ],
+  "coverage": {
+    "countries": ["global"],
+    "granularity": "individual occurrence records with coordinates",
+    "temporal": "historical to near-real-time"
+  },
+  "join_keys": ["gbif_key", "taxon_key", "country_code"],
+  "update_frequency": "continuous ingestion from publishers",
+  "license": "Per-record (CC0/CC BY/CC BY-NC); check the license field",
+  "auth": { "type": "none", "paid": false, "notes": "Search is open; downloads require a free account." },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "fair use",
+  "pagination": "offset/limit, max 300 per page",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://api.gbif.org/v1/occurrence/search?limit={n}&country={code}&taxonKey={key}"
+  },
+  "usage_notes": "count reports the full match size; respect per-record license fields for reuse.",
+  "test_pack": {
+    "id": "gbif_search_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.gbif.org/v1/occurrence/search?limit=5"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 15000 },
+      { "type": "min_rows", "path": "results", "min": 5 },
+      { "type": "fields_present", "path": "results", "fields": ["key", "datasetKey", "basisOfRecord"] },
+      { "type": "known_answer", "path": "count", "min_number": 1000000 }
+    ]
+  },
+  "fallback_capability_ids": []
+}

@@ -1,0 +1,53 @@
+{
+  "capability_id": "source.nager.public_holidays",
+  "manifest_version": "1.0",
+  "claim": "Returns official public holidays for any of 100+ countries and any year, no authentication required",
+  "publisher": {
+    "name": "Nager.Date",
+    "authority_url": "https://date.nager.at/Api"
+  },
+  "protocol": "rest",
+  "category": "government",
+  "tags": ["holidays", "calendar", "public-holiday", "government", "scheduling", "global"],
+  "tasks": [
+    "list public holidays for a country and year",
+    "business-day and scheduling calculations",
+    "holiday calendar data"
+  ],
+  "coverage": {
+    "countries": ["global"],
+    "granularity": "country (some subdivision support)",
+    "temporal": "past and future years"
+  },
+  "join_keys": ["date", "country_code"],
+  "update_frequency": "as legislation changes",
+  "license": "MIT (open source project)",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "fair use",
+  "pagination": "none",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://date.nager.at/api/v3/PublicHolidays/{year}/{country_code}"
+  },
+  "usage_notes": "counties field lists subdivision codes when a holiday is not nationwide; global=true means countrywide.",
+  "test_pack": {
+    "id": "nager_us_holidays_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://date.nager.at/api/v3/PublicHolidays/2026/US"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 10000 },
+      { "type": "min_rows", "path": "", "min": 10 },
+      { "type": "fields_present", "path": "", "fields": ["date", "name", "countryCode"] },
+      { "type": "field_pattern", "path": "", "field": "date", "pattern": "^2026-[0-9]{2}-[0-9]{2}$" },
+      { "type": "known_answer", "path": "0.countryCode", "equals": "US" }
+    ]
+  },
+  "fallback_capability_ids": []
+}

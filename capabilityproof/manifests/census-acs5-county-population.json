@@ -1,0 +1,59 @@
+{
+  "capability_id": "source.census.acs5_county_population",
+  "manifest_version": "1.0",
+  "claim": "Returns population for every US county, keyed by state and county FIPS, from the US Census Bureau ACS 5-year estimates",
+  "publisher": {
+    "name": "US Census Bureau",
+    "authority_url": "https://www.census.gov/data/developers/data-sets/acs-5year.html"
+  },
+  "protocol": "rest",
+  "category": "demographics",
+  "tags": ["census", "population", "county", "fips", "acs", "demographics", "united-states"],
+  "tasks": [
+    "retrieve current county population estimates",
+    "county population keyed by FIPS",
+    "demographic counts for US counties"
+  ],
+  "coverage": {
+    "countries": ["US"],
+    "granularity": "county",
+    "temporal": "5-year rolling estimates, latest vintage 2023"
+  },
+  "join_keys": ["state_fips", "county_fips"],
+  "update_frequency": "annual",
+  "license": "Public domain (US federal data)",
+  "auth": {
+    "type": "api_key_free",
+    "paid": false,
+    "notes": "Free key from https://api.census.gov/data/key_signup.html; set CENSUS_API_KEY. Without a key the API returns HTTP 200 with an HTML 'Missing Key' page — exactly the failure mode receipts exist to catch."
+  },
+  "cost": { "per_call_usd": 0 },
+  "required_env": ["CENSUS_API_KEY"],
+  "rate_limit": "500 calls/day per key",
+  "pagination": "none — full county table in one response",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://api.census.gov/data/2023/acs/acs5?get=NAME,B01003_001E&for=county:*&key=${ENV:CENSUS_API_KEY}"
+  },
+  "usage_notes": "Response is an array-of-arrays table; first row is the header. Concatenate state+county columns for a 5-digit county FIPS.",
+  "test_pack": {
+    "id": "us_county_population_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.census.gov/data/2023/acs/acs5?get=NAME,B01003_001E&for=county:*&key=${ENV:CENSUS_API_KEY}"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 15000 },
+      { "type": "min_rows", "path": "", "transform": "array_table", "min": 3000 },
+      { "type": "fields_present", "path": "", "transform": "array_table", "fields": ["NAME", "B01003_001E", "state", "county"] },
+      { "type": "field_pattern", "path": "", "transform": "array_table", "field": "state", "pattern": "^[0-9]{2}$" },
+      { "type": "field_pattern", "path": "", "transform": "array_table", "field": "county", "pattern": "^[0-9]{3}$" },
+      { "type": "value_range", "path": "", "transform": "array_table", "field": "B01003_001E", "min": 0, "max": 12000000 }
+    ]
+  },
+  "fallback_capability_ids": ["source.worldbank.country_population"]
+}

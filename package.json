@@ -9,13 +9,20 @@
     "start": "vite build && electron .",
     "mcp": "node mcp/server.mjs",
     "mcp:http": "node mcp/server.mjs --transport http --port 3100",
+    "capabilityproof:api": "node capabilityproof/api.mjs",
+    "capabilityproof:mcp": "node capabilityproof/mcp-server.mjs",
+    "capabilityproof:verify": "node capabilityproof/cli.mjs verify-all",
+    "capabilityproof:test": "node capabilityproof/test/smoke.mjs",
     "package": "vite build && electron-builder --publish never",
     "package:mac": "vite build && electron-builder --mac --publish never",
     "package:win": "vite build && electron-builder --win --publish never",
     "package:linux": "vite build && electron-builder --linux --publish never"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "BytemasterWez",
+    "email": "142010457+BytemasterWez@users.noreply.github.com"
+  },
   "license": "ISC",
   "description": "Live QA observer for AI-generated code",
   "dependencies": {

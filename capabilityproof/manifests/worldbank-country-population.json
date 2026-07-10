@@ -1,0 +1,54 @@
+{
+  "capability_id": "source.worldbank.country_population",
+  "manifest_version": "1.0",
+  "claim": "Returns annual total population time series for any country from the World Bank Open Data API, no authentication required",
+  "publisher": {
+    "name": "World Bank",
+    "authority_url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
+  },
+  "protocol": "rest",
+  "category": "demographics",
+  "tags": ["population", "country", "world-bank", "demographics", "time-series", "global"],
+  "tasks": [
+    "retrieve national population estimates",
+    "country population time series",
+    "coarse fallback when county-level population sources fail"
+  ],
+  "coverage": {
+    "countries": ["global"],
+    "granularity": "country",
+    "temporal": "annual, 1960 to present"
+  },
+  "join_keys": ["iso3_country_code"],
+  "update_frequency": "annual with periodic revisions",
+  "license": "CC BY 4.0",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "unpublished; be polite",
+  "pagination": "page/per_page query parameters; metadata object is element 0 of the response",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://api.worldbank.org/v2/country/{iso3}/indicator/SP.POP.TOTL?format=json&per_page=10"
+  },
+  "usage_notes": "Response is [metadata, rows]. Most recent year may have a null value before the annual release lands.",
+  "test_pack": {
+    "id": "worldbank_us_population_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.worldbank.org/v2/country/US/indicator/SP.POP.TOTL?format=json&per_page=10"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 15000 },
+      { "type": "min_rows", "path": "1", "min": 5 },
+      { "type": "fields_present", "path": "1", "fields": ["date", "value", "countryiso3code"] },
+      { "type": "field_pattern", "path": "1", "field": "date", "pattern": "^[0-9]{4}$" },
+      { "type": "known_answer", "path": "1.0.countryiso3code", "equals": "USA" },
+      { "type": "freshness", "path": "0.lastupdated", "max_age_hours": 8760 }
+    ]
+  },
+  "fallback_capability_ids": []
+}

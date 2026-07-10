@@ -1,0 +1,46 @@
+name: CapabilityProof daily sweep
+
+# Daily live verification of every seed capability. A red run means a source
+# genuinely broke, drifted, or started lying (HTTP 200 with bad content) —
+# the job summary shows which checks failed. Sources whose required env keys
+# (e.g. CENSUS_API_KEY) aren't configured as repo secrets are skipped, not
+# failed.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies (skip Electron binary download)
+        run: npm ci --ignore-scripts
+
+      - name: Offline smoke test
+        run: npm run capabilityproof:test
+
+      - name: Live verification sweep
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: node capabilityproof/cli.mjs verify-all --skip-missing-env
+
+      - name: Upload receipts and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capabilityproof-data-${{ github.run_id }}
+          path: capabilityproof/data
+          retention-days: 30

@@ -9,3 +9,6 @@ release/
 *.deb
 *.snap
 .DS_Store
+
+# CapabilityProof runtime state (keys, receipts, evidence, history)
+capabilityproof/data/

@@ -1,0 +1,53 @@
+{
+  "capability_id": "source.openmeteo.hourly_forecast",
+  "manifest_version": "1.0",
+  "claim": "Returns hourly weather forecast variables for any global coordinate from Open-Meteo, no authentication required",
+  "publisher": {
+    "name": "Open-Meteo",
+    "authority_url": "https://open-meteo.com/en/docs"
+  },
+  "protocol": "rest",
+  "category": "weather",
+  "tags": ["weather", "forecast", "hourly", "temperature", "global", "open-meteo"],
+  "tasks": [
+    "get hourly weather forecast for a coordinate",
+    "global weather data without an API key",
+    "fallback weather source when NWS is unavailable or outside the US"
+  ],
+  "coverage": {
+    "countries": ["global"],
+    "granularity": "~1-11km model grid",
+    "temporal": "hourly, up to 16 forecast days"
+  },
+  "join_keys": ["latitude", "longitude", "time"],
+  "update_frequency": "hourly model runs",
+  "license": "CC BY 4.0, free for non-commercial use",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "10,000 calls/day (fair use)",
+  "pagination": "none",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 6,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=temperature_2m"
+  },
+  "usage_notes": "Parallel arrays: hourly.time[i] pairs with hourly.temperature_2m[i]. Timestamps are ISO 8601 without timezone suffix (UTC by default).",
+  "test_pack": {
+    "id": "openmeteo_dc_hourly_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=38.8894&longitude=-77.0352&hourly=temperature_2m&forecast_days=1"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 10000 },
+      { "type": "min_rows", "path": "hourly.time", "min": 24 },
+      { "type": "value_range", "path": "hourly.temperature_2m", "field": "", "min": -70, "max": 65 },
+      { "type": "known_answer", "path": "latitude", "min_number": 38, "max_number": 40 },
+      { "type": "freshness", "path": "hourly.time.0", "max_age_hours": 48 }
+    ]
+  },
+  "fallback_capability_ids": ["source.nws.point_forecast_metadata"]
+}

@@ -1,0 +1,53 @@
+{
+  "capability_id": "source.census.tigerweb_states",
+  "manifest_version": "1.0",
+  "claim": "Returns US state names and FIPS GEOIDs from the Census TIGERweb ArcGIS REST service, queryable with geometry, no authentication required",
+  "publisher": {
+    "name": "US Census Bureau",
+    "authority_url": "https://tigerweb.geo.census.gov/arcgisweb/"
+  },
+  "protocol": "rest",
+  "category": "geospatial",
+  "tags": ["gis", "arcgis", "boundaries", "state", "fips", "tiger", "geometry", "united-states"],
+  "tasks": [
+    "list US states with FIPS codes",
+    "query state and county boundary geometries",
+    "GIS layer source for US administrative boundaries"
+  ],
+  "coverage": {
+    "countries": ["US"],
+    "granularity": "state and county boundaries",
+    "temporal": "current TIGER vintage"
+  },
+  "join_keys": ["state_fips"],
+  "update_frequency": "annual TIGER releases",
+  "license": "Public domain (US federal data)",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "unpublished",
+  "pagination": "resultOffset/resultRecordCount ArcGIS parameters",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/0/query?where={where}&outFields={fields}&returnGeometry={bool}&f=json"
+  },
+  "usage_notes": "Standard ArcGIS REST query interface. Layer 0 is states; sibling layers cover counties. Set returnGeometry=true for boundary polygons.",
+  "test_pack": {
+    "id": "tigerweb_states_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/0/query?where=1%3D1&outFields=NAME,GEOID&returnGeometry=false&f=json"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 15000 },
+      { "type": "min_rows", "path": "features", "min": 50 },
+      { "type": "fields_present", "path": "features", "fields": ["attributes.NAME", "attributes.GEOID"] },
+      { "type": "field_pattern", "path": "features", "field": "attributes.GEOID", "pattern": "^[0-9]{2}$" },
+      { "type": "known_answer", "path": "fieldAliases.GEOID", "equals": "GEOID" }
+    ]
+  },
+  "fallback_capability_ids": ["source.fcc.census_area_lookup"]
+}
