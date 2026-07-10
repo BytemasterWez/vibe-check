@@ -183,7 +183,7 @@ for a representative example. URLs may reference free keys as
 `required_env` and `verify-all --skip-missing-env` will skip (not fail) the
 source when they're absent.
 
-Seed inventory (8 sources, 5 categories, all read-only):
+Seed inventory (16 sources, 7 categories, all read-only):
 
 | Capability | Category | Auth |
 | --- | --- | --- |
@@ -194,7 +194,20 @@ Seed inventory (8 sources, 5 categories, all read-only):
 | `source.usgs.earthquakes_all_day` | hazards | none |
 | `source.fema.disaster_declarations` | hazards | none |
 | `source.fcc.census_area_lookup` | geospatial | none |
+| `source.census.tigerweb_states` | geospatial (ArcGIS) | none |
+| `source.zippopotam.zip_lookup` | geospatial | none |
 | `source.treasury.debt_to_penny` | economic | none |
+| `source.bls.unemployment_rate` | economic | none |
+| `source.erapi.exchange_rates` | economic | none |
+| `source.usgs.water_streamflow` | environment | none |
+| `source.gbif.species_occurrences` | environment | none |
+| `source.nager.public_holidays` | government | none |
+| `source.usaspending.toptier_agencies` | government | none |
+
+Test packs also encode observed real-world quirks as evidence rather than
+noise: BLS publishes `"-"` for months lost to the 2025 appropriations lapse
+(handled via `allow_values` missing-data sentinels), and the Census API
+returns HTTP 200 HTML when unauthenticated.
 
 ## Layout
 

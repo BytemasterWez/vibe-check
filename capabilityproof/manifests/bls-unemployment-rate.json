@@ -1,0 +1,54 @@
+{
+  "capability_id": "source.bls.unemployment_rate",
+  "manifest_version": "1.0",
+  "claim": "Returns the official US monthly unemployment rate time series (LNS14000000) from the Bureau of Labor Statistics public API, no key required at v1",
+  "publisher": {
+    "name": "US Bureau of Labor Statistics",
+    "authority_url": "https://www.bls.gov/developers/"
+  },
+  "protocol": "rest",
+  "category": "economic",
+  "tags": ["unemployment", "labor", "bls", "economic", "indicator", "time-series", "united-states"],
+  "tasks": [
+    "get current US unemployment rate",
+    "monthly labor statistics time series",
+    "official economic indicator data"
+  ],
+  "coverage": {
+    "countries": ["US"],
+    "granularity": "national, monthly",
+    "temporal": "v1 returns the latest ~3 years"
+  },
+  "join_keys": ["series_id", "year", "period"],
+  "update_frequency": "monthly (Employment Situation release)",
+  "license": "Public domain (US federal data)",
+  "auth": { "type": "none", "paid": false, "notes": "v1 allows 25 queries/day without a key; v2 with a free key allows 500/day." },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "25 calls/day unregistered",
+  "pagination": "none — series-based",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/{series_id}"
+  },
+  "usage_notes": "Values are strings; period M01-M12 are months. status field is REQUEST_SUCCEEDED even when Results is empty, so check row counts, not just status. Missing months are published as value \"-\" with an explanatory footnote (e.g. October 2025 during the appropriations lapse).",
+  "test_pack": {
+    "id": "bls_unemployment_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/LNS14000000"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 15000 },
+      { "type": "known_answer", "path": "status", "equals": "REQUEST_SUCCEEDED" },
+      { "type": "known_answer", "path": "Results.series.0.seriesID", "equals": "LNS14000000" },
+      { "type": "min_rows", "path": "Results.series.0.data", "min": 12 },
+      { "type": "field_pattern", "path": "Results.series.0.data", "field": "year", "pattern": "^[0-9]{4}$" },
+      { "type": "value_range", "path": "Results.series.0.data", "field": "value", "min": 0, "max": 25, "allow_values": ["-"] }
+    ]
+  },
+  "fallback_capability_ids": []
+}

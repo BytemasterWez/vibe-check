@@ -20,6 +20,7 @@ import path from 'path';
 import assert from 'assert';
 import { createService } from '../lib/service.mjs';
 import { verifyReceiptSignature } from '../lib/receipts.mjs';
+import { runChecks } from '../lib/evaluate.mjs';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'capabilityproof-test-'));
 const manifestDir = path.join(tmp, 'manifests');
@@ -216,6 +217,15 @@ ok('schema-drift webhook fired when the good source changed shape', () => {
   const e = webhookEvents.find((e) => e.event === 'capability_schema_drift' && e.capability_id === 'mock.good.population');
   assert(e, 'no drift event');
   assert.notStrictEqual(e.previous_schema_hash, e.new_schema_hash);
+});
+
+// Declared missing-value sentinels don't fail value_range, undeclared ones do
+ok('value_range tolerates declared sentinels but rejects undeclared junk', () => {
+  const probeLike = { ok: true, status: 200, latency_ms: 1, body: { data: [{ v: '4.2' }, { v: '-' }, { v: '3.9' }] }, body_text: '' };
+  const withSentinel = runChecks(probeLike, { checks: [{ type: 'value_range', path: 'data', field: 'v', min: 0, max: 25, allow_values: ['-'] }] });
+  assert.strictEqual(withSentinel.results.task_success, true, withSentinel.failures.join('; '));
+  const withoutSentinel = runChecks(probeLike, { checks: [{ type: 'value_range', path: 'data', field: 'v', min: 0, max: 25 }] });
+  assert.strictEqual(withoutSentinel.results.task_success, false);
 });
 
 // Receipt retrieval round-trip

@@ -1,0 +1,54 @@
+{
+  "capability_id": "source.erapi.exchange_rates",
+  "manifest_version": "1.0",
+  "claim": "Returns current foreign exchange rates for 160+ currencies against any base currency, no authentication required",
+  "publisher": {
+    "name": "ExchangeRate-API (open endpoint)",
+    "authority_url": "https://www.exchangerate-api.com/docs/free"
+  },
+  "protocol": "rest",
+  "category": "economic",
+  "tags": ["currency", "exchange-rate", "forex", "fx", "economic", "global"],
+  "tasks": [
+    "get current currency exchange rates",
+    "convert between currencies",
+    "daily FX reference rates"
+  ],
+  "coverage": {
+    "countries": ["global"],
+    "granularity": "currency pair",
+    "temporal": "updated daily"
+  },
+  "join_keys": ["base_code", "currency_code"],
+  "update_frequency": "daily",
+  "license": "Free tier requires attribution link",
+  "auth": { "type": "none", "paid": false },
+  "cost": { "per_call_usd": 0 },
+  "rate_limit": "fair use; updates are daily so cache aggressively",
+  "pagination": "none",
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "endpoint": {
+    "method": "GET",
+    "url": "https://open.er-api.com/v6/latest/{base_currency}"
+  },
+  "usage_notes": "rates is an object keyed by ISO currency code, not an array. time_last_update_unix gives data freshness.",
+  "test_pack": {
+    "id": "erapi_usd_rates_v1",
+    "request": {
+      "method": "GET",
+      "url": "https://open.er-api.com/v6/latest/USD"
+    },
+    "checks": [
+      { "type": "status", "equals": 200 },
+      { "type": "json" },
+      { "type": "max_latency", "ms": 10000 },
+      { "type": "known_answer", "path": "result", "equals": "success" },
+      { "type": "known_answer", "path": "base_code", "equals": "USD" },
+      { "type": "known_answer", "path": "rates.EUR", "min_number": 0.3, "max_number": 2 },
+      { "type": "known_answer", "path": "rates.JPY", "min_number": 50, "max_number": 500 },
+      { "type": "freshness", "path": "time_last_update_unix", "unit": "epoch_s", "max_age_hours": 48 }
+    ]
+  },
+  "fallback_capability_ids": []
+}

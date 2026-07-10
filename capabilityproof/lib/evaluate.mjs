@@ -142,17 +142,23 @@ const CHECKS = {
     if (rows.length === 0) return { ok: false, detail: `no rows at "${check.path ?? ''}" to inspect` };
     const sample = rows.slice(0, check.sample ?? 50);
     const bad = [];
+    let sentinels = 0;
     for (const row of sample) {
-      const n = Number(resolvePath(row, check.field));
-      if (Number.isNaN(n)) { bad.push('NaN'); continue; }
+      const raw = resolvePath(row, check.field);
+      // Documented missing-data sentinels (e.g. BLS publishes "-" for months
+      // lost to a government shutdown) are counted, not treated as failures.
+      if (check.allow_values?.includes(raw)) { sentinels++; continue; }
+      const n = Number(raw);
+      if (Number.isNaN(n)) { bad.push(JSON.stringify(raw)); continue; }
       if (check.min !== undefined && n < check.min) bad.push(n);
       if (check.max !== undefined && n > check.max) bad.push(n);
     }
+    const sentinelNote = sentinels ? `, ${sentinels} declared missing-value sentinel${sentinels > 1 ? 's' : ''}` : '';
     return {
       ok: bad.length === 0,
       detail: bad.length === 0
-        ? `"${check.field}" numeric and within [${check.min ?? '-inf'}, ${check.max ?? 'inf'}] for ${sample.length} rows`
-        : `${bad.length}/${sample.length} values of "${check.field}" out of range (e.g. ${bad[0]})`,
+        ? `"${check.field}" numeric and within [${check.min ?? '-inf'}, ${check.max ?? 'inf'}] for ${sample.length - sentinels}/${sample.length} rows${sentinelNote}`
+        : `${bad.length}/${sample.length} values of "${check.field}" out of range (e.g. ${bad[0]})${sentinelNote}`,
     };
   },
 
