@@ -1,0 +1,22 @@
+{
+  "autonomy": {
+    "hardware_purchase": "forbidden",
+    "paid_api_use": "forbidden",
+    "contact_people": "forbidden",
+    "recruit_participants": "forbidden",
+    "diagnose_real_patient": "forbidden",
+    "promote_clinical_claim": "forbidden",
+    "alter_frozen_thresholds": "forbidden",
+    "delete_failed_results": "forbidden",
+    "use_private_health_data": "forbidden"
+  },
+  "resources": {
+    "maximum_runtime_per_experiment_minutes": 60,
+    "maximum_campaign_runtime_hours": 12,
+    "maximum_storage_gb": 50,
+    "minimum_free_disk_gb": 20,
+    "run_only_while_connected_to_power": true,
+    "maximum_consecutive_failures": 5
+  },
+  "maturity_ceiling": "C5"
+}

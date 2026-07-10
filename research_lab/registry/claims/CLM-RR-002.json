@@ -1,0 +1,19 @@
+{
+  "claim_id": "CLM-RR-002",
+  "statement": "Respiratory rate can be estimated to within 1 breath/min under adversarial apparatus motion",
+  "intended_use": "supervised_clinical_scan",
+  "claim_type": "derived_measurement",
+  "required_modalities": ["mmwave", "imu"],
+  "reference_standard": "respiratory_belt_or_capnography",
+  "clinical_relevance": 0.8,
+  "confounders": ["device_motion", "second_person", "sensor_dropout"],
+  "acceptance_contract": {
+    "mae_breaths_per_minute": 1.0,
+    "minimum_coverage": 0.95,
+    "must_abstain_when_sqi_below": 0.6
+  },
+  "maturity": "C2",
+  "open_uncertainties": ["handheld_motion"],
+  "supporting_experiments": [],
+  "contradicting_experiments": []
+}

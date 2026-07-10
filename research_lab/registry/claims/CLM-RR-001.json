@@ -1,0 +1,19 @@
+{
+  "claim_id": "CLM-RR-001",
+  "statement": "Respiratory rate can be estimated from thoracic mmWave displacement",
+  "intended_use": "supervised_clinical_scan",
+  "claim_type": "derived_measurement",
+  "required_modalities": ["mmwave"],
+  "reference_standard": "respiratory_belt_or_capnography",
+  "clinical_relevance": 1.0,
+  "confounders": ["speech", "gross_motion", "sensor_motion", "multipath", "second_person"],
+  "acceptance_contract": {
+    "mae_breaths_per_minute": 2.0,
+    "minimum_coverage": 0.9,
+    "must_abstain_when_sqi_below": 0.6
+  },
+  "maturity": "C2",
+  "open_uncertainties": ["handheld_motion", "distance_sensitivity"],
+  "supporting_experiments": [],
+  "contradicting_experiments": []
+}

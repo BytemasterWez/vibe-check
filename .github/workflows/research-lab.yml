@@ -1,0 +1,41 @@
+name: Research lab loop
+
+# The autonomous pre-hardware sensing lab is fully offline and deterministic:
+# it seeds the claim ledger, runs the closed experiment loop to a terminal
+# state, and re-runs every receipt from its frozen protocol. A red run means a
+# safety invariant broke (leakage, a non-reproducing experiment, a claim that
+# advanced past the C5 ceiling), not a flaky network.
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies (skip Electron binary download)
+        run: npm ci --ignore-scripts
+
+      - name: Offline smoke test (26 assertions)
+        run: npm run lab:test
+
+      - name: Run the campaign to a terminal state
+        run: |
+          npm run lab -- seed
+          npm run lab:run
+          npm run lab:status

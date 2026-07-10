@@ -12,3 +12,6 @@ release/
 
 # CapabilityProof runtime state (keys, receipts, evidence, history)
 capabilityproof/data/
+
+# Research lab runtime state (keys, claims ledger, protocols, receipts)
+research_lab/data/
