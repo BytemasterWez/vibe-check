@@ -1,0 +1,53 @@
+{
+  "receipt_version": "1.0",
+  "runner_version": "1.0.0",
+  "experiment_id": "EXP-RR-003-2a0dfdbc",
+  "claim_id": "CLM-RR-003",
+  "step_id": "c4_target_absent",
+  "advance_to": "C4",
+  "world_family": "target_absent",
+  "challenge_set": "target_absent",
+  "provenance_class": "simulated",
+  "candidate": "robust_ensemble_v1",
+  "baseline": "fft_peak_v1",
+  "protocol_hash": "sha256:6623c344c2f6877a50ea7b7e12c2228e3f02aedbbde16a72a79a154a55c08fbc",
+  "input_manifest_hash": "sha256:c7ed359d861cac2dd7acd651d5aa56b4997d67cc8adcd74e8730aa3fe835b379",
+  "started_at": "2026-07-11T08:42:19.638Z",
+  "completed_at": "2026-07-11T08:42:34.095Z",
+  "acceptance_criteria_frozen": true,
+  "result": "PASSED",
+  "failed_reasons": [],
+  "primary_metrics": {
+    "mae_bpm": null,
+    "valid_coverage": 0,
+    "false_confident_rate": 0,
+    "missed_abstention_rate": 0,
+    "correct_abstention_rate": 1,
+    "target_absent_false_positive_rate": 0,
+    "utility": 0
+  },
+  "baseline_metrics": {
+    "statistician_version": "1.1.0",
+    "error_tolerance_bpm": 2,
+    "n_trials": 1200,
+    "n_recoverable": 0,
+    "n_unrecoverable": 0,
+    "n_target_absent": 1200,
+    "mae_bpm": null,
+    "p95_error_bpm": null,
+    "valid_coverage": 0,
+    "false_confident_rate": 0.0375,
+    "missed_abstention_rate": 0.0375,
+    "correct_abstention_rate": 0.9625,
+    "target_absent_false_positive_rate": 0.0375,
+    "utility": -0.2625
+  },
+  "leakage_check": "clean",
+  "red_team": {
+    "verdict": "no_alternative_explanation",
+    "findings": [],
+    "tracking_correlation": null
+  },
+  "reproduction_status": "EXACT_MATCH",
+  "signature": "ed25519:8WMpmTWc3zY88ghqqRFzwsg1vADbR7Gp6nEzuI7D73Fj+fCk7dG9TcNRmT7k2yv6z3c7ojkEmVqXq17nJgYFAg=="
+}

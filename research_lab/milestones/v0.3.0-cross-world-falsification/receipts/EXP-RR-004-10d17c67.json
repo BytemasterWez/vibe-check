@@ -1,0 +1,59 @@
+{
+  "receipt_version": "1.0",
+  "runner_version": "1.0.0",
+  "experiment_id": "EXP-RR-004-10d17c67",
+  "claim_id": "CLM-RR-004",
+  "step_id": "c4_second_person",
+  "advance_to": "C4",
+  "world_family": "sinusoidal",
+  "challenge_set": "intruder",
+  "provenance_class": "simulated",
+  "candidate": "robust_ensemble_v1",
+  "baseline": "fft_peak_v1",
+  "protocol_hash": "sha256:710c58dd0bfcfbbc04edd173c9511e14016a1f8325770041cb32e84d2c4118a7",
+  "input_manifest_hash": "sha256:fe0068bb9e6375d5eaae1f5b1b8530388d77e3abaacf5407ce8f34a4d4c32dea",
+  "started_at": "2026-07-11T08:41:54.258Z",
+  "completed_at": "2026-07-11T08:41:55.679Z",
+  "acceptance_criteria_frozen": true,
+  "result": "PASSED",
+  "failed_reasons": [],
+  "primary_metrics": {
+    "mae_bpm": 0.27031,
+    "valid_coverage": 0.60656,
+    "false_confident_rate": 0,
+    "missed_abstention_rate": 0.22034,
+    "correct_abstention_rate": 0.77966,
+    "target_absent_false_positive_rate": 0,
+    "utility": 0.16588
+  },
+  "baseline_metrics": {
+    "statistician_version": "1.1.0",
+    "error_tolerance_bpm": 2,
+    "n_trials": 120,
+    "n_recoverable": 61,
+    "n_unrecoverable": 59,
+    "n_target_absent": 0,
+    "mae_bpm": 0.07072,
+    "p95_error_bpm": 0.14154,
+    "valid_coverage": 0.93443,
+    "false_confident_rate": 0,
+    "missed_abstention_rate": 0.23729,
+    "correct_abstention_rate": 0.76271,
+    "target_absent_false_positive_rate": 0,
+    "utility": 0.45985
+  },
+  "leakage_check": "clean",
+  "red_team": {
+    "verdict": "no_alternative_explanation",
+    "findings": [
+      {
+        "confounder": "no_discriminating_power",
+        "detail": "candidate utility 0.16588 does not exceed baseline 0.45985 — cancellation added no separable information on this confounder",
+        "severity": "medium"
+      }
+    ],
+    "tracking_correlation": 0.9982701373083409
+  },
+  "reproduction_status": "EXACT_MATCH",
+  "signature": "ed25519:MnpzVT01uCd47W6/9lpB/LBlphhKp72Db4yNASKK+GyxNw8+S1dppjrrPkBN+ZtC3lWAA5aHlUX3gqfF3psNAg=="
+}

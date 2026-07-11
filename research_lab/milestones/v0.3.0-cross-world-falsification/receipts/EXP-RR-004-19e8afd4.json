@@ -1,0 +1,59 @@
+{
+  "receipt_version": "1.0",
+  "runner_version": "1.0.0",
+  "experiment_id": "EXP-RR-004-19e8afd4",
+  "claim_id": "CLM-RR-004",
+  "step_id": "c4_second_person",
+  "advance_to": "C4",
+  "world_family": "nonstationary",
+  "challenge_set": "intruder",
+  "provenance_class": "simulated",
+  "candidate": "robust_ensemble_v1",
+  "baseline": "fft_peak_v1",
+  "protocol_hash": "sha256:7fb3c30f9f9edb5bf29727e42779e4d7dd937694e40488c9df356ab921f4d21b",
+  "input_manifest_hash": "sha256:8d0f9444d9d89300640d69ee1b5b5bb4e7b4da3c782f1a862a9f7c756715ca94",
+  "started_at": "2026-07-11T08:41:57.028Z",
+  "completed_at": "2026-07-11T08:41:58.434Z",
+  "acceptance_criteria_frozen": true,
+  "result": "PASSED",
+  "failed_reasons": [],
+  "primary_metrics": {
+    "mae_bpm": 0.29202,
+    "valid_coverage": 0.63934,
+    "false_confident_rate": 0,
+    "missed_abstention_rate": 0.15254,
+    "correct_abstention_rate": 0.84746,
+    "target_absent_false_positive_rate": 0,
+    "utility": 0.33426
+  },
+  "baseline_metrics": {
+    "statistician_version": "1.1.0",
+    "error_tolerance_bpm": 2,
+    "n_trials": 120,
+    "n_recoverable": 61,
+    "n_unrecoverable": 59,
+    "n_target_absent": 0,
+    "mae_bpm": 0.10525,
+    "p95_error_bpm": 0.23386,
+    "valid_coverage": 0.85246,
+    "false_confident_rate": 0,
+    "missed_abstention_rate": 0.16949,
+    "correct_abstention_rate": 0.83051,
+    "target_absent_false_positive_rate": 0,
+    "utility": 0.51348
+  },
+  "leakage_check": "clean",
+  "red_team": {
+    "verdict": "no_alternative_explanation",
+    "findings": [
+      {
+        "confounder": "no_discriminating_power",
+        "detail": "candidate utility 0.33426 does not exceed baseline 0.51348 — cancellation added no separable information on this confounder",
+        "severity": "medium"
+      }
+    ],
+    "tracking_correlation": 0.9978256937035009
+  },
+  "reproduction_status": "EXACT_MATCH",
+  "signature": "ed25519:pa9T4q4ZXme/jZbdAZFJqOGvZIB7h1HQVhC3E9n56Hok/KAtjNXoHBRzufKWza+dbWiPfbBUjfKaY9cZ6JwbDg=="
+}

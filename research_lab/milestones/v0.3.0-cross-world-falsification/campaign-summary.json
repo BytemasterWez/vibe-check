@@ -1,0 +1,136 @@
+{
+  "generated_at": "2026-07-11T08:42:56.801Z",
+  "summary": {
+    "ceiling": "C5",
+    "claims": [
+      {
+        "claim_id": "CLM-RR-001",
+        "statement": "Given one stationary adult 0.5-2.0 m from the sensor with no second moving person present, respiratory rate (8-30 breaths/min) is recovered with MAE <= 2 breaths/min over a 60 s window, abstaining when signal quality is insufficient.",
+        "maturity": "C5",
+        "maturity_name": "Hardware experiment required",
+        "state": "CEILING (hardware next)",
+        "steps_completed": 2,
+        "steps_total": 2,
+        "supporting": 6,
+        "contradicting": 0,
+        "open_uncertainties": [
+          "handheld_motion",
+          "distance_sensitivity"
+        ]
+      },
+      {
+        "claim_id": "CLM-RR-002",
+        "statement": "When periodic non-respiratory motion has amplitude >= the respiratory displacement, the estimator either maintains MAE <= 2 breaths/min or abstains, in at least 95% of trials (no confident wrong rate).",
+        "maturity": "C5",
+        "maturity_name": "Hardware experiment required",
+        "state": "CEILING (hardware next)",
+        "steps_completed": 2,
+        "steps_total": 2,
+        "supporting": 6,
+        "contradicting": 0,
+        "open_uncertainties": [
+          "handheld_motion"
+        ]
+      },
+      {
+        "claim_id": "CLM-RR-003",
+        "statement": "During complete target absence, the estimator does not report a confident respiratory rate in more than 0.1% of trials.",
+        "maturity": "C5",
+        "maturity_name": "Hardware experiment required",
+        "state": "CEILING (hardware next)",
+        "steps_completed": 2,
+        "steps_total": 2,
+        "supporting": 3,
+        "contradicting": 0,
+        "open_uncertainties": [
+          "low_snr_environmental_motion"
+        ]
+      },
+      {
+        "claim_id": "CLM-RR-004",
+        "statement": "A second independently moving subject causes abstention rather than misattribution in at least 95% of trials (confident wrong rate <= 5%).",
+        "maturity": "C3",
+        "maturity_name": "Independent-data reproduction",
+        "state": "FALSIFIED",
+        "steps_completed": 1,
+        "steps_total": 2,
+        "supporting": 3,
+        "contradicting": 3,
+        "open_uncertainties": [
+          "intruder_at_similar_rate"
+        ]
+      },
+      {
+        "claim_id": "CLM-SYNC-001",
+        "statement": "Multi-sensor fusion remains within its defined performance bounds when sensor clocks have up to +/-50 ms offset and +/-20 ppm drift.",
+        "maturity": "C2",
+        "maturity_name": "External evidence",
+        "state": "BLOCKED",
+        "steps_completed": 0,
+        "steps_total": 1,
+        "supporting": 0,
+        "contradicting": 0,
+        "open_uncertainties": [
+          "clock_offset",
+          "clock_drift",
+          "cross_sensor_correlation"
+        ]
+      }
+    ],
+    "experiments": {
+      "total": 21,
+      "passed": 20,
+      "failed": 1
+    }
+  },
+  "diversity": {
+    "experiments": 21,
+    "passed": 20,
+    "failed": 1,
+    "simulator_families_exercised": [
+      "biomechanical",
+      "sinusoidal",
+      "nonstationary",
+      "target_absent"
+    ],
+    "simulator_family_coverage": 1,
+    "respiratory_world_coverage": 1,
+    "estimator_families_compared": [
+      "ensemble",
+      "spectral"
+    ],
+    "estimators_used": [
+      "robust_ensemble_v1",
+      "fft_peak_v1"
+    ],
+    "challenge_sets": [
+      "motion",
+      "clean",
+      "target_absent",
+      "intruder"
+    ],
+    "confounder_coverage": [
+      "device_motion",
+      "no_target",
+      "second_person"
+    ],
+    "parameter_space": {
+      "challenge_sets_seen": 4,
+      "challenge_sets_total": 4,
+      "coverage": 1
+    },
+    "abstention_distribution": {
+      "n": 21,
+      "min": 0,
+      "max": 1,
+      "mean": 0.1606
+    },
+    "false_confident_distribution": {
+      "n": 21,
+      "min": 0,
+      "max": 0.0667,
+      "mean": 0.0032
+    },
+    "warnings": []
+  }
+}

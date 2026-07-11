@@ -1,0 +1,55 @@
+{
+  "receipt_version": "1.0",
+  "runner_version": "1.0.0",
+  "experiment_id": "EXP-RR-004-73f6a6af",
+  "claim_id": "CLM-RR-004",
+  "step_id": "c4_second_person",
+  "advance_to": "C4",
+  "world_family": "biomechanical",
+  "challenge_set": "intruder",
+  "provenance_class": "simulated",
+  "candidate": "robust_ensemble_v1",
+  "baseline": "fft_peak_v1",
+  "protocol_hash": "sha256:f10da2560a00d234a81c8c6ba1644f48672b356597488b5e9dda7bff6083a117",
+  "input_manifest_hash": "sha256:8b4e05621701672c62506348feae8a3c55b1a7e5e542a0978101e56214269d51",
+  "started_at": "2026-07-11T08:41:59.800Z",
+  "completed_at": "2026-07-11T08:42:01.227Z",
+  "acceptance_criteria_frozen": true,
+  "result": "FAILED",
+  "failed_reasons": [
+    "false_confident_rate_exceeded"
+  ],
+  "primary_metrics": {
+    "mae_bpm": 0.16298,
+    "valid_coverage": 0.09836,
+    "false_confident_rate": 0.06667,
+    "missed_abstention_rate": 0.25424,
+    "correct_abstention_rate": 0.74576,
+    "target_absent_false_positive_rate": 0,
+    "utility": -0.74345
+  },
+  "baseline_metrics": {
+    "statistician_version": "1.1.0",
+    "error_tolerance_bpm": 2,
+    "n_trials": 120,
+    "n_recoverable": 61,
+    "n_unrecoverable": 59,
+    "n_target_absent": 0,
+    "mae_bpm": 0.11908,
+    "p95_error_bpm": 0.54551,
+    "valid_coverage": 0.14754,
+    "false_confident_rate": 0.19167,
+    "missed_abstention_rate": 0.50847,
+    "correct_abstention_rate": 0.49153,
+    "target_absent_false_positive_rate": 0,
+    "utility": -1.82774
+  },
+  "leakage_check": "clean",
+  "red_team": {
+    "verdict": "no_alternative_explanation",
+    "findings": [],
+    "tracking_correlation": 0.9988446556539503
+  },
+  "reproduction_status": "EXACT_MATCH",
+  "signature": "ed25519:ni5usmDoU/gN0LX27J+DRuncSZrmumWFsMCNFWGa/ro6HnkRm4eukyeNk/SREdX+hpqddqp52LKcz6e9jyg9Bg=="
+}
