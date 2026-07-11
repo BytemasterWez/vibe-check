@@ -1,0 +1,70 @@
+{
+  "capability_id": "source.epa.echo_facilities",
+  "manifest_version": "1.0",
+  "claim": "Enforcement/compliance history; responseset=50 keeps responses within probe limits; slow endpoint — generous latency budget",
+  "publisher": {
+    "name": "EPA ECHO facility compliance"
+  },
+  "protocol": "rest",
+  "category": "environment",
+  "tags": [
+    "environment"
+  ],
+  "tasks": [
+    "Enforcement/compliance history; responseset=50 keeps responses within probe limits; slow endpoint — generous latency budget"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:31:27.948Z"
+  },
+  "test_pack": {
+    "id": "epa.echo_facilities_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://echodata.epa.gov/echo/echo_rest_services.get_facility_info?output=JSON&p_st=DC&responseset=50"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "Results.QueryParameters",
+        "min": 1
+      },
+      {
+        "type": "fields_present",
+        "path": "Results.QueryParameters",
+        "fields": [
+          "QP",
+          "QV"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

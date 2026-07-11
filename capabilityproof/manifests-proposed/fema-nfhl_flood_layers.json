@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.fema.nfhl_flood_layers",
+  "manifest_version": "1.0",
+  "claim": "ArcGIS flood-zone mapping service; core input for property/flood intelligence",
+  "publisher": {
+    "name": "FEMA National Flood Hazard Layer"
+  },
+  "protocol": "rest",
+  "category": "hazards",
+  "tags": [
+    "hazards"
+  ],
+  "tasks": [
+    "ArcGIS flood-zone mapping service; core input for property/flood intelligence"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:25.663Z"
+  },
+  "test_pack": {
+    "id": "fema.nfhl_flood_layers_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer?f=json"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "layers",
+        "min": 16
+      },
+      {
+        "type": "fields_present",
+        "path": "layers",
+        "fields": [
+          "id",
+          "name",
+          "parentLayerId",
+          "defaultVisibility"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

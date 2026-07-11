@@ -104,7 +104,13 @@ export function draftManifestFallback(candidate, probe) {
     scouted: { drafted_by: 'fallback', drafted_at: new Date().toISOString() },
     test_pack: {
       id: `${candidate.slug}_scout_v1`,
-      request: { method: 'GET', url: candidate.probe_url, ...(candidate.headers ? { headers: candidate.headers } : {}) },
+      contract_version: '1.0.0',
+      request: {
+        method: candidate.method || 'GET',
+        url: candidate.probe_url,
+        ...(candidate.headers ? { headers: candidate.headers } : {}),
+        ...(candidate.body ? { body: candidate.body } : {}),
+      },
       checks,
     },
     fallback_capability_ids: [],
@@ -170,7 +176,13 @@ ${sample}`;
     scouted: { drafted_by: 'llm', model: llm.model, drafted_at: new Date().toISOString() },
     test_pack: {
       id: `${candidate.slug}_scout_v1`,
-      request: { method: 'GET', url: candidate.probe_url, ...(candidate.headers ? { headers: candidate.headers } : {}) },
+      contract_version: '1.0.0',
+      request: {
+        method: candidate.method || 'GET',
+        url: candidate.probe_url,
+        ...(candidate.headers ? { headers: candidate.headers } : {}),
+        ...(candidate.body ? { body: candidate.body } : {}),
+      },
       checks,
     },
     fallback_capability_ids: [],
@@ -227,9 +239,25 @@ async function discover() {
 
   const proposedService = createService({ manifestDir: PROPOSED_DIR, dataDir: DATA_DIR });
   let qualified = 0;
+  let parked = 0;
   for (const candidate of candidates) {
     console.log(`\n--- ${candidate.name} (source.${candidate.slug})`);
-    const probe = await runProbe({ method: 'GET', url: candidate.probe_url, headers: candidate.headers });
+
+    // Admission score gate: curated candidates below 70/100 are not pursued.
+    if (candidate.score !== undefined && candidate.score < 70) {
+      console.log(`    rejected: admission score ${candidate.score} below 70`);
+      continue;
+    }
+    // Parked candidates wait for credentials (free keys / contact identity)
+    // rather than burning a probe that is guaranteed to fail.
+    const missingEnv = (candidate.requires_env || []).filter((v) => !process.env[v]);
+    if (missingEnv.length) {
+      parked++;
+      console.log(`    parked: set ${missingEnv.join(', ')} to activate this candidate`);
+      continue;
+    }
+
+    const probe = await runProbe({ method: candidate.method || 'GET', url: candidate.probe_url, headers: candidate.headers, body: candidate.body });
     if (!probe.ok || probe.status !== 200 || probe.body === null) {
       console.log(`    discarded: probe failed (status=${probe.status}, error=${probe.error ?? 'body is not JSON'})`);
       continue;
@@ -264,7 +292,7 @@ async function discover() {
     if (receipt.status === 'verified') qualified++;
     console.log(`    quarantined in ${path.relative(process.cwd(), file)} — promote after a streak of ${PROMOTE_STREAK} clean verifications`);
   }
-  console.log(`\nScout finished: ${qualified}/${candidates.length} new candidates verified on first probe. Run "verify-proposed" daily and "promote --ready" to graduate them.`);
+  console.log(`\nScout finished: ${qualified}/${candidates.length} new candidates verified on first probe${parked ? `, ${parked} parked awaiting credentials` : ''}. Run "verify-proposed" daily and "promote --ready" to graduate them.`);
   void proposedService; // service created for side effects (dirs); sweeps happen via verify-proposed
 }
 

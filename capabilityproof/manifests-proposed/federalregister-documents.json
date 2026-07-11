@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.federalregister.documents",
+  "manifest_version": "1.0",
+  "claim": "Daily rules, proposed rules and notices; regulatory-monitoring backbone",
+  "publisher": {
+    "name": "Federal Register documents"
+  },
+  "protocol": "rest",
+  "category": "government",
+  "tags": [
+    "government"
+  ],
+  "tasks": [
+    "Daily rules, proposed rules and notices; regulatory-monitoring backbone"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:37.629Z"
+  },
+  "test_pack": {
+    "id": "federalregister.documents_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://www.federalregister.gov/api/v1/documents.json?per_page=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "results",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "results",
+        "fields": [
+          "title",
+          "type",
+          "document_number",
+          "html_url"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

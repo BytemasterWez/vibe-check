@@ -9,7 +9,10 @@ const MAX_BODY_BYTES = 5 * 1024 * 1024; // refuse to buffer more than 5 MB
 export async function runProbe(request, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   const url = substituteEnv(request.url);
   const method = (request.method || 'GET').toUpperCase();
-  const headers = { 'User-Agent': 'CapabilityProof/0.1 (SourceProof probe)', ...(request.headers || {}) };
+  // Header values may also carry ${ENV:VAR} (e.g. token headers, or SEC's
+  // required contact-email User-Agent) so secrets stay out of manifests.
+  const headers = { 'User-Agent': 'CapabilityProof/0.1 (SourceProof probe)' };
+  for (const [k, v] of Object.entries(request.headers || {})) headers[k] = substituteEnv(v);
 
   const fetchedAt = new Date().toISOString();
   const started = Date.now();

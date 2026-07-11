@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.nhtsa.vehicle_recalls",
+  "manifest_version": "1.0",
+  "claim": "Safety recalls by vehicle; consumer-safety monitoring",
+  "publisher": {
+    "name": "NHTSA vehicle recalls"
+  },
+  "protocol": "rest",
+  "category": "transport",
+  "tags": [
+    "transport"
+  ],
+  "tasks": [
+    "Safety recalls by vehicle; consumer-safety monitoring"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:30:02.924Z"
+  },
+  "test_pack": {
+    "id": "nhtsa.vehicle_recalls_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=honda&model=civic&modelYear=2020"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "results",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "results",
+        "fields": [
+          "Manufacturer",
+          "NHTSACampaignNumber",
+          "parkIt",
+          "parkOutSide"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

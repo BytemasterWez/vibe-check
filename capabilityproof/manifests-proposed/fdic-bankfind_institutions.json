@@ -1,0 +1,69 @@
+{
+  "capability_id": "source.fdic.bankfind_institutions",
+  "manifest_version": "1.0",
+  "claim": "All FDIC-insured institutions with financials; core banking-risk reference",
+  "publisher": {
+    "name": "FDIC BankFind institutions"
+  },
+  "protocol": "rest",
+  "category": "finance",
+  "tags": [
+    "finance"
+  ],
+  "tasks": [
+    "All FDIC-insured institutions with financials; core banking-risk reference"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:03.991Z"
+  },
+  "test_pack": {
+    "id": "fdic.bankfind_institutions_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://banks.data.fdic.gov/api/institutions?limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "data",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "data",
+        "fields": [
+          "score"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}
