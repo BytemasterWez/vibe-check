@@ -62,6 +62,34 @@ run if the file was edited without re-freezing. A changed config is a **new
 candidate version** (`robust_ensemble_v2`), never a silent update to an existing
 result — essential once external recordings are in play.
 
+### Rare-event safety uses confidence bounds
+
+"Zero failures in a small test" is weak evidence, so the dangerous-confidence
+classes are gated on a **Clopper-Pearson 95% upper bound** (`lib/stats.mjs`), not
+a point rate. The target-absent false-positive limit of `0.001` therefore forces
+~3000 clean trials before it can be believed — `CLM-RR-003` runs 3200. The hard
+constraint is `false_confident_95pct_upper_bound` / `target_absent_fp_95pct_upper_bound`,
+and receipts report `count / trials / upper_bound`, never a bare zero-rate.
+
+### External evaluation outcomes (allowed to disappoint)
+
+`lib/external/evaluate.mjs` runs the full gate chain and returns ONE outcome from
+a frozen taxonomy — `PASS`, `FAIL`, `ABSTAIN`, `EVIDENCE_INELIGIBLE`,
+`SIGNAL_TYPE_INCOMPATIBLE`, `REFERENCE_UNUSABLE`, `ADAPTER_INVALID`,
+`CLAIM_NOT_APPLICABLE` — so a valid dataset that simply lacks the needed spatial
+information is *not* recorded as an estimator failure. It emits an external
+evidence receipt (raw/normalized hashes, adapter version, subject/session/
+recording counts, eligibility, `truth_isolation_verified`) and runs the estimator
+against input mounted in a **separate directory** from the scorer's truth.
+
+### Hardware-in-the-loop claims (escalated, never faked)
+
+`HIL-SIG/ABS/MOTION/AMB-001/002` are registered as `recorded_hardware`-gated. The
+autonomous loop cannot produce that evidence, so a provenance gate blocks each
+and escalates **`NEEDS_HARDWARE`** — including `HIL-AMB-002`, the explicit
+*boundary* claim that co-located targets are **not** separable with the current
+observation configuration.
+
 ### External evidence (human-gated)
 
 `lib/external/` is the framework for evidence the lab did not generate: a generic
@@ -96,10 +124,10 @@ claims + evidence ledger
 ## Quick start
 
 ```bash
-npm run lab:test                 # offline smoke test (41 assertions)
+npm run lab:test                 # offline smoke test (43 assertions)
 npm run lab:test:mutation        # governance mutation test (all guardrails killed)
 npm run lab:test:cross-world     # proof: expose + reject an overfit estimator
-npm run lab:test:external        # external-evidence framework (adapter, eligibility, blindness)
+npm run lab:test:external        # external-evidence framework + evaluation outcomes (26 assertions)
 
 npm run lab -- seed              # seed the ledger from registry/claims/
 npm run lab -- plan              # ranked next experiments (expected info gain)

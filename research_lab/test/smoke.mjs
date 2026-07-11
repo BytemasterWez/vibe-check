@@ -175,7 +175,9 @@ let protocol;
 // --- 8. Governor + hard constraints ----------------------------------------
 console.log('governor + constraints');
 {
-  const cleanCtx = { false_confident_rate: 0, target_absent_false_positive_rate: 0, reproduction_status: 'EXACT_MATCH', critical_scenario_coverage: 1 };
+  // Clean evidence: zero events over enough trials that the 95% upper bounds
+  // clear the safety limits (target-absent needs ~3000 trials for 0.001).
+  const cleanCtx = { false_confident_count: 0, false_confident_trials: 4000, target_absent_false_positive_count: 0, target_absent_trials: 4000, reproduction_status: 'EXACT_MATCH', critical_scenario_coverage: 1 };
   const gov = createGovernor();
   check('forbidden action blocked + escalated', gov.checkAction('purchase_hardware').escalate === true);
   check('hard constraints pass on clean evidence', gov.checkHardConstraints(cleanCtx).pass === true);
@@ -185,8 +187,12 @@ console.log('governor + constraints');
 
   const clean = evaluateHardConstraints(cleanCtx);
   check('constraints module passes clean evidence', clean.pass === true);
-  const danger = evaluateHardConstraints({ ...cleanCtx, false_confident_rate: 0.02 });
-  check('a dangerous false-confident rate fails hard constraints', danger.pass === false);
+  // Zero failures in a SMALL sample must not pass: 0/200 bounds the rate at ~0.015.
+  const smallSample = evaluateHardConstraints({ ...cleanCtx, target_absent_false_positive_count: 0, target_absent_trials: 200 });
+  check('zero failures in a small sample cannot establish the 0.001 bound', smallSample.pass === false);
+  const danger = evaluateHardConstraints({ ...cleanCtx, false_confident_count: 3, false_confident_trials: 100 });
+  check('a dangerous false-confident count fails hard constraints', danger.pass === false);
+  check('constraints report the confidence bound + counts', typeof clean.bounds.false_confident.upper_bound === 'number');
 }
 
 // --- 9. Executor no-leak + reproduction ------------------------------------
@@ -205,9 +211,10 @@ console.log('cross-world campaign');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'research-lab-xw-'));
   const store = createStore(path.join(tmp, 'data'));
 
-  // A robust claim that should advance across two world families.
+  // A robust claim that should advance across two world families. 90 seeds/world
+  // (180 trials, 0 events) clears the false-confident 95% upper bound (< 0.02).
   store.saveClaim(mkClaim('CLM-A', 'robust_ensemble_v1', [
-    step('s1', 'C3', 'clean', ['sinusoidal', 'nonstationary'], 2, 800000, 24),
+    step('s1', 'C3', 'clean', ['sinusoidal', 'nonstationary'], 2, 800000, 90),
   ]));
   // An overfit candidate that should be FALSIFIED on the target-absent world.
   store.saveClaim(mkClaim('CLM-B', 'sinusoid_template_v1', [

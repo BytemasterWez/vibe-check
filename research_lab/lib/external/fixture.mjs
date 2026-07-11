@@ -63,7 +63,9 @@ export function makeFixtureRecording(opts = {}) {
     manifestBase,
     raw,
     transformations,
-    truth: { true_rr_bpm: rrBpm },
+    // A declared reference method but missing label values -> REFERENCE_UNUSABLE
+    // at scoring time (distinct from an ineligible dataset with no method at all).
+    truth: opts.unusable_reference ? { true_rr_bpm: null } : { true_rr_bpm: rrBpm },
     subjects,
   });
 

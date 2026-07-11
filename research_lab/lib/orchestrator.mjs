@@ -22,6 +22,7 @@ import { ALL_WORLDS } from './simulators/index.mjs';
 import { PRE_HARDWARE_CEILING } from './maturity.mjs';
 import { machineDigest } from './escalation.mjs';
 import { diversityReport } from './diversity.mjs';
+import { isAutonomous, ingestEscalationFor } from './provenance.mjs';
 
 function runtimeEnv(overrides = {}) {
   return { on_power: true, free_disk_gb: 100, ...overrides };
@@ -56,9 +57,14 @@ function resolveStep(store, governor, claim, step, receipts) {
   const passes = rs.filter(trustworthyPass);
   const passedFamilies = new Set(passes.map((r) => r.world_family));
 
+  const sum = (f) => rs.reduce((a, r) => a + (r.primary_metrics[f] ?? 0), 0);
   const aggregate = {
-    false_confident_rate: Math.max(0, ...rs.map((r) => r.primary_metrics.false_confident_rate ?? 0)),
-    target_absent_false_positive_rate: Math.max(0, ...rs.map((r) => r.primary_metrics.target_absent_false_positive_rate ?? 0)),
+    // Aggregate EVENT COUNTS across the step's world experiments so the hard
+    // constraint can gate on a confidence bound rather than a small-sample rate.
+    false_confident_count: sum('false_confident_count'),
+    false_confident_trials: sum('n_trials'),
+    target_absent_false_positive_count: sum('target_absent_false_positive_count'),
+    target_absent_trials: sum('n_target_absent'),
     reproduction_status: rs.every((r) => r.reproduction_status === 'EXACT_MATCH') ? 'EXACT_MATCH' : 'MISMATCH',
     critical_scenario_coverage: Math.min(1, passedFamilies.size / step.min_families),
   };
@@ -209,6 +215,25 @@ export function step(store, governor, keys, env) {
     if (remaining.length === 0) {
       return resolveStep(store, governor, claim, step, receipts);
     }
+  }
+
+  // 1b. A claim whose next step requires NON-autonomous evidence (recorded
+  // hardware, human labels, external data) cannot be run by the loop — it must
+  // escalate to the correct human/hardware gate rather than fabricate evidence.
+  for (const claim of claims) {
+    const step = currentStep(claim);
+    if (!step || !step.provenance_class || isAutonomous(step.provenance_class)) continue;
+    claim.blocked = true;
+    store.saveClaim(claim);
+    const category = ingestEscalationFor(step.provenance_class) || 'NEEDS_HARDWARE';
+    store.log({ event: 'provenance_gate', claim_id: claim.claim_id, provenance: step.provenance_class, category });
+    return {
+      type: 'escalation',
+      category,
+      claim_id: claim.claim_id,
+      detail: `step ${step.id} requires ${step.provenance_class} evidence (human/hardware-gated); the autonomous loop cannot produce it`,
+      digest: machineDigest({ category, claim, evidence: evidenceSummary(store, claim.claim_id), detail: `requires ${step.provenance_class}` }),
+    };
   }
 
   // 2. Run the next highest-information experiment (or handle a missing world).

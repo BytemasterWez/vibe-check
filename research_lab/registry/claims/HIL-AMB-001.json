@@ -1,0 +1,32 @@
+{
+  "claim_id": "HIL-AMB-001",
+  "statement": "Two mechanical targets at distinct resolvable ranges cause the ambiguity gate to abstain when their motion sources disagree.",
+  "intended_use": "hardware_in_the_loop_bench",
+  "claim_type": "safety_property",
+  "required_modalities": ["mmwave_hardware"],
+  "reference_standard": "dual_encoder_reference",
+  "clinical_relevance": 0.85,
+  "candidate_estimator": "robust_ensemble_v2",
+  "baseline_estimator": "fft_peak_v1",
+  "maturity": "C5",
+  "open_uncertainties": ["sim_to_real_gap"],
+  "notes": "Hardware-in-the-loop entry claim. Requires a physical sensor + mechanically-driven target; the autonomous pre-hardware loop cannot produce this evidence and must escalate NEEDS_HARDWARE. Not a human/clinical measurement.",
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "h1_bench",
+        "advance_to": "H1-BENCH-HARDWARE",
+        "provenance_class": "recorded_hardware",
+        "challenge_set": "hardware_bench",
+        "worlds": ["hil_bench"],
+        "min_families": 1,
+        "seed_start": 0,
+        "seed_count": 0,
+        "acceptance": { "false_confident_max": 0.05 }
+      }
+    ]
+  },
+  "supporting_experiments": [],
+  "contradicting_experiments": [],
+  "completed_steps": []
+}

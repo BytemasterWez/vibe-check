@@ -6,12 +6,20 @@ This baseline should not be modified in place; later work is compared against it
 
 ## Code baseline
 
-- Evidence-baseline commit: `1bdbdeb21678db6370ec9db6785382662ca35397`
+- `code_baseline_commit: 1bdbdeb21678db6370ec9db6785382662ca35397`
   (tree `911ab8c31d7ae28ab9dfb2e35c2852f75b074ea0`) — the `research_lab`
-  cross-world build, before any Packet 3 changes.
+  cross-world build the archived receipts were generated from, before any
+  Packet 3 changes.
+- `milestone_archive_commit: ac1651cc7043274b22b16821ee608f99b2f6272d` — the
+  commit that adds this milestone directory (MILESTONE.md + receipts + summary).
+- `tag_target_commit: ac1651cc7043274b22b16821ee608f99b2f6272d` — the annotated
+  tag `v0.3.0-cross-world-falsification` dereferences here.
 - Archived receipt bundle sha256 (concatenated, this directory's `receipts/`):
   `b2a081f2d16ff436c24e716af182a98309d4a35a4994761076edc3f56170064c`
-- Tag: `v0.3.0-cross-world-falsification`
+
+Note: the tag exists locally and points at `ac1651c`. If the remote tag push is
+rejected (the session token may be scoped to branch refs only), a maintainer can
+publish it with `git push origin refs/tags/v0.3.0-cross-world-falsification`.
 
 ## Test totals (offline, deterministic)
 

@@ -13,10 +13,14 @@
 //   9. E3 (cross-dataset) needs >= 2 independently acquired datasets
 
 import assert from 'assert';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { makeFixtureRecording } from '../lib/external/fixture.mjs';
 import { validateAdapter, reproductionExact } from '../lib/external/contract.mjs';
 import { checkEligibility, checkSubjectSplit } from '../lib/external/eligibility.mjs';
 import { externalAdvanceGate, requiresHumanGate } from '../lib/external/maturity.mjs';
+import { evaluateExternal, OUTCOMES } from '../lib/external/evaluate.mjs';
 import { runEstimator } from '../lib/estimators/index.mjs';
 
 let passed = 0;
@@ -91,6 +95,31 @@ console.log('external maturity');
   check('E3 rejected with a single dataset', !oneDataset.allowed);
   const twoDatasets = externalAdvanceGate({ to: 'E3-CROSS-DATASET', autonomous: false, datasets: [{ source: 'a' }, { source: 'b' }] });
   check('E3 allowed (human) with two independent datasets', twoDatasets.allowed);
+}
+
+// 10. End-to-end evaluation pipeline + outcome taxonomy.
+console.log('evaluation pipeline (outcomes may disappoint)');
+{
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rl- exteval-'.replace(' ', '')));
+  const singleChannelClaim = { claim_id: 'EXT-RR-DEMO', required_modalities: ['mmwave'], candidate_estimator: 'robust_ensemble_v1', acceptance: { mae_max: 2 } };
+  const spatialClaim = { claim_id: 'EXT-RR-SPATIAL', required_modalities: ['mmwave_2channel'], candidate_estimator: 'robust_ensemble_v2', acceptance: { mae_max: 2 } };
+
+  const good = makeFixtureRecording({ seed: 7 });
+  const r = evaluateExternal(good, singleChannelClaim, { workDir });
+  check('eligible recording + applicable claim yields PASS/ABSTAIN', ['PASS', 'ABSTAIN'].includes(r.outcome));
+  check('external receipt binds raw + normalized hashes', r.raw_bundle_sha256 && r.normalized_bundle_sha256);
+  check('truth isolation is verified', r.truth_isolation_verified === true);
+
+  check('a single-channel dataset is CLAIM_NOT_APPLICABLE for a spatial claim', evaluateExternal(makeFixtureRecording({ seed: 8 }), spatialClaim, { workDir }).outcome === 'CLAIM_NOT_APPLICABLE');
+  check('an ineligible dataset yields EVIDENCE_INELIGIBLE', evaluateExternal(makeFixtureRecording({ seed: 9, ineligible: 'license' }), singleChannelClaim, { workDir }).outcome === 'EVIDENCE_INELIGIBLE');
+  check('a declared-but-empty reference yields REFERENCE_UNUSABLE', evaluateExternal(makeFixtureRecording({ seed: 10, unusable_reference: true }), singleChannelClaim, { workDir }).outcome === 'REFERENCE_UNUSABLE');
+  check('a corrupted adapter yields ADAPTER_INVALID', evaluateExternal(makeFixtureRecording({ seed: 11, corrupt: 'undeclared' }), singleChannelClaim, { workDir }).outcome === 'ADAPTER_INVALID');
+
+  // signal_type is checked after the adapter contract, so flip only that field.
+  const wrongSignal = makeFixtureRecording({ seed: 12 });
+  wrongSignal.manifest.signal_type = 'audio_waveform';
+  check('an incompatible signal type yields SIGNAL_TYPE_INCOMPATIBLE', evaluateExternal(wrongSignal, singleChannelClaim, { workDir }).outcome === 'SIGNAL_TYPE_INCOMPATIBLE');
+  check('all outcomes are drawn from the frozen taxonomy', OUTCOMES.length === 8 && OUTCOMES.includes('CLAIM_NOT_APPLICABLE'));
 }
 
 console.log(`\n${passed} checks passed.`);

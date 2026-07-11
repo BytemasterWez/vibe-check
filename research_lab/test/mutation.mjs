@@ -100,16 +100,20 @@ mutant(
   );
 }
 
-// 3. Hard constraints: must reject a dangerous false-confident rate.
+// 3. Hard constraints: must reject a dangerous false-confident count and must
+//    not accept "zero failures in a small sample" as meeting a tight bound.
 mutant(
-  'hard constraints reject dangerous false confidence',
+  'hard constraints reject dangerous false confidence via a confidence bound',
   (fn) => {
-    const base = { false_confident_rate: 0, target_absent_false_positive_rate: 0, reproduction_status: 'EXACT_MATCH', critical_scenario_coverage: 1 };
-    return fn(base).pass === true && fn({ ...base, false_confident_rate: 0.02 }).pass === false;
+    const base = { false_confident_count: 0, false_confident_trials: 4000, target_absent_false_positive_count: 0, target_absent_trials: 4000, reproduction_status: 'EXACT_MATCH', critical_scenario_coverage: 1 };
+    const clean = fn(base).pass === true;
+    const danger = fn({ ...base, false_confident_count: 3, false_confident_trials: 100 }).pass === false;
+    const smallSample = fn({ ...base, target_absent_trials: 200 }).pass === false; // 0/200 can't reach 0.001
+    return clean && danger && smallSample;
   },
   (ctx) => evaluateHardConstraints(ctx),
-  // Mutant: ignores the false-confident rate.
-  (ctx) => evaluateHardConstraints({ ...ctx, false_confident_rate: 0 })
+  // Mutant: treats a point rate of zero as proof, ignoring how few trials backed it.
+  (ctx) => evaluateHardConstraints({ ...ctx, false_confident_count: 0, false_confident_trials: 1e9, target_absent_false_positive_count: 0, target_absent_trials: 1e9 })
 );
 
 // 4. Statistician: must count a confident output on an empty scene.

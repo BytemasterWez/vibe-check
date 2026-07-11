@@ -29,7 +29,8 @@
         "worlds": ["target_absent"],
         "min_families": 1,
         "seed_start": 500000,
-        "seed_count": 1200,
+        "seed_count": 3200,
+        "note": "3200 trials so a zero-event campaign gives a Clopper-Pearson 95% upper bound (~0.00094) below the 0.001 hard constraint; a smaller sample could not establish it.",
         "acceptance": { "mae_max": null, "coverage_min": null, "false_confident_max": null, "target_absent_fp_max": 0.001, "utility_min": null }
       }
     ]

@@ -1,0 +1,32 @@
+{
+  "claim_id": "HIL-SIG-001",
+  "statement": "A single periodic mechanical target produces a repeatable dominant frequency estimate within a frozen error tolerance across repeated trials.",
+  "intended_use": "hardware_in_the_loop_bench",
+  "claim_type": "hardware_property",
+  "required_modalities": ["mmwave_hardware"],
+  "reference_standard": "encoder_driven_reference",
+  "clinical_relevance": 0.9,
+  "candidate_estimator": "robust_ensemble_v2",
+  "baseline_estimator": "fft_peak_v1",
+  "maturity": "C5",
+  "open_uncertainties": ["sim_to_real_gap"],
+  "notes": "Hardware-in-the-loop entry claim. Requires a physical sensor + mechanically-driven target; the autonomous pre-hardware loop cannot produce this evidence and must escalate NEEDS_HARDWARE. Not a human/clinical measurement.",
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "h1_bench",
+        "advance_to": "H1-BENCH-HARDWARE",
+        "provenance_class": "recorded_hardware",
+        "challenge_set": "hardware_bench",
+        "worlds": ["hil_bench"],
+        "min_families": 1,
+        "seed_start": 0,
+        "seed_count": 0,
+        "acceptance": { "mae_max": 2.0, "coverage_min": 0.9 }
+      }
+    ]
+  },
+  "supporting_experiments": [],
+  "contradicting_experiments": [],
+  "completed_steps": []
+}

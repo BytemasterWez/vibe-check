@@ -7,12 +7,12 @@
 // brilliantly against one simulated world but fails against an independently
 // constructed one. This test drives exactly that, and asserts the outcome.
 //
-// Two claims share an identical evidence plan and differ only in the candidate:
-//   * sinusoid_template_v1 — overfit to the stationary sinusoid, never abstains
-//   * robust_ensemble_v1   — reports only when independent methods agree
-// Both are brilliant on the clean sinusoidal step. The independent target-absent
-// world then separates them: the overfit one invents vital signs and is
-// FALSIFIED; the ensemble abstains and reaches its software ceiling.
+// Two claims are brilliant on the clean sinusoidal step and are then taken into
+// independent worlds:
+//   * sinusoid_template_v1 (overfit, never abstains) -> invents vital signs on
+//     the target-absent world -> FALSIFIED.
+//   * robust_ensemble_v2 (ambiguity gate + agreeing members) -> survives an
+//     independent adversarial world (distinct-range intruder) -> reaches ceiling.
 
 import fs from 'fs';
 import os from 'os';
@@ -33,7 +33,13 @@ function cleanMetrics(estimator, world, n = 60, start = 990000) {
   return scoreTrials(trials);
 }
 
-function plan(candidate) {
+// Both plans share a clean first step. The overfit is then exposed on the
+// independent target-absent world (it invents rates -> many observed events ->
+// falsified even at a small sample). The ensemble is instead taken through an
+// independent adversarial world (a distinct-range intruder) that it survives and
+// reaches its ceiling; the strict 0.001 target-absent bound is established in the
+// main campaign (CLM-RR-003, 3200 trials), not re-proven at cost here.
+function baseClaim(candidate, secondStep) {
   return {
     claim_id: `CLM-${candidate}`,
     statement: `probe: ${candidate}`,
@@ -44,8 +50,8 @@ function plan(candidate) {
     open_uncertainties: [],
     evidence_plan: {
       steps: [
-        { id: 's1_clean', advance_to: 'C3', challenge_set: 'clean', worlds: ['sinusoidal', 'biomechanical'], min_families: 2, seed_start: 960000, seed_count: 40, acceptance: { mae_max: 2, coverage_min: 0.9, false_confident_max: 0.02, utility_min: 0.8 } },
-        { id: 's2_absent', advance_to: 'C4', challenge_set: 'target_absent', worlds: ['target_absent'], min_families: 1, seed_start: 970000, seed_count: 300, acceptance: { target_absent_fp_max: 0.001 } },
+        { id: 's1_clean', advance_to: 'C3', challenge_set: 'clean', worlds: ['sinusoidal', 'biomechanical'], min_families: 2, seed_start: 960000, seed_count: 120, acceptance: { mae_max: 2, coverage_min: 0.9, false_confident_max: 0.02, utility_min: 0.8 } },
+        secondStep,
       ],
     },
     supporting_experiments: [],
@@ -53,6 +59,12 @@ function plan(candidate) {
     completed_steps: [],
   };
 }
+const overfitPlan = baseClaim('sinusoid_template_v1', {
+  id: 's2_absent', advance_to: 'C4', challenge_set: 'target_absent', worlds: ['target_absent'], min_families: 1, seed_start: 970000, seed_count: 300, acceptance: { target_absent_fp_max: 0.001 },
+});
+const ensemblePlan = baseClaim('robust_ensemble_v2', {
+  id: 's2_independent', advance_to: 'C4', challenge_set: 'intruder_distinct', worlds: ['sinusoidal', 'biomechanical'], min_families: 2, seed_start: 980000, seed_count: 120, acceptance: { false_confident_max: 0.05 },
+});
 
 console.log('cross-world proof milestone\n');
 
@@ -63,13 +75,13 @@ console.log('  -> brilliant on its home world.\n');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'research-lab-proof-'));
 const store = createStore(path.join(tmp, 'data'));
-store.saveClaim(plan('sinusoid_template_v1'));
-store.saveClaim(plan('robust_ensemble_v1'));
+store.saveClaim(overfitPlan); // fails on target-absent via observed events
+store.saveClaim(ensemblePlan); // survives an independent adversarial world
 
 const res = runCampaign({ dataDir: store.dataDir, maxSteps: 100 });
 
 const overfit = store.getClaim('CLM-sinusoid_template_v1');
-const ensemble = store.getClaim('CLM-robust_ensemble_v1');
+const ensemble = store.getClaim('CLM-robust_ensemble_v2');
 
 console.log('outcome:');
 console.log(`  overfit  : completed_steps=${JSON.stringify(overfit.completed_steps)} falsified=${!!overfit.falsified} maturity=${overfit.maturity}`);

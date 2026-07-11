@@ -79,6 +79,10 @@ export function scoreTrials(trials, opts = {}) {
     n_recoverable: recoverableCount,
     n_unrecoverable: unrecoverableCount,
     n_target_absent: targetAbsentCount,
+    // Raw event counts — required to compute confidence bounds on rare events
+    // (a rate alone hides how many trials backed it).
+    false_confident_count: falseConfident,
+    target_absent_false_positive_count: targetAbsentFalsePositive,
     mae_bpm: round(mae),
     p95_error_bpm: round(percentile(validErrors, 0.95)),
     valid_coverage: round(validCoverage),
