@@ -43,6 +43,9 @@ jobs:
       - name: External-evidence framework (adapter contract, eligibility, blindness)
         run: npm run lab:test:external
 
+      - name: External crossing (Mendeley radar dataset; skips if raw data absent)
+        run: npm run lab:test:external-crossing
+
       - name: Run the campaign to a terminal state
         run: |
           npm run lab -- seed

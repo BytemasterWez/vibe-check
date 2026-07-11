@@ -25,6 +25,8 @@
     "lab:test:mutation": "node research_lab/test/mutation.mjs",
     "lab:test:cross-world": "node research_lab/test/cross_world.mjs",
     "lab:test:external": "node research_lab/test/external.mjs",
+    "lab:test:external-crossing": "node research_lab/test/external_mendeley.mjs",
+    "lab:external:bootstrap": "node research_lab/external_bootstrap.mjs",
     "package": "vite build && electron-builder --publish never",
     "package:mac": "vite build && electron-builder --mac --publish never",
     "package:win": "vite build && electron-builder --win --publish never",

@@ -1,0 +1,21 @@
+{
+  "evidence_id": "EXT-RR-MULTI-001",
+  "dataset_title": "FMCW radar-based multi-person vital sign monitoring data.",
+  "doi": "10.17632/684v4r8wfr.1",
+  "version": 1,
+  "repository": "Mendeley Data",
+  "creators": [
+    "Guangyu Lei",
+    "Wei Cheng",
+    "Xipeng Yin",
+    "Yuqing Wu"
+  ],
+  "publish_date": "2024-09-04T09:48:16.23Z",
+  "license_short": "CC BY 4.0",
+  "license_full": "Creative Commons Attribution 4.0 International",
+  "license_url": "http://creativecommons.org/licenses/by/4.0",
+  "license_source": "Mendeley dataset landing record (NOT the accompanying article PDF)",
+  "required_attribution": "Guangyu Lei, Wei Cheng, Xipeng Yin, Yuqing Wu. \"FMCW radar-based multi-person vital sign monitoring data.\" Mendeley Data, V1. doi:10.17632/684v4r8wfr.1. Licensed CC BY 4.0.",
+  "transformation_disclosure": "Radar .bin decoded per readDCA1000.m (int16 IQ -> range-FFT -> range-bin phase slow-time, 2 spatial channels). Reference CSV (ECG/PCG) parsed to scorer-only truth. All transforms declared in the adapter manifest; normalized outputs hashed.",
+  "attribution_notice": "Changes were made (decoding, range-FFT, normalization). This use does not imply endorsement by the rights holder."
+}

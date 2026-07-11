@@ -1,0 +1,58 @@
+{
+  "evidence_id": "EXT-RR-MULTI-001",
+  "dataset_level": {
+    "persistent_provenance": true,
+    "license_recorded": "CC BY 4.0",
+    "more_than_one_recording": true,
+    "raw_radar_present": true,
+    "reference_streams_present": true,
+    "reference_pairs_to_radar": true,
+    "sampling_metadata_available": true,
+    "scenario_traceable": true,
+    "unresolved_duplicates": false,
+    "deterministic_ids": true,
+    "splits_separable": true,
+    "truth_isolable": true,
+    "status": "ELIGIBLE",
+    "note": "Dataset is a legitimate, licensed, well-formed external source."
+  },
+  "claim_level": {
+    "CLM-RR-001": {
+      "outcome": "REFERENCE_UNUSABLE",
+      "reason": "Frozen reference standard for the claim is respiratory_belt_or_capnography; dataset reference is cardiac ECG/PCG. Deriving respiration (EDR) is undocumented and must not be improvised/tuned."
+    },
+    "CLM-RR-002": {
+      "outcome": "REFERENCE_UNUSABLE",
+      "reason": "Frozen reference standard for the claim is respiratory_belt_or_capnography; dataset reference is cardiac ECG/PCG. Deriving respiration (EDR) is undocumented and must not be improvised/tuned."
+    },
+    "CLM-RR-003": {
+      "outcome": "REFERENCE_UNUSABLE",
+      "reason": "Frozen reference standard for the claim is respiratory_belt_or_capnography; dataset reference is cardiac ECG/PCG. Deriving respiration (EDR) is undocumented and must not be improvised/tuned."
+    },
+    "CLM-RR-004": {
+      "outcome": "REFERENCE_UNUSABLE",
+      "reason": "Frozen reference standard for the claim is respiratory_belt_or_capnography; dataset reference is cardiac ECG/PCG. Deriving respiration (EDR) is undocumented and must not be improvised/tuned."
+    },
+    "CLM-RR-004B": {
+      "outcome": "REFERENCE_UNUSABLE",
+      "reason": "Frozen reference standard for the claim is respiratory_belt_or_capnography; dataset reference is cardiac ECG/PCG. Deriving respiration (EDR) is undocumented and must not be improvised/tuned."
+    }
+  },
+  "exclusion_reason_codes": [
+    "SOURCE_FILE_CORRUPT",
+    "SOURCE_FILE_EMPTY",
+    "REQUIRED_METADATA_MISSING",
+    "RADAR_REFERENCE_PAIR_MISSING",
+    "TIME_ALIGNMENT_UNRECOVERABLE",
+    "UNSUPPORTED_ENCODING",
+    "DUPLICATE_RECORDING",
+    "RECORDING_DURATION_BELOW_FROZEN_MINIMUM"
+  ],
+  "inclusion_exclusion": {
+    "total_recordings": 162,
+    "included_for_radar_decode": 162,
+    "excluded": [],
+    "scorable_for_respiratory_claims": 0,
+    "note": "All 162 recordings are radar-decodable; ZERO are scorable for respiratory-rate claims because the reference is cardiac. This is a reference limitation, not an exclusion of difficult recordings."
+  }
+}

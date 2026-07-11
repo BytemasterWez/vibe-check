@@ -15,3 +15,7 @@ capabilityproof/data/
 
 # Research lab runtime state (keys, claims ledger, protocols, receipts)
 research_lab/data/
+
+# External raw datasets (large, human-gated; retrieved via bootstrap, never committed)
+research_lab/evidence/external/raw/
+research_lab/runtime/

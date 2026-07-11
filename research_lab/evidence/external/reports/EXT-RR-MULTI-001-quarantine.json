@@ -1,0 +1,162 @@
+{
+  "evidence_id": "EXT-RR-MULTI-001",
+  "generated_at": "2026-07-11T14:07:19.876980Z",
+  "archive_structure": {
+    "file_count": 490,
+    "total_size_bytes": 2015258679,
+    "bin": 162,
+    "csv": 324,
+    "csv_target1": 162,
+    "csv_target2": 162,
+    "other": [
+      "DataSetDescription&ParametersSetting.pdf",
+      "DatasetFramework.pdf",
+      "RadarDataProcessing.zip",
+      "read_log.m"
+    ]
+  },
+  "bin_filename_convention": "adc_{bandwidth}_position{p}_ ({test}).bin",
+  "bandwidths": [
+    "2GHZ",
+    "2_5GHZ",
+    "3GHZ"
+  ],
+  "positions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9
+  ],
+  "tests_per_config": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "uniform_bin_size_bytes": [
+    10607872,
+    11520000
+  ],
+  "radar_parameters": {
+    "start_freq_ghz": 60,
+    "adc_samples": 200,
+    "adc_rate_ksps": 4000,
+    "pulse_duration_us": 57,
+    "frame_period_ms": 50,
+    "frame_rate_hz": 20,
+    "num_frames": 1200,
+    "chirp_per_frame": 1,
+    "num_rx": 4,
+    "num_tx": 3,
+    "slopes_mhz_per_us": {
+      "3GHZ": 60,
+      "2_5GHZ": 50,
+      "2GHZ": 40
+    },
+    "source": "DataSetDescription&ParametersSetting.pdf Table 2 + read_log.m/Main.m"
+  },
+  "position_geometry": [
+    {
+      "position": 1,
+      "theta1_deg": 40,
+      "theta2_deg": 20,
+      "r1_m": 1.0,
+      "r2_m": 1.0,
+      "config": "distinct_angle_same_range"
+    },
+    {
+      "position": 2,
+      "theta1_deg": 20,
+      "theta2_deg": 40,
+      "r1_m": 1.4,
+      "r2_m": 1.4,
+      "config": "distinct_angle_same_range"
+    },
+    {
+      "position": 3,
+      "theta1_deg": 40,
+      "theta2_deg": 40,
+      "r1_m": 1.4,
+      "r2_m": 1.0,
+      "config": "same_angle_distinct_range"
+    },
+    {
+      "position": 4,
+      "theta1_deg": 20,
+      "theta2_deg": 20,
+      "r1_m": 1.0,
+      "r2_m": 0.6,
+      "config": "same_angle_distinct_range"
+    },
+    {
+      "position": 5,
+      "theta1_deg": 20,
+      "theta2_deg": 40,
+      "r1_m": 1.4,
+      "r2_m": 1.0,
+      "config": "distinct_angle_distinct_range"
+    },
+    {
+      "position": 6,
+      "theta1_deg": 40,
+      "theta2_deg": 20,
+      "r1_m": 0.6,
+      "r2_m": 1.0,
+      "config": "distinct_angle_distinct_range"
+    },
+    {
+      "position": 7,
+      "theta1_deg": 40,
+      "theta2_deg": 40,
+      "r1_m": 0.6,
+      "r2_m": 0.6,
+      "config": "co_located_same_angle_same_range"
+    },
+    {
+      "position": 8,
+      "theta1_deg": 40,
+      "theta2_deg": 40,
+      "r1_m": 1.0,
+      "r2_m": 1.0,
+      "config": "co_located_same_angle_same_range"
+    },
+    {
+      "position": 9,
+      "theta1_deg": 20,
+      "theta2_deg": 20,
+      "r1_m": 1.4,
+      "r2_m": 1.4,
+      "config": "co_located_same_angle_same_range"
+    }
+  ],
+  "reference_finding": {
+    "csv_columns": [
+      "ECG",
+      "PCG"
+    ],
+    "reference_device": "ADS1292R biopotential AFE",
+    "reference_sample_rate_hz": 125,
+    "respiratory_trace_present": false,
+    "note": "Reference is CARDIAC (ECG + phonocardiogram). No direct respiratory belt/capnography trace. Respiratory-band energy fraction negligible (measured 0.00-0.19). Respiratory rate is NOT directly recoverable from the reference."
+  },
+  "truth_bearing_paths": "Filenames encode scenario (position/bandwidth/test) and reference target identity (log_Target1/Target2). These MUST NOT be exposed to estimator processes; the adapter passes only decoded channels.",
+  "decode_validation": {
+    "method": "readDCA1000.m int16 IQ -> range-FFT(256) -> MTI -> dominant range-bin phase",
+    "result": "1200 frames recovered at 20 Hz; coherent range bins ~30-31; respiration-band signal present; antennas disagree (hint of two subjects). .bin is deterministically interpretable => NOT ADAPTER_INVALID."
+  },
+  "malformed_files": [],
+  "empty_files": [],
+  "duplicate_hashes": {
+    "ece6c61cea807a0e92492ab73e70f5ef17bef7e421386161f137100d3ee7b6db": [
+      "log_Target2_2GHZ_position2_ (4).csv",
+      "log_Target2_3GHZ_position2_ (4).csv"
+    ]
+  },
+  "ambiguous_conventions": "None; naming is regular. Bandwidth token '2_5GHZ' uses underscore for the decimal point."
+}

@@ -90,6 +90,25 @@ and escalates **`NEEDS_HARDWARE`** — including `HIL-AMB-002`, the explicit
 *boundary* claim that co-located targets are **not** separable with the current
 observation configuration.
 
+### First genuine external crossing (EXT-RR-MULTI-001)
+
+The first real dataset was ingested: *FMCW radar-based multi-person vital sign
+monitoring data* (Mendeley `doi:10.17632/684v4r8wfr.1`, **CC BY 4.0**, dual-subject
+60 GHz radar). The raw ADC is decoded exactly per the authors' `readDCA1000.m`
+(`lib/external/adapters/mendeley_684v4r8wfr_v1.mjs`); the evaluated recording's
+SHA-256 matches the canonical Mendeley hash, the decode is deterministic, and
+truth is isolated. **Honest outcome: `REFERENCE_UNUSABLE`** — the dataset's
+reference is ECG/PCG (cardiac), not a respiratory belt/capnography trace, so a
+respiratory rate cannot be scored without an undocumented ECG-derived-respiration
+transform the crossing must not improvise. No frozen rule was altered and the
+external maturity track did **not** advance (`E1` needs a usable reference). Full
+provenance, quarantine, eligibility, receipt and decision brief live under
+`evidence/external/`; raw data is git-ignored and reproduced via
+`external_bootstrap.mjs` (content-addressed, hash-verified). See
+`evidence/external/reports/EXT-RR-MULTI-001-decision-brief.md`. This is the lab
+working as intended: it consumed real outside data and refused to manufacture a
+reference to force a PASS.
+
 ### External evidence (human-gated)
 
 `lib/external/` is the framework for evidence the lab did not generate: a generic
