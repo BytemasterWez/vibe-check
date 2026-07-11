@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.cftc.public_reporting",
+  "manifest_version": "1.0",
+  "claim": "Socrata-hosted COT legacy futures dataset",
+  "publisher": {
+    "name": "CFTC public reporting (Commitments of Traders)"
+  },
+  "protocol": "rest",
+  "category": "finance",
+  "tags": [
+    "finance"
+  ],
+  "tasks": [
+    "Socrata-hosted COT legacy futures dataset"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:04.811Z"
+  },
+  "test_pack": {
+    "id": "cftc.public_reporting_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://publicreporting.cftc.gov/resource/6dca-aqww.json?$limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "",
+        "fields": [
+          "id",
+          "market_and_exchange_names",
+          "report_date_as_yyyy_mm_dd",
+          "yyyy_report_week_ww"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

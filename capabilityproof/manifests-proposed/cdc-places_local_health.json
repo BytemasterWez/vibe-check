@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.cdc.places_local_health",
+  "manifest_version": "1.0",
+  "claim": "Model-based county/place health measures (Socrata)",
+  "publisher": {
+    "name": "CDC PLACES local health estimates"
+  },
+  "protocol": "rest",
+  "category": "health",
+  "tags": [
+    "health"
+  ],
+  "tasks": [
+    "Model-based county/place health measures (Socrata)"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:31:29.127Z"
+  },
+  "test_pack": {
+    "id": "cdc.places_local_health_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://data.cdc.gov/resource/swc5-untb.json?$limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "",
+        "fields": [
+          "year",
+          "stateabbr",
+          "statedesc",
+          "locationname"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

@@ -1,0 +1,75 @@
+{
+  "capability_id": "source.grantsgov.opportunity_search",
+  "manifest_version": "1.0",
+  "claim": "Federal grant opportunities; keyless POST search",
+  "publisher": {
+    "name": "Grants.gov opportunity search"
+  },
+  "protocol": "rest",
+  "category": "government",
+  "tags": [
+    "government"
+  ],
+  "tasks": [
+    "Federal grant opportunities; keyless POST search"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:38.706Z"
+  },
+  "test_pack": {
+    "id": "grantsgov.opportunity_search_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "POST",
+      "url": "https://api.grants.gov/v1/api/search2",
+      "body": {
+        "rows": 5,
+        "keyword": "water"
+      }
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "data.fundingCategories",
+        "min": 10
+      },
+      {
+        "type": "fields_present",
+        "path": "data.fundingCategories",
+        "fields": [
+          "label",
+          "value",
+          "count"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

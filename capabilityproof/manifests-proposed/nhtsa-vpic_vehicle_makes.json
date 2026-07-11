@@ -1,0 +1,70 @@
+{
+  "capability_id": "source.nhtsa.vpic_vehicle_makes",
+  "manifest_version": "1.0",
+  "claim": "Vehicle reference data incl. VIN decoding endpoints",
+  "publisher": {
+    "name": "NHTSA vPIC vehicle makes"
+  },
+  "protocol": "rest",
+  "category": "transport",
+  "tags": [
+    "transport"
+  ],
+  "tasks": [
+    "Vehicle reference data incl. VIN decoding endpoints"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:30:01.144Z"
+  },
+  "test_pack": {
+    "id": "nhtsa.vpic_vehicle_makes_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "Results",
+        "min": 6142
+      },
+      {
+        "type": "fields_present",
+        "path": "Results",
+        "fields": [
+          "Make_ID",
+          "Make_Name"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

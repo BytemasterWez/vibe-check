@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.ncei.daily_summaries",
+  "manifest_version": "1.0",
+  "claim": "Station-level historical climate; keyless access service (unlike keyed CDO v2)",
+  "publisher": {
+    "name": "NOAA NCEI daily climate summaries"
+  },
+  "protocol": "rest",
+  "category": "weather",
+  "tags": [
+    "weather"
+  ],
+  "tasks": [
+    "Station-level historical climate; keyless access service (unlike keyed CDO v2)"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:39.739Z"
+  },
+  "test_pack": {
+    "id": "ncei.daily_summaries_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=USW00013743&startDate=2026-07-01&endDate=2026-07-05&format=json"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "",
+        "fields": [
+          "WSF2",
+          "DATE",
+          "WDF2",
+          "AWND"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

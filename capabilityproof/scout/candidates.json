@@ -13,7 +13,10 @@
       "slug": "nws.active_alerts",
       "category": "hazards",
       "probe_url": "https://api.weather.gov/alerts/active",
-      "headers": { "User-Agent": "CapabilityProof/0.1 (scout probe)", "Accept": "application/geo+json" },
+      "headers": {
+        "User-Agent": "CapabilityProof/0.1 (scout probe)",
+        "Accept": "application/geo+json"
+      },
       "notes": "Official NWS active watches/warnings feed, GeoJSON, keyless"
     },
     {
@@ -71,6 +74,723 @@
       "category": "economic",
       "probe_url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
       "notes": "Crypto spot prices, keyless with strict rate limits — expect occasional 429s"
+    },
+    {
+      "name": "FDIC BankFind institutions",
+      "slug": "fdic.bankfind_institutions",
+      "category": "finance",
+      "probe_url": "https://banks.data.fdic.gov/api/institutions?limit=5",
+      "notes": "All FDIC-insured institutions with financials; core banking-risk reference",
+      "score": 85,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 13,
+        "update": 8,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "CFTC public reporting (Commitments of Traders)",
+      "slug": "cftc.public_reporting",
+      "category": "finance",
+      "probe_url": "https://publicreporting.cftc.gov/resource/6dca-aqww.json?$limit=5",
+      "notes": "Socrata-hosted COT legacy futures dataset",
+      "score": 74,
+      "score_breakdown": {
+        "commercial": 18,
+        "adoption": 9,
+        "authority": 15,
+        "stability": 12,
+        "update": 8,
+        "historical": 6,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "CFPB consumer complaints",
+      "slug": "cfpb.consumer_complaints",
+      "category": "finance",
+      "probe_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?size=5&no_aggs=true&format=json",
+      "notes": "Timed out from cloud test location on 2026-07-11; expected to work elsewhere — Scout will retry",
+      "score": 81,
+      "score_breakdown": {
+        "commercial": 21,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 11,
+        "update": 8,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "FEMA National Flood Hazard Layer",
+      "slug": "fema.nfhl_flood_layers",
+      "category": "hazards",
+      "probe_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer?f=json",
+      "notes": "ArcGIS flood-zone mapping service; core input for property/flood intelligence",
+      "score": 81,
+      "score_breakdown": {
+        "commercial": 22,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 12,
+        "update": 6,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "USGS National Map products",
+      "slug": "usgs.tnm_products",
+      "category": "geospatial",
+      "probe_url": "https://tnmaccess.nationalmap.gov/api/v1/products?max=5&prodFormats=GeoTIFF",
+      "notes": "Elevation/imagery/hydrography product discovery",
+      "score": 77,
+      "score_breakdown": {
+        "commercial": 18,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 12,
+        "update": 8,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "Federal Register documents",
+      "slug": "federalregister.documents",
+      "category": "government",
+      "probe_url": "https://www.federalregister.gov/api/v1/documents.json?per_page=5",
+      "notes": "Daily rules, proposed rules and notices; regulatory-monitoring backbone",
+      "score": 88,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 13,
+        "authority": 15,
+        "stability": 14,
+        "update": 9,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "Grants.gov opportunity search",
+      "slug": "grantsgov.opportunity_search",
+      "category": "government",
+      "method": "POST",
+      "probe_url": "https://api.grants.gov/v1/api/search2",
+      "body": {
+        "rows": 5,
+        "keyword": "water"
+      },
+      "notes": "Federal grant opportunities; keyless POST search",
+      "score": 84,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 12,
+        "update": 8,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "NOAA NCEI daily climate summaries",
+      "slug": "ncei.daily_summaries",
+      "category": "weather",
+      "probe_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=USW00013743&startDate=2026-07-01&endDate=2026-07-05&format=json",
+      "notes": "Station-level historical climate; keyless access service (unlike keyed CDO v2)",
+      "score": 85,
+      "score_breakdown": {
+        "commercial": 21,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 13,
+        "update": 8,
+        "historical": 10,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "EPA Envirofacts TRI facilities",
+      "slug": "epa.envirofacts_tri",
+      "category": "environment",
+      "probe_url": "https://data.epa.gov/efservice/tri_facility/state_abbr/DC/rows/0:4/JSON",
+      "notes": "Toxics Release Inventory facilities; environmental due-diligence input",
+      "score": 78,
+      "score_breakdown": {
+        "commercial": 20,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 11,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "EPA ECHO facility compliance",
+      "slug": "epa.echo_facilities",
+      "category": "environment",
+      "probe_url": "https://echodata.epa.gov/echo/echo_rest_services.get_facility_info?output=JSON&p_st=DC&responseset=50",
+      "notes": "Enforcement/compliance history; responseset=50 keeps responses within probe limits; slow endpoint — generous latency budget",
+      "score": 76,
+      "score_breakdown": {
+        "commercial": 20,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 10,
+        "update": 7,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "NHTSA vPIC vehicle makes",
+      "slug": "nhtsa.vpic_vehicle_makes",
+      "category": "transport",
+      "probe_url": "https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json",
+      "notes": "Vehicle reference data incl. VIN decoding endpoints",
+      "score": 81,
+      "score_breakdown": {
+        "commercial": 22,
+        "adoption": 13,
+        "authority": 15,
+        "stability": 12,
+        "update": 5,
+        "historical": 6,
+        "machine_readable": 5,
+        "access": 3
+      }
+    },
+    {
+      "name": "NHTSA vehicle recalls",
+      "slug": "nhtsa.vehicle_recalls",
+      "category": "transport",
+      "probe_url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=honda&model=civic&modelYear=2020",
+      "notes": "Safety recalls by vehicle; consumer-safety monitoring",
+      "score": 84,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 13,
+        "authority": 15,
+        "stability": 12,
+        "update": 7,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "CMS hospital provider data",
+      "slug": "cms.hospital_provider_data",
+      "category": "health",
+      "probe_url": "https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0?limit=5",
+      "notes": "Hospital general information dataset on the CMS provider data API",
+      "score": 83,
+      "score_breakdown": {
+        "commercial": 22,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 12,
+        "update": 8,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "CDC PLACES local health estimates",
+      "slug": "cdc.places_local_health",
+      "category": "health",
+      "probe_url": "https://data.cdc.gov/resource/swc5-untb.json?$limit=5",
+      "notes": "Model-based county/place health measures (Socrata)",
+      "score": 81,
+      "score_breakdown": {
+        "commercial": 21,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 12,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "SEC EDGAR company submissions",
+      "slug": "sec.edgar_submissions",
+      "category": "finance",
+      "probe_url": "https://data.sec.gov/submissions/CIK0000320193.json",
+      "headers": {
+        "User-Agent": "PublicAPIWatch/0.3 (${ENV:SEC_CONTACT_EMAIL})"
+      },
+      "requires_env": [
+        "SEC_CONTACT_EMAIL"
+      ],
+      "notes": "SEC requires a real contact email in the User-Agent; verified live 2026-07-11 with one supplied privately",
+      "score": 91,
+      "score_breakdown": {
+        "commercial": 24,
+        "adoption": 14,
+        "authority": 15,
+        "stability": 14,
+        "update": 9,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "SEC XBRL company facts",
+      "slug": "sec.company_facts",
+      "category": "finance",
+      "probe_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "headers": {
+        "User-Agent": "PublicAPIWatch/0.3 (${ENV:SEC_CONTACT_EMAIL})"
+      },
+      "requires_env": [
+        "SEC_CONTACT_EMAIL"
+      ],
+      "notes": "Structured financial facts per filer",
+      "score": 90,
+      "score_breakdown": {
+        "commercial": 24,
+        "adoption": 13,
+        "authority": 15,
+        "stability": 14,
+        "update": 9,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "Federal Reserve FRED series",
+      "slug": "fred.series_observations",
+      "category": "economic",
+      "probe_url": "https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&api_key=${ENV:FRED_API_KEY}&file_type=json&limit=5&sort_order=desc",
+      "requires_env": [
+        "FRED_API_KEY"
+      ],
+      "notes": "Free key at fred.stlouisfed.org",
+      "score": 92,
+      "score_breakdown": {
+        "commercial": 25,
+        "adoption": 15,
+        "authority": 14,
+        "stability": 14,
+        "update": 9,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "BEA national accounts",
+      "slug": "bea.nipa_data",
+      "category": "economic",
+      "probe_url": "https://apps.bea.gov/api/data/?UserID=${ENV:BEA_API_KEY}&method=GetData&datasetname=NIPA&TableName=T10101&Frequency=Q&Year=2025&ResultFormat=JSON",
+      "requires_env": [
+        "BEA_API_KEY"
+      ],
+      "notes": "GDP and national accounts; free key",
+      "score": 84,
+      "score_breakdown": {
+        "commercial": 22,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 13,
+        "update": 8,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "EIA electricity retail sales",
+      "slug": "eia.electricity_retail_sales",
+      "category": "energy",
+      "probe_url": "https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${ENV:EIA_API_KEY}&frequency=monthly&data[0]=price&length=5",
+      "requires_env": [
+        "EIA_API_KEY"
+      ],
+      "notes": "Energy prices/consumption; free key",
+      "score": 86,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 13,
+        "update": 8,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "NOAA Climate Data Online",
+      "slug": "noaa.climate_data_online",
+      "category": "weather",
+      "probe_url": "https://www.ncei.noaa.gov/cdo-web/api/v2/datasets?limit=5",
+      "headers": {
+        "token": "${ENV:NOAA_CDO_TOKEN}"
+      },
+      "requires_env": [
+        "NOAA_CDO_TOKEN"
+      ],
+      "notes": "Free token; partially overlaps keyless NCEI access service",
+      "score": 79,
+      "score_breakdown": {
+        "commercial": 19,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 12,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "EPA AirNow current AQI",
+      "slug": "epa.airnow_current_aqi",
+      "category": "environment",
+      "probe_url": "https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=20002&API_KEY=${ENV:AIRNOW_API_KEY}",
+      "requires_env": [
+        "AIRNOW_API_KEY"
+      ],
+      "notes": "Free key",
+      "score": 78,
+      "score_breakdown": {
+        "commercial": 20,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 11,
+        "update": 8,
+        "historical": 7,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "NREL alternative fuel stations",
+      "slug": "nrel.alt_fuel_stations",
+      "category": "energy",
+      "probe_url": "https://developer.nrel.gov/api/alt-fuel-stations/v1.json?limit=5&api_key=${ENV:NREL_API_KEY}",
+      "requires_env": [
+        "NREL_API_KEY"
+      ],
+      "notes": "Free api.data.gov key",
+      "score": 74,
+      "score_breakdown": {
+        "commercial": 18,
+        "adoption": 9,
+        "authority": 15,
+        "stability": 12,
+        "update": 6,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "Regulations.gov documents",
+      "slug": "regulationsgov.documents",
+      "category": "government",
+      "probe_url": "https://api.regulations.gov/v4/documents?page[size]=5&api_key=${ENV:REGULATIONS_GOV_API_KEY}",
+      "requires_env": [
+        "REGULATIONS_GOV_API_KEY"
+      ],
+      "notes": "Rulemaking dockets and comments; free key",
+      "score": 82,
+      "score_breakdown": {
+        "commercial": 22,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 12,
+        "update": 8,
+        "historical": 8,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "SAM.gov contract opportunities",
+      "slug": "samgov.contract_opportunities",
+      "category": "government",
+      "probe_url": "https://api.sam.gov/opportunities/v2/search?limit=5&api_key=${ENV:SAM_GOV_API_KEY}&postedFrom=01/01/2026&postedTo=07/01/2026",
+      "requires_env": [
+        "SAM_GOV_API_KEY"
+      ],
+      "notes": "Procurement opportunities; free key via sam.gov account",
+      "score": 81,
+      "score_breakdown": {
+        "commercial": 23,
+        "adoption": 12,
+        "authority": 15,
+        "stability": 10,
+        "update": 8,
+        "historical": 7,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "HUD fair market rents",
+      "slug": "hud.fair_market_rents",
+      "category": "property",
+      "probe_url": "https://www.huduser.gov/hudapi/public/fmr/listStates",
+      "headers": {
+        "Authorization": "Bearer ${ENV:HUD_API_TOKEN}"
+      },
+      "requires_env": [
+        "HUD_API_TOKEN"
+      ],
+      "notes": "Rents, income limits; free token",
+      "score": 79,
+      "score_breakdown": {
+        "commercial": 21,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 11,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "USPTO patent applications search",
+      "slug": "uspto.patent_search",
+      "category": "government",
+      "probe_url": "https://api.uspto.gov/api/v1/patent/applications/search?q=applicationMetaData.applicationTypeLabelName:Utility&limit=5",
+      "headers": {
+        "X-API-KEY": "${ENV:USPTO_API_KEY}"
+      },
+      "requires_env": [
+        "USPTO_API_KEY"
+      ],
+      "notes": "Open Data Portal; free key; endpoint validated on activation",
+      "score": 76,
+      "score_breakdown": {
+        "commercial": 19,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 11,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 1
+      }
+    },
+    {
+      "name": "ITA consolidated screening list",
+      "slug": "trade.consolidated_screening_list",
+      "category": "government",
+      "probe_url": "https://data.trade.gov/consolidated_screening_list/v1/search?name=smith&size=1",
+      "headers": {
+        "subscription-key": "${ENV:TRADE_GOV_API_KEY}"
+      },
+      "requires_env": [
+        "TRADE_GOV_API_KEY"
+      ],
+      "notes": "Sanctions/denied-party screening; free key",
+      "score": 73,
+      "score_breakdown": {
+        "commercial": 19,
+        "adoption": 9,
+        "authority": 15,
+        "stability": 11,
+        "update": 7,
+        "historical": 7,
+        "machine_readable": 4,
+        "access": 1
+      }
+    },
+    {
+      "name": "USDA FoodData Central",
+      "slug": "usda.fooddata_central",
+      "category": "health",
+      "probe_url": "https://api.nal.usda.gov/fdc/v1/foods/search?query=apple&pageSize=5&api_key=${ENV:FDC_API_KEY}",
+      "requires_env": [
+        "FDC_API_KEY"
+      ],
+      "notes": "Nutrition reference; free api.data.gov key",
+      "score": 75,
+      "score_breakdown": {
+        "commercial": 19,
+        "adoption": 11,
+        "authority": 15,
+        "stability": 12,
+        "update": 5,
+        "historical": 7,
+        "machine_readable": 4,
+        "access": 2
+      }
+    },
+    {
+      "name": "USDA NASS Quick Stats",
+      "slug": "usda.nass_quick_stats",
+      "category": "agriculture",
+      "probe_url": "https://quickstats.nass.usda.gov/api/api_GET/?key=${ENV:NASS_API_KEY}&commodity_desc=CORN&year=2025&state_alpha=IA&format=JSON",
+      "requires_env": [
+        "NASS_API_KEY"
+      ],
+      "notes": "Agricultural statistics; free key",
+      "score": 77,
+      "score_breakdown": {
+        "commercial": 20,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 11,
+        "update": 7,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 1
+      }
+    },
+    {
+      "name": "Census building permits survey",
+      "slug": "census.building_permits",
+      "category": "property",
+      "probe_url": "https://api.census.gov/data/timeseries/eits/bps?get=cell_value,time_slot_id,category_code&for=us:*&key=${ENV:CENSUS_API_KEY}",
+      "requires_env": [
+        "CENSUS_API_KEY"
+      ],
+      "notes": "Same key as the Census ACS capability; endpoint validated on activation",
+      "score": 78,
+      "score_breakdown": {
+        "commercial": 21,
+        "adoption": 10,
+        "authority": 15,
+        "stability": 10,
+        "update": 8,
+        "historical": 9,
+        "machine_readable": 4,
+        "access": 1
+      }
+    },
+    {
+      "name": "GSA auctions",
+      "slug": "gsa.auctions",
+      "category": "government",
+      "probe_url": "https://api.gsa.gov/assets/gsaauctions/v2/auctions?api_key=${ENV:GSA_API_KEY}",
+      "requires_env": [
+        "GSA_API_KEY"
+      ],
+      "notes": "Federal asset auctions; free key; endpoint validated on activation",
+      "score": 71,
+      "score_breakdown": {
+        "commercial": 17,
+        "adoption": 8,
+        "authority": 15,
+        "stability": 10,
+        "update": 7,
+        "historical": 6,
+        "machine_readable": 4,
+        "access": 4
+      }
+    },
+    {
+      "name": "GSA city pair airfares",
+      "slug": "gsa.city_pair_fares",
+      "category": "government",
+      "probe_url": "https://api.gsa.gov/travel/citypairs/v1/rates?api_key=${ENV:GSA_API_KEY}",
+      "requires_env": [
+        "GSA_API_KEY"
+      ],
+      "notes": "Contract airfares; endpoint validated on activation",
+      "score": 70,
+      "score_breakdown": {
+        "commercial": 16,
+        "adoption": 8,
+        "authority": 15,
+        "stability": 10,
+        "update": 7,
+        "historical": 6,
+        "machine_readable": 4,
+        "access": 4
+      }
+    },
+    {
+      "name": "Transitland feeds registry",
+      "slug": "transitland.feeds",
+      "category": "transport",
+      "probe_url": "https://transit.land/api/v2/rest/feeds?limit=5&apikey=${ENV:TRANSITLAND_API_KEY}",
+      "requires_env": [
+        "TRANSITLAND_API_KEY"
+      ],
+      "notes": "GTFS feed registry; free key; third-party aggregator of official feeds",
+      "score": 71,
+      "score_breakdown": {
+        "commercial": 17,
+        "adoption": 10,
+        "authority": 12,
+        "stability": 11,
+        "update": 7,
+        "historical": 6,
+        "machine_readable": 4,
+        "access": 4
+      }
     }
-  ]
+  ],
+  "high_value_50_batch": {
+    "processed_at": "2026-07-11",
+    "note": "One-time curated expansion authorized as a narrow freeze override. No further batches without explicit instruction.",
+    "duplicates_removed": [
+      "US Census Data API",
+      "Census Geocoding API",
+      "BLS API",
+      "US Treasury Fiscal Data API",
+      "USAspending API",
+      "FEMA OpenFEMA API",
+      "USGS Earthquake API",
+      "National Weather Service API",
+      "USGS Water Services API",
+      "FCC API",
+      "openFDA API"
+    ],
+    "rejected": [
+      {
+        "name": "IRS tax statistics",
+        "reason": "bulk statistical files, no recurring-testable API"
+      },
+      {
+        "name": "SBA Open Data API",
+        "reason": "legacy api.sba.gov deprecated; no stable successor endpoint identified"
+      },
+      {
+        "name": "DOE Open Data API",
+        "reason": "no distinct stable API beyond keyed NREL/OpenEI already covered"
+      },
+      {
+        "name": "Bureau of Transportation Statistics API",
+        "reason": "no stable public dataset identifier confirmed this pass"
+      },
+      {
+        "name": "FAA data APIs",
+        "reason": "public airport-status API discontinued; NOTAM API is keyed and access-restricted"
+      },
+      {
+        "name": "Federal Railroad Administration safety data",
+        "reason": "portal downloads only; no recurring-testable API"
+      }
+    ]
+  }
 }

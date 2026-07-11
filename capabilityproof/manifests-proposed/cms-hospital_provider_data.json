@@ -1,0 +1,62 @@
+{
+  "capability_id": "source.cms.hospital_provider_data",
+  "manifest_version": "1.0",
+  "claim": "Hospital general information dataset on the CMS provider data API",
+  "publisher": {
+    "name": "CMS hospital provider data"
+  },
+  "protocol": "rest",
+  "category": "health",
+  "tags": [
+    "health"
+  ],
+  "tasks": [
+    "Hospital general information dataset on the CMS provider data API"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:30:04.926Z"
+  },
+  "test_pack": {
+    "id": "cms.hospital_provider_data_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0?limit=5"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "query.properties",
+        "min": 19
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}

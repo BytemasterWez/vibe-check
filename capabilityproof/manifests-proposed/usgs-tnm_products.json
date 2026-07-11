@@ -1,0 +1,72 @@
+{
+  "capability_id": "source.usgs.tnm_products",
+  "manifest_version": "1.0",
+  "claim": "Elevation/imagery/hydrography product discovery",
+  "publisher": {
+    "name": "USGS National Map products"
+  },
+  "protocol": "rest",
+  "category": "geospatial",
+  "tags": [
+    "geospatial"
+  ],
+  "tasks": [
+    "Elevation/imagery/hydrography product discovery"
+  ],
+  "coverage": {
+    "countries": [
+      "global"
+    ]
+  },
+  "join_keys": [],
+  "auth": {
+    "type": "none",
+    "paid": false
+  },
+  "cost": {
+    "per_call_usd": 0
+  },
+  "risk_class": "read_only",
+  "receipt_ttl_hours": 24,
+  "scouted": {
+    "drafted_by": "fallback",
+    "drafted_at": "2026-07-11T19:29:36.749Z"
+  },
+  "test_pack": {
+    "id": "usgs.tnm_products_scout_v1",
+    "contract_version": "1.0.0",
+    "request": {
+      "method": "GET",
+      "url": "https://tnmaccess.nationalmap.gov/api/v1/products?max=5&prodFormats=GeoTIFF"
+    },
+    "checks": [
+      {
+        "type": "status",
+        "equals": 200
+      },
+      {
+        "type": "json"
+      },
+      {
+        "type": "max_latency",
+        "ms": 20000
+      },
+      {
+        "type": "min_rows",
+        "path": "items",
+        "min": 2
+      },
+      {
+        "type": "fields_present",
+        "path": "items",
+        "fields": [
+          "title",
+          "moreInfo",
+          "sourceId",
+          "sourceName"
+        ]
+      }
+    ]
+  },
+  "fallback_capability_ids": []
+}
