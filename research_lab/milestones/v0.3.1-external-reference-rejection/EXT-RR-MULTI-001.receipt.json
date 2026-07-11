@@ -1,0 +1,94 @@
+{
+  "kind": "external_evidence_receipt",
+  "evidence_id": "EXT-RR-MULTI-001",
+  "provenance_class": "external_public",
+  "dataset_title": "FMCW radar-based multi-person vital sign monitoring data.",
+  "doi": "10.17632/684v4r8wfr.1",
+  "dataset_version": 1,
+  "repository": "Mendeley Data",
+  "creators": [
+    "Guangyu Lei",
+    "Wei Cheng",
+    "Xipeng Yin",
+    "Yuqing Wu"
+  ],
+  "license": "CC BY 4.0",
+  "license_url": "http://creativecommons.org/licenses/by/4.0",
+  "license_source": "Mendeley dataset landing record (not the accompanying article)",
+  "retrieved_at": "2026-07-11T13:55:52.060726Z",
+  "raw_recording": "adc_3GHZ_position3_ (1).bin",
+  "raw_bundle_sha256": "sha256:05182d7a627fdbcbe867a99332b08a91a0edd3c5dec27b3e91535ce6e43a1717",
+  "canonical_source_manifest_sha256": "sha256:45e1a20b419b716d8ddaa1bfc5979dc2301dfd187592a0dafd1ac1855ac67876",
+  "adapter_name": "mendeley_684v4r8wfr_v1",
+  "adapter_version": "1.0.0",
+  "adapter_config_hash": "sha256:e28263ddcb99ff7ddd2f555914cff8548067e5de77a8379007699c262c8141a3",
+  "normalized_bundle_sha256": "sha256:6885a513c0939a3fd6b57e500c863aa7b79267912400cfb3a959c2e427ec6a11",
+  "radar_range_bin": 3,
+  "subject_count": 2,
+  "session_count": 1,
+  "recording_count": 1,
+  "included_recording_count": 1,
+  "excluded_recordings": [],
+  "scenario_coverage": {
+    "position": "position3",
+    "geometry": "distinct radial ranges 1.4m / 1.0m (Table 1)",
+    "bandwidth": "3GHz"
+  },
+  "eligibility_status": "ELIGIBLE",
+  "truth_isolation_verified": true,
+  "adapter_reproducible": true,
+  "reference": {
+    "method": "ecg_pcg_cardiac_ads1292r",
+    "channels": [
+      "ECG",
+      "PCG"
+    ],
+    "respiratory_trace_present": false,
+    "target1_resp_band_fraction": 0.0091,
+    "note": "ECG/PCG cardiac reference; respiratory-band energy negligible. Respiratory rate not directly available."
+  },
+  "claim_applicability": {
+    "CLM-RR-004": "REFERENCE_UNUSABLE",
+    "CLM-RR-004B": "REFERENCE_UNUSABLE",
+    "CLM-RR-001": "REFERENCE_UNUSABLE",
+    "CLM-RR-002": "REFERENCE_UNUSABLE",
+    "CLM-RR-003": "REFERENCE_UNUSABLE"
+  },
+  "candidate_outcomes": [
+    {
+      "candidate": "fft_peak_v1",
+      "abstained": true,
+      "radar_rr_bpm": null,
+      "note": "UNSCORED — no usable respiratory reference"
+    },
+    {
+      "candidate": "autocorr_v1",
+      "abstained": true,
+      "radar_rr_bpm": null,
+      "note": "UNSCORED — no usable respiratory reference"
+    },
+    {
+      "candidate": "robust_ensemble_v1",
+      "abstained": true,
+      "radar_rr_bpm": null,
+      "note": "UNSCORED — no usable respiratory reference"
+    },
+    {
+      "candidate": "robust_ensemble_v2",
+      "abstained": true,
+      "radar_rr_bpm": null,
+      "note": "UNSCORED — no usable respiratory reference"
+    }
+  ],
+  "outcome": "REFERENCE_UNUSABLE",
+  "statistical_bounds": {
+    "note": "not computed — outcome is REFERENCE_UNUSABLE, no scored trials"
+  },
+  "maturity_outcome": {
+    "simulated": "C5-SIMULATED (unchanged)",
+    "external": "not advanced — E1 requires >=1 applicable claim evaluated against a usable reference",
+    "reason": "reference modality (cardiac ECG/PCG) does not match the frozen respiratory reference standard"
+  },
+  "frozen_rules_altered": false,
+  "signature": "sha256:e46627f56370c712a496784f274754c6f24aec2838d70fe33902943ac12612df"
+}

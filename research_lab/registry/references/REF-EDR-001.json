@@ -1,0 +1,14 @@
+{
+  "reference_id": "REF-EDR-001",
+  "status": "PROPOSED_NOT_VALIDATED",
+  "name": "ECG-derived respiration (EDR) as a secondary reference candidate",
+  "rationale": "EDR can sometimes infer respiration from ECG morphology/timing, but it is NOT equivalent to a direct respiratory_belt_or_capnography reference. It introduces new degrees of freedom (lead/channel selection, amplitude vs RSA methods, filtering/windowing, beat detection, interpolation, phase/delay, artefact rejection, subject/posture dependence).",
+  "governance": {
+    "must_be_preregistered_before_use": true,
+    "must_be_validated_against_direct_reference_first": true,
+    "may_only_support_clearly_labelled_secondary_analysis": true,
+    "must_never_change_primary_verdict": "The Mendeley EXT-RR-MULTI-001 REFERENCE_UNUSABLE verdict is immutable.",
+    "not_admissible_as_frozen_respiratory_reference_standard": true
+  },
+  "validation_plan": "Validate EDR-derived respiratory rate against a synchronized direct respiratory belt/RIP/capnography reference on an independent dataset; freeze the extraction protocol; only then permit a separate secondary-analysis claim on cardiac-reference datasets."
+}

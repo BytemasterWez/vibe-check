@@ -1,0 +1,17 @@
+{
+  "evidence_id": "EXT-RR-MULTI-001",
+  "radar_observations_status": "USABLE",
+  "respiratory_reference_status": "UNUSABLE",
+  "dataset_terminal_outcome": "REFERENCE_UNUSABLE",
+  "operational_marker": "X1-EXTERNAL-ADMISSIBILITY-EXERCISED",
+  "external_maturity": "E0",
+  "usable_for": [
+    "raw multi-target geometry",
+    "radar decoder validation",
+    "range/spatial-processing development",
+    "observational-ambiguity experiments",
+    "secondary EDR research after REF-EDR-001 is independently validated"
+  ],
+  "not_usable_for": ["scored respiratory-rate claims (no direct respiratory reference)"],
+  "receipt": "evidence/external/receipts/EXT-RR-MULTI-001.receipt.json"
+}

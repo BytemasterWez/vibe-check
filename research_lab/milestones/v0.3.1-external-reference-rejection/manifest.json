@@ -1,0 +1,40 @@
+{
+  "milestone": "v0.3.1-external-reference-rejection",
+  "kind": "operational_evidence_processing_milestone",
+  "not_a_performance_maturity_level": true,
+  "does_not_imply_E1": true,
+  "code_baseline_commit": "69a4a1e079439d00c95fe7d85d2a87006ebcb342",
+  "external_dataset": {
+    "title": "FMCW radar-based multi-person vital sign monitoring data.",
+    "doi": "10.17632/684v4r8wfr.1",
+    "repository": "Mendeley Data",
+    "version": "1",
+    "license": "CC BY 4.0",
+    "license_source": "Mendeley dataset landing record (not the accompanying article)",
+    "creators": ["Guangyu Lei", "Wei Cheng", "Xipeng Yin", "Yuqing Wu"]
+  },
+  "external_evidence_attempted": true,
+  "external_dataset_decoded": true,
+  "adapter_reproduced": true,
+  "truth_isolation_verified": true,
+  "claims_scored": false,
+  "external_maturity": "E0",
+  "terminal_outcome": "REFERENCE_UNUSABLE",
+  "reason": "direct respiratory reference absent — dataset validation reference is ECG/PCG (cardiac, ADS1292R), not the frozen respiratory_belt_or_capnography standard",
+  "evidence_status": {
+    "radar_observations_status": "USABLE",
+    "respiratory_reference_status": "UNUSABLE",
+    "dataset_terminal_outcome": "REFERENCE_UNUSABLE"
+  },
+  "hashes": {
+    "canonical_source_manifest_sha256": "see evidence/external/manifests/EXT-RR-MULTI-001.source.json",
+    "evaluated_recording": "adc_3GHZ_position3_ (1).bin (SHA-256 matches canonical Mendeley hash)",
+    "normalized_bundle_sha256": "see EXT-RR-MULTI-001.receipt.json"
+  },
+  "candidate_radar_outputs": "recorded UNSCORED in the receipt (no usable respiratory reference)",
+  "simulated_maturity": "C5-SIMULATED (unchanged)",
+  "external_E1_reached": false,
+  "external_E2_reached": false,
+  "edr_policy": "ECG-derived respiration was NOT added. If investigated later it must be a separately preregistered reference candidate (REF-EDR-001), first validated against a direct respiratory reference on another dataset, and it must never retroactively change this REFERENCE_UNUSABLE verdict.",
+  "immutable": true
+}

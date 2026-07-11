@@ -15,6 +15,19 @@ export const EXTERNAL_LADDER = [
   { level: 'H2-HUMAN-FEASIBILITY', desc: 'passed approved non-diagnostic human feasibility collection', autonomous: false, escalation: 'NEEDS_HUMAN_LABELS' },
 ];
 
+// Operational markers are NOT performance maturity levels. They record that an
+// evidence-processing capability was exercised, deliberately kept off the
+// E1..E3/H1/H2 ladder so they can never be mistaken for external estimator
+// validation. X1 = a genuine external package was acquired, decoded, normalized,
+// reproduced and truth-isolated, and scoring was correctly refused or performed.
+export const OPERATIONAL_MARKERS = {
+  'X1-EXTERNAL-ADMISSIBILITY-EXERCISED': 'a genuine external package was processed end-to-end and its admissibility contract enforced (scoring performed or correctly refused)',
+};
+
+export function isOperationalMarker(level) {
+  return Object.prototype.hasOwnProperty.call(OPERATIONAL_MARKERS, level);
+}
+
 const INDEX = Object.fromEntries(EXTERNAL_LADDER.map((l, i) => [l.level, i]));
 
 export function describeExternal(level) {
