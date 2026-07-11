@@ -1,0 +1,41 @@
+{
+  "evidence_id": "EXT-RR-BELT-001",
+  "stage": "pre_download_eligibility",
+  "dataset_level": {
+    "persistent_provenance": true,
+    "doi": "10.4121/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28.v1",
+    "license_recorded": "CC BY 4.0 (repository record)",
+    "direct_respiratory_reference": true,
+    "reference_device": "Vernier Go Direct Respiration Belt (.xlsx)",
+    "raw_radar_present": true,
+    "more_than_one_recording": true,
+    "target_absent_present": true,
+    "status": "ELIGIBLE",
+    "note": "Legitimate, licensed, well-formed source WITH the direct respiratory-belt reference our frozen contract requires — the key advantage over EXT-RR-MULTI-001."
+  },
+  "claim_applicability": {
+    "CLM-RR-001": {
+      "outcome": "APPLICABLE",
+      "why": "Single stationary adult, no second person present — matches activities 1-4 (sitting/lying still, normal + faster breathing). This is the primary route to a first scored E1.",
+      "caveats": ["radar-belt sync is manual (alignment uncertainty)", "10 Hz radar frame rate vs 20 Hz simulator; estimators operate at the data fs, no rule change"]
+    },
+    "CLM-RR-002": {
+      "outcome": "CLAIM_NOT_APPLICABLE",
+      "why": "The claim requires periodic NON-respiratory motion >= respiratory amplitude. The dataset has subject restlessness/free movement (activities 5-6), not controlled periodic apparatus motion. Do not invent it from ordinary recordings."
+    },
+    "CLM-RR-003": {
+      "outcome": "APPLICABLE_LIMITED",
+      "why": "Empty-room calibration recordings (Calibration_emptyRoom_*node*.bin) provide genuine target-absent data.",
+      "caveats": ["few independent empty-room recordings -> the 0.001 target-absent upper bound needs ~3000 independent windows; likely INSUFFICIENT_EVIDENCE for the frozen bound. Report window/recording-level and mark insufficient rather than forcing a pass."]
+    },
+    "CLM-RR-004": { "outcome": "CLAIM_NOT_APPLICABLE", "why": "Single-person dataset (one participant per recording; three radars are not three people). No simultaneous multi-person data." },
+    "CLM-RR-004B": { "outcome": "CLAIM_NOT_APPLICABLE", "why": "Same — no simultaneous multi-person, person-specific respiratory truth. RR-004B external confirmation remains blocked (Track B)." }
+  },
+  "execution_prerequisites": {
+    "format": "Radar .bin uses the Dopplium format with parameters embedded in the file; requires porting/using the Dopplium parser (Dopplium/dopplium-parser). The EXT-RR-MULTI-001 readDCA1000 adapter does NOT apply.",
+    "storage": "Total 140.8 GB; per-participant zips 6.6-9.4 GB (extracted ~13-19 GB). Exceeds this environment's ~30 GB working disk. A full scored E1/E2 campaign must run where >= ~50 GB working disk is available; a single participant is borderline feasible.",
+    "checksums": "4TU API exposes no per-file md5; compute + record hashes on download and bind to the DataCite record."
+  },
+  "recommended_next_action": "Track A: on an environment with adequate disk, port the Dopplium parser into a versioned adapter (mendeley pattern), download one participant (smallest zip), decode activities 1-4 for CLM-RR-001, construct the belt reference (freeze protocol first), isolate truth, and score -> earn E1 (a valid FAIL/ABSTAIN also earns E1), then a clean rerun for E2. Keep RR-004/004B as CLAIM_NOT_APPLICABLE.",
+  "exclusion_reason_codes": ["SOURCE_FILE_CORRUPT", "SOURCE_FILE_EMPTY", "REQUIRED_METADATA_MISSING", "RADAR_REFERENCE_PAIR_MISSING", "TIME_ALIGNMENT_UNRECOVERABLE", "UNSUPPORTED_ENCODING", "DUPLICATE_RECORDING", "RECORDING_DURATION_BELOW_FROZEN_MINIMUM"]
+}

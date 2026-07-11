@@ -1,0 +1,17 @@
+{
+  "evidence_id": "EXT-RR-BELT-001",
+  "dataset_title": "Dataset of vital sign measurements with three FMCW radars at elevated position - Nov 2025",
+  "doi": "10.4121/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28.v1",
+  "version": "1",
+  "repository": "4TU.ResearchData",
+  "creators": [
+    "Wendelmuth, Mareike",
+    "Yarovoy, Alexander",
+    "Fioranelli, Francesco"
+  ],
+  "license_short": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "license_source": "4TU.ResearchData repository record (Djehuty API) + DataCite rightsList; NOT a secondary catalogue",
+  "required_attribution": "Wendelmuth, M., Yarovoy, A., Fioranelli, F. \"Dataset of vital sign measurements with three FMCW radars at elevated position - Nov 2025\". 4TU.ResearchData, 2026. doi:10.4121/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28. Licensed CC BY 4.0.",
+  "transformation_disclosure": "Radar .bin to be decoded via the Dopplium parser (params embedded in .bin). Belt .xlsx parsed to scorer-only truth. All transforms to be declared and hashed in a future adapter (mendeley adapter does NOT apply \u2014 different format)."
+}

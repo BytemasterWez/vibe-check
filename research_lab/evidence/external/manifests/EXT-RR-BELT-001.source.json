@@ -1,0 +1,202 @@
+{
+  "evidence_id": "EXT-RR-BELT-001",
+  "dataset_title": "Dataset of vital sign measurements with three FMCW radars at elevated position - Nov 2025",
+  "doi": "10.4121/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28.v1",
+  "concept_doi": "10.4121/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28",
+  "version": "1",
+  "repository": "4TU.ResearchData",
+  "publish_year": 2026,
+  "creators": [
+    "Wendelmuth, Mareike",
+    "Yarovoy, Alexander",
+    "Fioranelli, Francesco"
+  ],
+  "license": {
+    "short_name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "source": "4TU.ResearchData repository record + DataCite rightsList (cc-by-4.0)"
+  },
+  "retrieval_timestamp": "2026-07-11T15:05:43.834813Z",
+  "retrieval_method": "4TU Djehuty API v2 (per-file download_url); DataCite for licence/version",
+  "total_size_bytes": 140839567915,
+  "file_count": 19,
+  "per_file_checksums_exposed": false,
+  "checksum_note": "4TU API did not expose per-file md5; provenance binds DOI+version+DataCite record. Hashes to be computed on download (future stage).",
+  "radar": {
+    "units": 3,
+    "model": "Dopplium (IWR6843ISK + DCA1000EVM)",
+    "mode": "FDMA",
+    "start_freqs_ghz": [
+      60,
+      61.25,
+      62.5
+    ],
+    "bandwidth_ghz": 1,
+    "adc_samples": 80,
+    "freq_slope_mhz_per_us": 25,
+    "chirps_per_frame": 120,
+    "frame_period_ms": 100,
+    "frame_rate_hz": 10,
+    "tx": 3,
+    "rx": 4,
+    "range_res_m": 0.15,
+    "max_range_m": 11.99,
+    "params_embedded_in_bin": true,
+    "parser": "Dopplium/dopplium-parser (Python/MATLAB) \u2014 required to decode; params stored in .bin"
+  },
+  "reference": {
+    "device": "Vernier Go Direct Respiration Belt",
+    "type": "direct_respiratory_belt",
+    "format": ".xlsx",
+    "radar_belt_sync": "manual alignment"
+  },
+  "participants": 18,
+  "person_per_recording": 1,
+  "simultaneous_multi_person": false,
+  "activities": [
+    "sitting_[3,3]_2min_normal-fast-normal",
+    "sitting_arbitrary_60s_normal",
+    "lying_back_[3,3]_2min_normal-fast-normal",
+    "lying_arbitrary_60s_normal",
+    "restless_position_change",
+    "continuous_movements_5min"
+  ],
+  "target_absent_present": true,
+  "target_absent_source": "Calibration_emptyRoom_*node*.bin",
+  "file_naming": "Participant{id}_activity{nr}_data_{node}.bin ; Calibration_{x}_{y}_{node}.bin ; Calibration_emptyRoom_{node}.bin",
+  "files": [
+    {
+      "filename": "Participant1.zip",
+      "uuid": "338bb3c1-4440-40db-9eb3-857ade8ee29e",
+      "size_bytes": 7199820068,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/338bb3c1-4440-40db-9eb3-857ade8ee29e"
+    },
+    {
+      "filename": "Participant10.zip",
+      "uuid": "f97cb3d1-758d-45a5-aedd-8774834b7982",
+      "size_bytes": 9398297877,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/f97cb3d1-758d-45a5-aedd-8774834b7982"
+    },
+    {
+      "filename": "Participant11.zip",
+      "uuid": "8913da22-568d-40df-a0fa-aa70836d869a",
+      "size_bytes": 8468697830,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/8913da22-568d-40df-a0fa-aa70836d869a"
+    },
+    {
+      "filename": "Participant12.zip",
+      "uuid": "ac4d7238-e799-4104-829e-d20f5a4055ae",
+      "size_bytes": 8562261716,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/ac4d7238-e799-4104-829e-d20f5a4055ae"
+    },
+    {
+      "filename": "Participant13.zip",
+      "uuid": "619f3676-0847-4bad-8f73-a1d5818cf019",
+      "size_bytes": 7511338732,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/619f3676-0847-4bad-8f73-a1d5818cf019"
+    },
+    {
+      "filename": "Participant14.zip",
+      "uuid": "4751186d-b303-47fa-b2b4-6e7adc889371",
+      "size_bytes": 7610024994,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/4751186d-b303-47fa-b2b4-6e7adc889371"
+    },
+    {
+      "filename": "Participant15.zip",
+      "uuid": "786986d3-d7c6-4fef-b8eb-34f248ea7778",
+      "size_bytes": 7656955809,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/786986d3-d7c6-4fef-b8eb-34f248ea7778"
+    },
+    {
+      "filename": "Participant16.zip",
+      "uuid": "252b7fd2-d974-4293-bdcc-f11ed99407b1",
+      "size_bytes": 7623347731,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/252b7fd2-d974-4293-bdcc-f11ed99407b1"
+    },
+    {
+      "filename": "Participant17.zip",
+      "uuid": "78b1ba35-6021-4359-9ad6-5148cbfd2604",
+      "size_bytes": 7644282758,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/78b1ba35-6021-4359-9ad6-5148cbfd2604"
+    },
+    {
+      "filename": "Participant18.zip",
+      "uuid": "3725d9f3-b9a3-4354-a715-19c148130b15",
+      "size_bytes": 7796210315,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/3725d9f3-b9a3-4354-a715-19c148130b15"
+    },
+    {
+      "filename": "Participant2.zip",
+      "uuid": "927d3963-a0be-48a7-9fd1-e47229c17daf",
+      "size_bytes": 7377921236,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/927d3963-a0be-48a7-9fd1-e47229c17daf"
+    },
+    {
+      "filename": "Participant3.zip",
+      "uuid": "01dc23cd-10b0-4380-a464-1d6390d9ddcd",
+      "size_bytes": 7953927024,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/01dc23cd-10b0-4380-a464-1d6390d9ddcd"
+    },
+    {
+      "filename": "Participant4.zip",
+      "uuid": "6f4c97e4-226e-42c4-9cbe-4933f108da8b",
+      "size_bytes": 7682173608,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/6f4c97e4-226e-42c4-9cbe-4933f108da8b"
+    },
+    {
+      "filename": "Participant5.zip",
+      "uuid": "b98c2c01-0466-4d68-9794-d16ec3a9e21d",
+      "size_bytes": 8111744109,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/b98c2c01-0466-4d68-9794-d16ec3a9e21d"
+    },
+    {
+      "filename": "Participant6.zip",
+      "uuid": "90f5863d-8882-4b33-9961-999ae992a80f",
+      "size_bytes": 7933554874,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/90f5863d-8882-4b33-9961-999ae992a80f"
+    },
+    {
+      "filename": "Participant7.zip",
+      "uuid": "8c1f7bd3-29c2-4a02-8c8d-5b836b8f7663",
+      "size_bytes": 7461508420,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/8c1f7bd3-29c2-4a02-8c8d-5b836b8f7663"
+    },
+    {
+      "filename": "Participant8.zip",
+      "uuid": "255c2d3d-15f5-421e-bff4-b1b4a75e9bdf",
+      "size_bytes": 6612454329,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/255c2d3d-15f5-421e-bff4-b1b4a75e9bdf"
+    },
+    {
+      "filename": "Participant9.zip",
+      "uuid": "2b0d4dfc-589b-4db1-9b19-d5829968a0b6",
+      "size_bytes": 8231665655,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/2b0d4dfc-589b-4db1-9b19-d5829968a0b6"
+    },
+    {
+      "filename": "Readme.pdf",
+      "uuid": "8995e3bc-28be-4e6e-9a10-ae31a5704597",
+      "size_bytes": 3380830,
+      "supplied_md5": null,
+      "download_url": "https://data.4tu.nl/file/169cadca-e5dd-46e7-a9c5-91a4c9b1ff28/8995e3bc-28be-4e6e-9a10-ae31a5704597"
+    }
+  ]
+}
