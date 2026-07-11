@@ -13,6 +13,7 @@ import { fft_peak_v1, FFT_PEAK_FAMILY } from './fft_peak.mjs';
 import { autocorr_v1, AUTOCORR_FAMILY } from './autocorr.mjs';
 import { adaptive_motion_cancellation_v2, AMC_FAMILY } from './adaptive_motion_cancellation.mjs';
 import { robust_ensemble_v1, ENSEMBLE_FAMILY } from './robust_ensemble.mjs';
+import { robust_ensemble_v2, ENSEMBLE_V2_FAMILY } from './robust_ensemble_v2.mjs';
 import { sinusoid_template_v1, TEMPLATE_FAMILY } from './sinusoid_template.mjs';
 
 export const ESTIMATORS = {
@@ -20,6 +21,7 @@ export const ESTIMATORS = {
   autocorr_v1,
   adaptive_motion_cancellation_v2,
   robust_ensemble_v1,
+  robust_ensemble_v2,
   sinusoid_template_v1,
 };
 
@@ -30,6 +32,7 @@ export const ESTIMATOR_FAMILIES = {
   autocorr_v1: AUTOCORR_FAMILY,
   adaptive_motion_cancellation_v2: AMC_FAMILY,
   robust_ensemble_v1: ENSEMBLE_FAMILY,
+  robust_ensemble_v2: ENSEMBLE_V2_FAMILY,
   sinusoid_template_v1: TEMPLATE_FAMILY,
 };
 
@@ -38,7 +41,11 @@ export function runEstimator(name, input, params) {
   if (!fn) throw new Error(`unknown estimator: ${name}`);
   // Hand the estimator ONLY readable channels — strip ground truth defensively.
   const safeInput = {
-    channels: { displacement: input.channels.displacement, imu: input.channels.imu },
+    channels: {
+      displacement: input.channels.displacement,
+      displacement_b: input.channels.displacement_b,
+      imu: input.channels.imu,
+    },
     fs_hz: input.fs_hz,
     duration_s: input.duration_s,
   };

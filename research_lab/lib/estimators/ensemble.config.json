@@ -1,0 +1,13 @@
+{
+  "ensemble_version": "1.0.0",
+  "members": [
+    "adaptive_motion_cancellation_v2",
+    "autocorr_v1"
+  ],
+  "agreement_tolerance_bpm": 2,
+  "abstain_on_disagreement": true,
+  "abstain_if_any_member_abstains": true,
+  "frozen_at": "2026-07-11",
+  "notes": "Members are algorithmically independent (spectral vs autocorrelation). Reports the mean member rate only when both commit and agree within tolerance.",
+  "config_hash": "sha256:e28263ddcb99ff7ddd2f555914cff8548067e5de77a8379007699c262c8141a3"
+}

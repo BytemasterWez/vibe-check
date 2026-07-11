@@ -26,6 +26,9 @@ import { createRng } from '../lib/rng.mjs';
 import { generateWorld, ALL_WORLDS, RESPIRATORY_WORLDS } from '../lib/simulators/index.mjs';
 import { runEstimator } from '../lib/estimators/index.mjs';
 import { scoreTrials } from '../lib/statistician.mjs';
+import { perturb } from '../lib/simulator_b.mjs';
+import { loadEnsembleConfig, computeConfigHash } from '../lib/estimators/ensemble_config.mjs';
+import { detectAmbiguity } from '../lib/detectors/ambiguity.mjs';
 import { isAutonomous, ingestEscalationFor } from '../lib/provenance.mjs';
 import { CHALLENGE_PUBLIC } from '../lib/challenges.mjs';
 import { preregister, protocolIntact } from '../lib/prereg.mjs';
@@ -75,6 +78,46 @@ console.log('estimators');
   }
   check('ensemble abstains on empty scenes', ensembleFP === 0);
   check('overfit template invents a rate on empty scenes', overfitFP === 40);
+}
+
+// --- 3b. Observational independence + ambiguity gate (Packet 3) -------------
+console.log('observational independence');
+{
+  const clean = generateWorld('sinusoidal', 4242);
+  check('worlds expose a second spatial channel', Array.isArray(clean.channels.displacement_b) && clean.channels.displacement_b.length === clean.channels.displacement.length);
+  check('ambiguity detector is quiet on a clean single source', !detectAmbiguity(clean, {}).ambiguous);
+
+  // A spatially-distinct second person should trip the ambiguity detector.
+  let tripped = 0;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    const t = perturb(generateWorld('biomechanical', 5000 + i), ['second_person_distinct'], 71);
+    if (detectAmbiguity(t, {}).ambiguous) tripped++;
+  }
+  check('ambiguity detector fires on distinct-range intruders (>=90%)', tripped / N >= 0.9);
+
+  // v2 resolves the distinct intruder where v1 misattributes (biomechanical).
+  const scoreV = (est) => {
+    const trials = [];
+    for (let i = 0; i < 120; i++) {
+      const t = perturb(generateWorld('biomechanical', 5000 + i), ['second_person_distinct'], 71);
+      trials.push({ output: runEstimator(est, t, {}), ground_truth: t.ground_truth });
+    }
+    return scoreTrials(trials).false_confident_rate;
+  };
+  const fcrV1 = scoreV('robust_ensemble_v1');
+  const fcrV2 = scoreV('robust_ensemble_v2');
+  check('v2 abstains on distinct intruders where v1 misattributes', fcrV2 === 0 && fcrV1 > fcrV2);
+}
+
+// --- 3c. Frozen versioned ensemble config (Packet 3) -----------------------
+console.log('frozen ensemble config');
+{
+  const cfg = loadEnsembleConfig();
+  check('ensemble config loads with a verified hash', cfg.ensemble_version === '1.0.0' && cfg.config_hash === computeConfigHash(cfg));
+  check('editing the config changes its hash (new version required)', computeConfigHash({ ...cfg, agreement_tolerance_bpm: 3.0 }) !== cfg.config_hash);
+  const out = runEstimator('robust_ensemble_v2', generateWorld('sinusoidal', 7), {});
+  check('v2 stamps outputs with the frozen ensemble version + hash', out.ensemble_version === cfg.ensemble_version && out.config_hash === cfg.config_hash);
 }
 
 // --- 4. Statistician bounds + target-absent FP -----------------------------

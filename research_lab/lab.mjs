@@ -21,10 +21,11 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createStore } from './lib/store.mjs';
 import { ensureKeys, verifyReceiptSignature } from './lib/receipts.mjs';
-import { seed, summarize, brief, machineBrief } from './lib/ledger.mjs';
+import { seed, summarize, brief, machineBrief, registryClaims } from './lib/ledger.mjs';
 import { rankAll } from './lib/selector.mjs';
 import { runCampaign } from './lib/orchestrator.mjs';
 import { reproduce } from './lib/reproducer.mjs';
+import { evaluateCandidates } from './lib/candidates.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.RESEARCH_LAB_DATA || path.join(HERE, 'data');
@@ -96,6 +97,28 @@ switch (cmd) {
   case 'diversity': {
     const { diversityReport } = await import('./lib/diversity.mjs');
     console.log(JSON.stringify(diversityReport(s.listReceipts()), null, 2));
+    break;
+  }
+
+  case 'candidates': {
+    const claimId = process.argv[3];
+    const claim = s.getClaim(claimId) || registryClaims().find((c) => c.claim_id === claimId);
+    if (!claim) {
+      console.error(`usage: candidates <claim_id>  (unknown claim ${claimId})`);
+      process.exit(1);
+    }
+    const report = evaluateCandidates(claim);
+    console.log(`Candidates for ${report.claim_id}: ${report.candidates.map((c) => `${c.name}(${c.family})`).join(', ')}\n`);
+    for (const pw of report.per_world) {
+      console.log(`${pw.world} / ${pw.challenge}`);
+      for (const [name, m] of Object.entries(pw.candidates)) {
+        console.log(`  ${name.padEnd(26)} mae=${m.mae_bpm} cov=${m.coverage} fcr=${m.false_confident_rate} taFP=${m.target_absent_fp_rate}`);
+      }
+      const dis = Object.entries(pw.pairwise_disagreement)
+        .map(([k, v]) => `${k}=${v.disagreement_rate}`)
+        .join('  ');
+      console.log(`  pairwise disagreement: ${dis}`);
+    }
     break;
   }
 

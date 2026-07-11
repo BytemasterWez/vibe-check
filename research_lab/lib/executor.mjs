@@ -38,7 +38,12 @@ function buildTrials(protocol) {
 
 function inputManifestHash(trials) {
   return sha256(
-    trials.map((t) => ({ displacement: t.channels.displacement, imu: t.channels.imu, fs_hz: t.fs_hz }))
+    trials.map((t) => ({
+      displacement: t.channels.displacement,
+      displacement_b: t.channels.displacement_b,
+      imu: t.channels.imu,
+      fs_hz: t.fs_hz,
+    }))
   );
 }
 

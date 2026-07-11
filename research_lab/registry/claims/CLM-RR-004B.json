@@ -1,0 +1,41 @@
+{
+  "claim_id": "CLM-RR-004B",
+  "statement": "A second independently moving subject AT A DISTINCT RANGE causes abstention rather than misattribution in at least 95% of trials, using a multi-target ambiguity gate over an independent spatial channel.",
+  "intended_use": "supervised_clinical_scan",
+  "claim_type": "safety_property",
+  "required_modalities": ["mmwave_2channel"],
+  "reference_standard": "respiratory_belt_or_capnography",
+  "clinical_relevance": 0.95,
+  "candidate_estimator": "robust_ensemble_v2",
+  "baseline_estimator": "robust_ensemble_v1",
+  "maturity": "C2",
+  "open_uncertainties": ["co_located_intruder_similar_range"],
+  "notes": "Successor to the falsified CLM-RR-004. The fix is observational, not algorithmic: an ambiguity gate over a second spatial channel abstains when the two channels disagree on the dominant source. Scoped to spatially-distinct intruders; a co-located intruder at a similar range remains unresolvable with two channels (see research_lab/docs/RR-004-root-cause.md).",
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "c3_clean",
+        "advance_to": "C3",
+        "challenge_set": "clean",
+        "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
+        "min_families": 3,
+        "seed_start": 340000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": 2.0, "coverage_min": 0.9, "false_confident_max": 0.02, "utility_min": 0.8 }
+      },
+      {
+        "id": "c4_distinct_intruder",
+        "advance_to": "C4",
+        "challenge_set": "intruder_distinct",
+        "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
+        "min_families": 3,
+        "seed_start": 240000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": null, "coverage_min": null, "false_confident_max": 0.05, "utility_min": null }
+      }
+    ]
+  },
+  "supporting_experiments": [],
+  "contradicting_experiments": [],
+  "completed_steps": []
+}

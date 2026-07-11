@@ -15,6 +15,7 @@ export const CHALLENGE_PUBLIC = {
   clean: { id: 'clean', tier: 'C3', difficulty: 'baseline', worlds: RESPIRATORY_WORLDS },
   motion: { id: 'motion', tier: 'C4', difficulty: 'adversarial', worlds: RESPIRATORY_WORLDS },
   intruder: { id: 'intruder', tier: 'C4', difficulty: 'adversarial', worlds: RESPIRATORY_WORLDS },
+  intruder_distinct: { id: 'intruder_distinct', tier: 'C4', difficulty: 'adversarial', worlds: RESPIRATORY_WORLDS },
   target_absent: { id: 'target_absent', tier: 'C4', difficulty: 'null', worlds: NULL_WORLDS },
 };
 
@@ -26,6 +27,8 @@ const CHALLENGE_HIDDEN = {
   motion: { perturbation_schedule: [['device_motion']], salt: 1337 },
   // A second independently-breathing subject, NOT on the IMU (ambiguous).
   intruder: { perturbation_schedule: [['second_person']], salt: 55 },
+  // A second subject at a distinct range — spatially separable via the 2nd channel.
+  intruder_distinct: { perturbation_schedule: [['second_person_distinct']], salt: 71 },
   target_absent: { perturbation_schedule: [], salt: 4242 },
 };
 

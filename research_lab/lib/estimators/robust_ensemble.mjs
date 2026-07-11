@@ -11,18 +11,28 @@
 
 import { adaptive_motion_cancellation_v2 } from './adaptive_motion_cancellation.mjs';
 import { autocorr_v1 } from './autocorr.mjs';
+import { loadEnsembleConfig } from './ensemble_config.mjs';
 
 export const ENSEMBLE_FAMILY = 'ensemble';
 
+const MEMBER_FNS = {
+  adaptive_motion_cancellation_v2,
+  autocorr_v1,
+};
+
 export function robust_ensemble_v1(input, params = {}) {
-  const agreeTol = params.agreement_bpm ?? 2.0;
-  const spectral = adaptive_motion_cancellation_v2(input, params);
-  const auto = autocorr_v1(input, params);
+  const cfg = loadEnsembleConfig();
+  const agreeTol = cfg.agreement_tolerance_bpm;
+  const [m0, m1] = cfg.members.map((name) => MEMBER_FNS[name]);
+  const spectral = m0(input, params);
+  const auto = m1(input, params);
+
+  const stamp = { estimator: 'robust_ensemble_v1', ensemble_version: cfg.ensemble_version, config_hash: cfg.config_hash };
 
   // Abstain unless BOTH independent methods commit to a number.
-  if (spectral.abstained || auto.abstained) {
+  if (cfg.abstain_if_any_member_abstains && (spectral.abstained || auto.abstained)) {
     return {
-      estimator: 'robust_ensemble_v1',
+      ...stamp,
       abstained: true,
       rr_bpm: null,
       reason: spectral.abstained && auto.abstained ? 'both_abstained' : 'one_method_abstained',
@@ -32,10 +42,10 @@ export function robust_ensemble_v1(input, params = {}) {
   }
 
   const disagreement = Math.abs(spectral.rr_bpm - auto.rr_bpm);
-  if (disagreement > agreeTol) {
+  if (cfg.abstain_on_disagreement && disagreement > agreeTol) {
     // Independent methods disagree => the signal is not trustworthy; abstain.
     return {
-      estimator: 'robust_ensemble_v1',
+      ...stamp,
       abstained: true,
       rr_bpm: null,
       reason: 'methods_disagree',
@@ -46,7 +56,7 @@ export function robust_ensemble_v1(input, params = {}) {
   }
 
   return {
-    estimator: 'robust_ensemble_v1',
+    ...stamp,
     abstained: false,
     rr_bpm: (spectral.rr_bpm + auto.rr_bpm) / 2,
     agreement_bpm: disagreement,

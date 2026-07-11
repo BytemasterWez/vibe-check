@@ -40,6 +40,9 @@ jobs:
       - name: Cross-world proof (expose and reject an overfit estimator)
         run: npm run lab:test:cross-world
 
+      - name: External-evidence framework (adapter contract, eligibility, blindness)
+        run: npm run lab:test:external
+
       - name: Run the campaign to a terminal state
         run: |
           npm run lab -- seed

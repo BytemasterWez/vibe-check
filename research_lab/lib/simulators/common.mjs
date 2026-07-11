@@ -10,6 +10,19 @@ import { createRng } from '../rng.mjs';
 export const FS_HZ = 20;
 export const DURATION_S = 60;
 
+// A second spatial observation (a different range bin / antenna). For a single
+// source it is a gain-scaled copy of the primary channel plus independent noise,
+// so the two channels agree on the dominant rhythm. A second target that mixes
+// into the two channels with DIFFERENT relative weights makes them disagree —
+// which is the observational independence a multi-target ambiguity detector
+// needs, and which two methods on the SAME channel cannot supply.
+function secondChannel(displacement, scenario) {
+  const rng = createRng((scenario.seed ^ 0x85ebca6b) >>> 0);
+  const gainB = 0.6 + 0.3 * ((scenario.seed % 7) / 7); // 0.6..0.9, source-consistent
+  const noiseSd = scenario.sensor_noise_sd ?? 0.05;
+  return displacement.map((v) => gainB * v + rng.gaussian(0, noiseSd));
+}
+
 export function respScenario(seed) {
   const rng = createRng(seed >>> 0);
   return {
@@ -35,7 +48,11 @@ export function makeTrial({ family, version, displacement, imu, scenario, trueRr
     generator: family,
     generator_version: version,
     world_family: family,
-    channels: { displacement, imu: imu ?? new Array(displacement.length).fill(0) },
+    channels: {
+      displacement,
+      displacement_b: secondChannel(displacement, scenario),
+      imu: imu ?? new Array(displacement.length).fill(0),
+    },
     fs_hz: scenario.fs_hz,
     duration_s: scenario.duration_s,
     ground_truth: {

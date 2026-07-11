@@ -88,6 +88,23 @@ export function highpass(x, window) {
   return out;
 }
 
+// Remove the IMU-observable motion from a channel by least-squares projection
+// (subtract the best-fit scalar multiple of the IMU). Used to strip apparatus
+// motion before asking whether a signal contains multiple *targets* — device
+// motion is observable on the IMU and must not be mistaken for a second person.
+export function imuCancel(x, imu) {
+  const dx = detrend(x);
+  const dm = detrend(imu);
+  let mm = 0;
+  let xm = 0;
+  for (let i = 0; i < dx.length; i++) {
+    mm += dm[i] * dm[i];
+    xm += dx[i] * dm[i];
+  }
+  const g = mm > 1e-9 ? xm / mm : 0;
+  return dx.map((v, i) => v - g * dm[i]);
+}
+
 // Biased autocorrelation at integer lags, normalized so lag 0 == 1.
 export function autocorr(x, maxLag) {
   const n = x.length;

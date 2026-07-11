@@ -21,6 +21,7 @@ function cloneTrial(trial) {
     ...trial,
     channels: {
       displacement: trial.channels.displacement.slice(),
+      displacement_b: (trial.channels.displacement_b || trial.channels.displacement).slice(),
       imu: trial.channels.imu.slice(),
     },
     ground_truth: {
@@ -44,6 +45,7 @@ const PERTURBATIONS = {
       const t = i / trial.fs_hz;
       const m = amp * Math.sin(2 * Math.PI * fMotion * t + phase);
       trial.channels.displacement[i] += m;
+      trial.channels.displacement_b[i] += m; // apparatus motion appears in both bins
       trial.channels.imu[i] += m; // fully observable on the IMU
     }
     // Recoverable: the corrupting motion is measured, so it can be removed.
@@ -59,12 +61,41 @@ const PERTURBATIONS = {
     const ratio = rng.range(0.4, 1.1);
     const amp = ratio * trial.ground_truth.scenario.resp_amplitude;
     const phase = rng.range(0, Math.PI * 2);
+    // The intruder mixes into the second spatial bin with a DIFFERENT relative
+    // weight than the subject does (they are at different ranges), so the two
+    // channels disagree on the dominant rhythm when the intruder is strong. This
+    // is the spatial/observational information a single mixed channel lacks.
+    const gOtherB = rng.range(0.2, 1.6);
     for (let i = 0; i < n; i++) {
       const t = i / trial.fs_hz;
-      trial.channels.displacement[i] += amp * Math.sin(2 * Math.PI * fOther * t + phase);
+      const s = Math.sin(2 * Math.PI * fOther * t + phase);
+      trial.channels.displacement[i] += amp * s;
+      trial.channels.displacement_b[i] += amp * gOtherB * s;
     }
     // Ambiguous when the intruder is comparably loud.
-    return { name: 'second_person', ratio, recoverable: ratio < 0.7 };
+    return { name: 'second_person', ratio, f_hz: fOther, gain_b: gOtherB, recoverable: ratio < 0.7 };
+  },
+
+  // A second breathing person at a DISTINCT range: loud (unrecoverable by rate
+  // alone) but spatially separable, mixing into the two channels with a clearly
+  // different weight than the subject. This is the regime where observational
+  // independence (a second spatial channel) can catch the intruder and abstain,
+  // as opposed to a co-located intruder that no amount of software can separate.
+  second_person_distinct(trial, rng) {
+    const n = trial.channels.displacement.length;
+    const fOther = rng.range(0.13, 0.45);
+    const ratio = rng.range(0.7, 1.1); // loud -> not recoverable as a rate
+    const amp = ratio * trial.ground_truth.scenario.resp_amplitude;
+    const phase = rng.range(0, Math.PI * 2);
+    // Spatially distinct: intruder is strongly weighted toward one channel.
+    const gOtherB = rng.uniform() < 0.5 ? rng.range(0.05, 0.3) : rng.range(2.2, 3.5);
+    for (let i = 0; i < n; i++) {
+      const t = i / trial.fs_hz;
+      const s = Math.sin(2 * Math.PI * fOther * t + phase);
+      trial.channels.displacement[i] += amp * s;
+      trial.channels.displacement_b[i] += amp * gOtherB * s;
+    }
+    return { name: 'second_person_distinct', ratio, f_hz: fOther, gain_b: gOtherB, recoverable: false };
   },
 
   // Sensor/link dropout: a contiguous run of samples goes to zero. A short gap
@@ -76,6 +107,7 @@ const PERTURBATIONS = {
     const start = Math.floor(rng.range(0, n - len));
     for (let i = start; i < start + len; i++) {
       trial.channels.displacement[i] = 0;
+      trial.channels.displacement_b[i] = 0;
       trial.channels.imu[i] = 0;
     }
     return { name: 'sensor_dropout', fraction: frac, recoverable: frac < 0.4 };
@@ -93,6 +125,7 @@ const PERTURBATIONS = {
       for (let i = at; i < Math.min(n, at + width); i++) {
         const spike = amp * (1 - (i - at) / width);
         trial.channels.displacement[i] += spike;
+        trial.channels.displacement_b[i] += spike;
         trial.channels.imu[i] += spike;
       }
     }

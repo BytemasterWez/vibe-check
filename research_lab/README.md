@@ -39,6 +39,45 @@ The proof milestone (`npm run lab:test:cross-world`) drives this directly: the
 overfit estimator is brilliant on its home world, then **falsified** by the
 independent target-absent world, while the ensemble reaches its ceiling.
 
+### Three kinds of independence
+
+Cross-world quorum gives **algorithmic** and **world** independence. But two
+mathematically different methods reading the *same mixed channel* can still agree
+confidently on the wrong source — mathematical independence is not
+**informational** independence. This is why `CLM-RR-004` was falsified (the
+ensemble misattributed a second person). The fix (`robust_ensemble_v2`) is
+observational, not algorithmic: each world now exposes a **second spatial
+channel**, and a **multi-target ambiguity detector** (`lib/detectors/ambiguity.mjs`)
+abstains when the two channels disagree on the dominant source, *before* any rate
+is trusted. `CLM-RR-004B` (distinct-range intruder) passes with v2 and fails with
+v1. A co-located intruder at a similar range remains unresolvable with two
+channels — a documented limit that escalates to richer sensing, not a bug. See
+`docs/RR-004-root-cause.md`.
+
+### Frozen, versioned ensemble
+
+The ensemble's members, agreement tolerance and voting logic are frozen in
+`lib/estimators/ensemble.config.json` with a `config_hash`; the loader refuses to
+run if the file was edited without re-freezing. A changed config is a **new
+candidate version** (`robust_ensemble_v2`), never a silent update to an existing
+result — essential once external recordings are in play.
+
+### External evidence (human-gated)
+
+`lib/external/` is the framework for evidence the lab did not generate: a generic
+adapter that applies only **declared, hashed** transformations
+(`adapter.mjs`), an **adapter validation contract** (`contract.mjs` — raw/
+normalized hashes, reproducible transformations, no truth leaked into estimator
+input), **dataset eligibility** (`eligibility.mjs` → `EVIDENCE_INELIGIBLE`),
+subject/session **split protection**, and an **external maturity ladder**
+(`maturity.mjs`: `E1-EXTERNAL-REPLAY` … `E3-CROSS-DATASET`, `H1`, `H2`) that the
+autonomous loop **cannot self-advance** — every external level requires
+human-gated provenance, so the loop can only prepare evidence and escalate
+`NEEDS_EXTERNAL_DATASET`. `E3` requires two independently acquired datasets so one
+small dataset cannot cause a large maturity jump. No real dataset is fabricated;
+a labelled synthetic fixture (`fixture.mjs`) self-tests the plumbing, and a real
+dataset is a human drop-in under `evidence/external/`.
+
 ## The loop
 
 ```
@@ -57,15 +96,17 @@ claims + evidence ledger
 ## Quick start
 
 ```bash
-npm run lab:test                 # offline smoke test (34 assertions)
+npm run lab:test                 # offline smoke test (41 assertions)
 npm run lab:test:mutation        # governance mutation test (all guardrails killed)
 npm run lab:test:cross-world     # proof: expose + reject an overfit estimator
+npm run lab:test:external        # external-evidence framework (adapter, eligibility, blindness)
 
 npm run lab -- seed              # seed the ledger from registry/claims/
 npm run lab -- plan              # ranked next experiments (expected info gain)
 npm run lab:run                  # run the loop to a terminal state
 npm run lab:status               # ledger + experiment summary
 npm run lab:diversity            # campaign diversity report
+npm run lab -- candidates <claim_id>       # co-equal multi-candidate evaluation
 npm run lab -- brief <claim_id> [--json]   # one-decision escalation brief
 npm run lab -- receipt <exp_id>            # signed receipt + signature check
 npm run lab -- reproduce <exp_id>          # rerun from the frozen protocol
@@ -153,9 +194,12 @@ research_lab/
   policy/autonomy.json        hard autonomy boundaries + resource budgets
   evidence/                   provenance-classed evidence store (adapters for external data)
   lib/
-    simulators/               world registry: sinusoidal, nonstationary, biomechanical, target_absent
-    estimators/               fft_peak, autocorr, adaptive_motion_cancellation, robust_ensemble, sinusoid_template
-    dsp.mjs                   shared signal primitives (periodogram, autocorr, high-pass)
+    simulators/               world registry: sinusoidal, nonstationary, biomechanical, target_absent (each with a 2nd spatial channel)
+    estimators/               fft_peak, autocorr, adaptive_motion_cancellation, robust_ensemble (v1/v2), sinusoid_template; frozen ensemble.config.json
+    detectors/ambiguity.mjs   multi-target ambiguity gate (observational independence)
+    external/                 external-evidence adapter, contract, eligibility, split protection, E-level maturity, fixture
+    candidates.mjs            co-equal multi-candidate evaluation + pairwise disagreement
+    dsp.mjs                   shared signal primitives (periodogram, autocorr, high-pass, imu-cancel)
     simulator_b.mjs           adversarial perturbation engine
     challenges.mjs            blind challenge sets (public metadata vs hidden manifest)
     statistician.mjs          metrics incl. abstention + target-absent FP + utility
@@ -170,10 +214,14 @@ research_lab/
     escalation.mjs            escalation categories + machine/human digests
     diversity.mjs             campaign diversity report
     receipts.mjs / store.mjs / ledger.mjs / rng.mjs / hash.mjs / maturity.mjs
+  docs/RR-004-root-cause.md   documented root cause + informational-independence limit
+  milestones/                 frozen milestone archives (receipts + summary + notes)
+  evidence/external/          human-gated external evidence store (adapters, manifests, raw, normalized, labels)
   test/
-    smoke.mjs                 offline end-to-end (34 assertions)
+    smoke.mjs                 offline end-to-end (41 assertions)
     mutation.mjs              governance mutation test (kills every guardrail mutant)
     cross_world.mjs           proof milestone: expose + reject an overfit estimator
+    external.mjs              external-evidence framework (17 assertions)
   data/                       runtime state: keys, claims, protocols, receipts (git-ignored)
 ```
 
