@@ -63,38 +63,55 @@ if (!cmd || !id) {
 }
 const only = rest.includes('--only') ? rest[rest.indexOf('--only') + 1] : null;
 const limit = rest.includes('--limit') ? parseInt(rest[rest.indexOf('--limit') + 1], 10) : Infinity;
+// Large external datasets must live OUTSIDE the repo; --dest points at content-
+// addressed external storage (e.g. external-data/4tu-three-radar-v1/source).
+const dest = rest.includes('--dest') ? rest[rest.indexOf('--dest') + 1] : null;
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath(id), 'utf-8'));
-const dir = rawDir(id);
+const dir = dest || rawDir(id);
 fs.mkdirSync(dir, { recursive: true });
 let files = manifest.files.filter((f) => (only ? f.filename.includes(only) : true)).slice(0, limit);
 
-console.log(`${cmd} ${id}: ${files.length} file(s); licence ${(manifest.data_licence || {}).short_name}; doi ${manifest.doi}`);
+const lic = (manifest.data_licence || manifest.license || {}).short_name || (manifest.license || {}).name || 'unknown';
+console.log(`${cmd} ${id}: ${files.length} file(s); licence ${lic}; doi ${manifest.doi}`);
 
 let ok = 0;
 let bad = 0;
 let missing = 0;
+const computed = [];
 for (const f of files) {
-  const dest = path.join(dir, f.filename);
-  if (cmd === 'fetch' && !fs.existsSync(dest)) {
+  const destPath = path.join(dir, f.filename);
+  if (cmd === 'fetch' && !fs.existsSync(destPath)) {
     try {
-      await download(f.download_url, dest);
+      await download(f.download_url, destPath);
     } catch (e) {
       console.error(`  DOWNLOAD FAILED ${f.filename}: ${e.message}`);
       bad++;
       continue;
     }
   }
-  if (!fs.existsSync(dest)) {
+  if (!fs.existsSync(destPath)) {
     missing++;
     continue;
   }
-  const got = sha256File(dest);
-  if (got === f.sha256) ok++;
-  else {
+  const got = sha256File(destPath);
+  if (!f.sha256) {
+    // Repository exposed no per-file checksum (e.g. 4TU): record our computed
+    // hash rather than verify against nothing.
+    console.log(`  ${f.filename}: sha256 ${got} (repository supplied none — recorded)`);
+    computed.push({ filename: f.filename, sha256: got, size_bytes: f.size_bytes });
+    ok++;
+  } else if (got === f.sha256) {
+    ok++;
+  } else {
     console.error(`  HASH MISMATCH ${f.filename}: got ${got} want ${f.sha256}`);
     bad++;
   }
+}
+if (computed.length) {
+  const out = path.join(dir, `${id}.computed-hashes.json`);
+  fs.writeFileSync(out, JSON.stringify({ evidence_id: id, computed_at: new Date().toISOString(), files: computed }, null, 2));
+  console.log(`recorded ${computed.length} computed hash(es) -> ${out}`);
 }
 console.log(`verified ${ok}, mismatched ${bad}, missing ${missing}`);
 process.exit(bad > 0 ? 1 : 0);

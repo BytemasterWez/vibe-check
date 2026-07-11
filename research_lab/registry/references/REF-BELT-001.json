@@ -1,0 +1,34 @@
+{
+  "reference_id": "REF-BELT-001",
+  "status": "FROZEN",
+  "applies_to_dataset": "EXT-RR-BELT-001",
+  "reference_standard": "respiratory_belt",
+  "device": "Vernier Go Direct Respiration Belt",
+  "file_format": ".xlsx",
+  "frozen_before_scoring": true,
+  "protocol": {
+    "belt_parser": "read the belt .xlsx breathing channel; force-belt/displacement column per the dataset's documented layout (to be confirmed from the belt file header on the execution machine; if the respiratory channel cannot be identified deterministically -> REFERENCE_UNUSABLE)",
+    "units": "device-native (force/displacement); rate derived, not absolute units",
+    "sample_rate_hz": "read from the belt file/metadata; must be > 4x the max respiratory frequency (0.7 Hz)",
+    "missing_value_handling": "linear interpolation over gaps < 1 s; longer gaps -> window excluded (RECORDING_DURATION_BELOW_FROZEN_MINIMUM if usable span < 45 s)",
+    "filter_passband_hz": [
+      0.1,
+      0.7
+    ],
+    "rate_extraction": "dominant-peak of the band periodogram over the evaluation window (same band as the estimators); reported in breaths/min",
+    "evaluation_window_s": 60,
+    "minimum_valid_duration_s": 45,
+    "artefact_criteria": "reject windows whose belt band-power SNR is below a frozen floor (belt_sqi_min = 4); such windows -> reference not usable for that window",
+    "edge_handling": "Hann window; no windows spanning documented breathing-protocol transitions (normal->fast) are used for the steady-rate comparison",
+    "rate_uncertainty_bpm": 1
+  },
+  "prohibited": [
+    "choosing the belt channel/filter to minimize radar estimator error",
+    "candidate-specific belt processing",
+    "removing difficult windows after viewing candidate outcomes"
+  ],
+  "failure_outcomes": [
+    "REFERENCE_UNUSABLE"
+  ],
+  "config_hash": "sha256:35ea0b5fd3c3093ca68b900d996833780888a31fdc2073fcceee2714a0a50627"
+}

@@ -1,0 +1,41 @@
+{
+  "reference_sync_protocol": "REF-SYNC-BELT-001",
+  "version": "1.0.0",
+  "status": "FROZEN",
+  "applies_to_dataset": "EXT-RR-BELT-001",
+  "frozen_before_scoring": true,
+  "allowed_inputs": [
+    "radar timestamps or frame index",
+    "belt timestamps or sample index",
+    "acquisition metadata",
+    "documented experiment start/end markers"
+  ],
+  "prohibited_inputs": [
+    "candidate respiratory estimates",
+    "candidate errors",
+    "candidate confidence",
+    "post-score visual tuning"
+  ],
+  "alignment": {
+    "type": "affine",
+    "parameters": [
+      "offset_seconds",
+      "optional_clock_scale"
+    ],
+    "estimation_method": "timestamp_anchored: align on documented acquisition start markers / recorded timestamps only; if absent, a single frozen cross-correlation of the belt band-limited signal against the radar range-bin band-limited signal over the WHOLE recording (not per-window, not per-candidate)",
+    "maximum_offset_seconds": 5,
+    "maximum_clock_drift_ppm": 500
+  },
+  "quality_checks": [
+    "monotonic time axes",
+    "overlap duration above minimum (>= 45 s)",
+    "residual timing uncertainty reported and folded into error tolerance",
+    "identical result on reproduction"
+  ],
+  "crucial_rule": "Alignment may use acquisition timing and permitted signal-independent markers, but MUST NOT be selected to minimize radar estimator error. If waveform-based alignment is required, exactly ONE fixed method is preregistered here and its residual uncertainty is added to the error tolerance.",
+  "failure_outcome": [
+    "REFERENCE_UNUSABLE",
+    "TIME_ALIGNMENT_UNRECOVERABLE"
+  ],
+  "config_hash": "sha256:29cf10f3f194a47191fbc5e5739a2be442bae60829401eb68c46d4a537aac1ab"
+}
