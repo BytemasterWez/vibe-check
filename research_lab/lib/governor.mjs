@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { isAtOrBelowCeiling, levelIndex, PRE_HARDWARE_CEILING } from './maturity.mjs';
+import { evaluateHardConstraints, DEFAULT_CONSTRAINTS } from './constraints.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_POLICY = path.join(HERE, '..', 'policy', 'autonomy.json');
@@ -33,6 +34,7 @@ const FORBIDDEN_ACTION_KEYS = {
 
 export function createGovernor(policy = loadPolicy()) {
   const consecutiveFailures = { count: 0 };
+  const counters = { protocol_tamper_events: 0, unsupported_promotion_attempts: 0 };
 
   function checkAction(action) {
     const policyKey = FORBIDDEN_ACTION_KEYS[action];
@@ -58,9 +60,12 @@ export function createGovernor(policy = loadPolicy()) {
     return { allowed: reasons.length === 0, reasons };
   }
 
-  // Gate a maturity advance: never past the pre-hardware ceiling.
+  // Gate a maturity advance: never past the pre-hardware ceiling. An attempt to
+  // cross the ceiling is recorded as an unsupported-promotion attempt, which is
+  // itself a hard-constraint violation the next advancement will see.
   function checkAdvance(fromLevel, toLevel) {
     if (!isAtOrBelowCeiling(toLevel)) {
+      counters.unsupported_promotion_attempts += 1;
       return {
         allowed: false,
         escalate: true,
@@ -71,6 +76,25 @@ export function createGovernor(policy = loadPolicy()) {
       return { allowed: false, escalate: false, reasons: ['advance is not upward'] };
     }
     return { allowed: true, escalate: false, reasons: [] };
+  }
+
+  function recordTamper() {
+    counters.protocol_tamper_events += 1;
+  }
+
+  // Two-stage advancement gate: hard safety constraints FIRST (a high utility can
+  // never buy back a dangerous confident-error class), then the caller ranks by
+  // utility. `context` supplies the aggregate evidence; the governor injects its
+  // own tamper / unsupported-promotion counters so they cannot be spoofed.
+  function checkHardConstraints(context) {
+    return evaluateHardConstraints(
+      {
+        ...context,
+        protocol_tamper_events: counters.protocol_tamper_events,
+        unsupported_promotion_attempts: counters.unsupported_promotion_attempts,
+      },
+      DEFAULT_CONSTRAINTS
+    );
   }
 
   function recordResult(passed) {
@@ -90,8 +114,13 @@ export function createGovernor(policy = loadPolicy()) {
     checkAction,
     checkExecution,
     checkAdvance,
+    checkHardConstraints,
+    recordTamper,
     recordResult,
     shouldHaltForFailures,
+    get counters() {
+      return { ...counters };
+    },
     get consecutiveFailures() {
       return consecutiveFailures.count;
     },

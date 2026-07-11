@@ -1,15 +1,15 @@
 {
-  "claim_id": "CLM-RR-001",
-  "statement": "Given one stationary adult 0.5-2.0 m from the sensor with no second moving person present, respiratory rate (8-30 breaths/min) is recovered with MAE <= 2 breaths/min over a 60 s window, abstaining when signal quality is insufficient.",
+  "claim_id": "CLM-RR-004",
+  "statement": "A second independently moving subject causes abstention rather than misattribution in at least 95% of trials (confident wrong rate <= 5%).",
   "intended_use": "supervised_clinical_scan",
-  "claim_type": "derived_measurement",
-  "required_modalities": ["mmwave", "imu"],
+  "claim_type": "safety_property",
+  "required_modalities": ["mmwave"],
   "reference_standard": "respiratory_belt_or_capnography",
-  "clinical_relevance": 1.0,
+  "clinical_relevance": 0.95,
   "candidate_estimator": "robust_ensemble_v1",
   "baseline_estimator": "fft_peak_v1",
   "maturity": "C2",
-  "open_uncertainties": ["handheld_motion", "distance_sensitivity"],
+  "open_uncertainties": ["intruder_at_similar_rate"],
   "evidence_plan": {
     "steps": [
       {
@@ -18,19 +18,19 @@
         "challenge_set": "clean",
         "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
         "min_families": 3,
-        "seed_start": 100000,
+        "seed_start": 130000,
         "seed_count": 120,
         "acceptance": { "mae_max": 2.0, "coverage_min": 0.9, "false_confident_max": 0.02, "utility_min": 0.8 }
       },
       {
-        "id": "c4_apparatus_motion",
+        "id": "c4_second_person",
         "advance_to": "C4",
-        "challenge_set": "motion",
+        "challenge_set": "intruder",
         "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
         "min_families": 3,
-        "seed_start": 200000,
+        "seed_start": 230000,
         "seed_count": 120,
-        "acceptance": { "mae_max": 2.0, "coverage_min": null, "false_confident_max": 0.02, "utility_min": null }
+        "acceptance": { "mae_max": null, "coverage_min": null, "false_confident_max": 0.05, "utility_min": null }
       }
     ]
   },

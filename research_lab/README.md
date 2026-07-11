@@ -1,172 +1,198 @@
 # Autonomous Pre-Hardware Sensing Laboratory
 
 A closed, deterministic research loop that automates the *pre-hardware* science
-of a clinical sensing capability: it maintains a machine-readable claim ledger,
-finds the highest-uncertainty claim, designs and **preregisters** a falsification
-experiment, executes it in isolation against **frozen** acceptance criteria,
-red-teams and reproduces the result, and advances claim maturity — **never past
-the pre-hardware ceiling (C5)**.
+of a clinical sensing capability. It maintains a machine-readable claim ledger,
+finds the highest-uncertainty claim, designs and **preregisters** falsification
+experiments, executes them in isolation against **frozen** acceptance criteria,
+red-teams and reproduces the results, and advances claim maturity — **never past
+the pre-hardware ceiling (C5)**, and **never on evidence from a single simulated
+world**.
 
 The deliverable is not a scanner. It is a defensible map of *what is observable,
 under which conditions, with what evidence* — and the smallest set of physical
-experiments still required. Your attention is needed only at governance gates,
-not during routine experimentation.
+experiments still required. Your attention is needed only at governance gates.
 
-Like the rest of this repo, it is zero-dependency Node (`node:crypto` only),
-file-based, and deterministic: every gate decision is code, not a model call.
+Zero-dependency Node (`node:crypto` only), file-based, deterministic: every gate
+decision is code, not a model call.
+
+## The central idea: defeat self-consistency
+
+A single estimator can "succeed" simply by sharing assumptions with the
+simulator that generated the test. This laboratory is built to catch that:
+
+- **Multiple structurally different worlds** generate the signals
+  (`lib/simulators/`): a stationary `sinusoidal` model, a `nonstationary`
+  drifting model, a `biomechanical` asymmetric chest-wall model, and a
+  `target_absent` empty-scene model. An estimator does not know which world
+  produced a trial.
+- **Multiple independent estimators** (`lib/estimators/`): a spectral peak
+  finder, an IMU-cancelling spectral estimator, a time-domain
+  `autocorr` estimator, and a `robust_ensemble` that reports **only when the
+  independent methods agree** — plus a deliberately overfit `sinusoid_template`
+  kept as a negative control.
+- **A cross-world quorum**: a claim advances only when ≥ `min_families`
+  independent world families pass *and* the hard safety constraints pass. A
+  candidate that is brilliant on one world but fails another is **falsified**,
+  not promoted.
+
+The proof milestone (`npm run lab:test:cross-world`) drives this directly: the
+overfit estimator is brilliant on its home world, then **falsified** by the
+independent target-absent world, while the ensemble reaches its ceiling.
 
 ## The loop
 
 ```
 claims + evidence ledger
-  -> find highest uncertainty          (selector, by expected information gain)
-  -> design falsification experiment   (per-family template)
-  -> preregister protocol              (hash-frozen BEFORE execution)
-  -> execute in isolated run           (hidden ground truth; no leakage)
-  -> analyse vs frozen criteria        (statistician)
-  -> independent red-team review       (adversarial critic)
-  -> reproduce from raw inputs         (reproducer; hash compare)
-  -> update claim maturity             (governor-gated, capped at C5)
+  -> find highest uncertainty            (selector, expected information gain)
+  -> design cross-world experiment       (per-step, one world at a time)
+  -> preregister protocol                (hash-frozen BEFORE execution)
+  -> execute in isolation                (hidden challenge + ground truth)
+  -> analyse vs frozen criteria          (statistician; abstention is primary)
+  -> independent red-team review         (adversarial critic)
+  -> reproduce from raw inputs           (reproducer; exact hash compare)
+  -> resolve step by cross-world quorum  (advance / falsify / escalate)
   -> ...
 ```
-
-It stops automatically at a terminal condition — all testable claims resolved,
-the pre-hardware evidence ceiling reached, a fatal contradiction, exhausted
-data, a resource limit, or something requiring a human decision.
 
 ## Quick start
 
 ```bash
-npm run lab:test            # offline end-to-end test (26 assertions)
+npm run lab:test                 # offline smoke test (34 assertions)
+npm run lab:test:mutation        # governance mutation test (all guardrails killed)
+npm run lab:test:cross-world     # proof: expose + reject an overfit estimator
 
-npm run lab -- seed         # seed the ledger from registry/claims/
-npm run lab -- plan         # ranked next experiments (expected information gain)
-npm run lab:run             # run the loop to a terminal state
-npm run lab:status          # ledger + experiment summary
-npm run lab -- receipt   <experiment_id>   # signed receipt + signature check
-npm run lab -- reproduce <experiment_id>   # rerun from the frozen protocol
-npm run lab -- digest    <claim_id>        # one-decision escalation digest
+npm run lab -- seed              # seed the ledger from registry/claims/
+npm run lab -- plan              # ranked next experiments (expected info gain)
+npm run lab:run                  # run the loop to a terminal state
+npm run lab:status               # ledger + experiment summary
+npm run lab:diversity            # campaign diversity report
+npm run lab -- brief <claim_id> [--json]   # one-decision escalation brief
+npm run lab -- receipt <exp_id>            # signed receipt + signature check
+npm run lab -- reproduce <exp_id>          # rerun from the frozen protocol
 ```
 
-A run climbs each seed claim `C2 -> C3 -> C4 -> C5` and escalates when a claim
-hits C5 (software ceiling; hardware required). Re-running resumes without
-repeating completed work.
+A run resolves each seeded claim to a terminal state and prints the escalations.
+With the default claims it climbs three claims to the C5 hardware ceiling,
+**falsifies** the second-person claim (the ensemble misattributes on the
+biomechanical intruder world), and raises **NEEDS_NEW_SIMULATOR** for the
+clock-sync claim (no world models it yet).
 
-## Bounded roles (deterministic modules, not one general agent)
+## Bounded roles (deterministic modules)
 
 | Role | Module | Prohibited action (enforced) |
 | --- | --- | --- |
-| Experiment Designer | `lib/selector.mjs` | cannot execute before preregistration |
+| Experiment Designer | `lib/selector.mjs` | cannot execute before prereg; blind to hidden challenge manifests |
 | Protocol Auditor | `lib/prereg.mjs` (`protocolIntact`) | cannot rewrite thresholds after results — edits break the freeze hash |
-| Executor | `lib/executor.mjs` | cannot interpret clinical significance; only PASS/FAIL vs frozen criteria |
+| Executor | `lib/executor.mjs` | cannot interpret significance; sole reader of hidden truth; no leakage |
 | Statistician | `lib/statistician.mjs` | cannot drop cases; scores every trial |
 | Adversarial Critic | `lib/critic.mjs` | cannot modify results; only appends findings + downgrades the verdict |
 | Reproducer | `lib/reproducer.mjs` | cannot use cached outputs; regenerates from seeds |
-| Governor | `lib/governor.mjs` | cannot approve expenditure or advance past C5 |
+| Governor | `lib/governor.mjs` | cannot approve expenditure, breach C5, or waive a hard constraint |
 
-## The maturity ladder (`lib/maturity.mjs`)
+## Maturity ladder + hard ceiling (`lib/maturity.mjs`)
 
 `C0` proposed · `C1` plausible · `C2` external evidence · `C3` independent-data
-reproduction · `C4` adversarial simulation · **`C5` hardware experiment
-required (autonomous ceiling)** · `C6` bench · `C7` human observational · `C8`
-clinical.
+reproduction · `C4` adversarial simulation · **`C5` hardware experiment required
+(autonomous ceiling)** · `C6` bench · `C7` human observational · `C8` clinical.
+The governor **permanently forbids** advancing past `C5`, and records any attempt
+as an `unsupported_promotion_attempt` (itself a hard-constraint violation).
 
-The governor **permanently forbids** advancing anything past `C5`. `C3` is
-earned by an independent-data experiment; `C4` by surviving an adversarial
-confounder campaign with correct abstention; `C5` is the escalation gate.
+## Two-stage advancement gate (`lib/constraints.mjs`)
 
-## Preregistration and frozen criteria (`lib/prereg.mjs`)
-
-Before an experiment runs, the designer freezes a protocol — hypothesis, the
-exact dataset (a manifest of simulator config + seeds, hashed), candidate vs
-baseline, primary metric, acceptance thresholds, and failure conditions — and
-hashes it. Ground truth is generated **after** the freeze, inside the executor,
-and is never handed to the estimator. A failed experiment is **not** rerun with
-easier thresholds: `protocolIntact` recomputes the freeze hash, so any
-post-hoc edit is detected, and the reproducer recomputes from the same record.
-
-## Two independent simulators
-
-- **Simulator A** (`lib/simulator_a.mjs`) — mechanistic generator. Builds a
-  thoracic-displacement signal from explicit physiological + sensor equations
-  (respiration, cardiac, baseline wander, sensor noise) and emits a hidden
-  ground-truth block.
-- **Simulator B** (`lib/simulator_b.mjs`) — adversarial perturbation engine. It
-  models no biology; it attacks a signal with named corruptions
-  (`device_motion`, `second_person`, `sensor_dropout`, `gross_motion`) and marks
-  whether the rate is still *recoverable*. Some corruptions are separable given
-  the IMU channel; some are genuinely ambiguous and must be abstained on.
-
-## Abstention is a primary metric (`lib/statistician.mjs`)
-
-A measurement system with a low average error is still dangerous if it
-occasionally reports confident nonsense. The statistician tracks numerical
-error, coverage, false-confident-output rate, correct-abstention rate, and a
-frozen engineering utility:
+A weighted utility can hide a dangerous failure mode. So advancement is gated in
+two stages: **hard safety constraints must ALL pass first**, and only then does
+utility rank candidates.
 
 ```
-Utility = ValidCoverage - 5*(FalseConfidentRate) - 2*(MissedAbstentionRate)
+false_confident_rate            <= 0.001
+target_absent_false_positive    <= 0.001
+reproduction_status              == EXACT_MATCH
+protocol_tamper_events           == 0
+unsupported_promotion_attempts   == 0
+critical_scenario_coverage      >= 1.0   (all required world families)
 ```
 
-Dangerous confidence is penalized far more heavily than an unavailable reading.
+Abstention is a primary metric (`lib/statistician.mjs`), and the frozen utility
+`ValidCoverage − 5·FalseConfident − 2·MissedAbstention` penalizes dangerous
+confidence far more heavily than an unavailable reading.
+
+## Blind challenges + provenance
+
+- **Blind challenges** (`lib/challenges.mjs`): the selector sees a challenge set
+  by id and coarse metadata only; the per-seed perturbation schedule and truth
+  annotations are readable **only by the executor**, which reveals truth to the
+  statistician at scoring time.
+- **Evidence provenance** (`lib/provenance.mjs`, `evidence/`): every result
+  carries a provenance class. Only `simulated` evidence is produced
+  autonomously; `public_dataset`, `recorded_hardware`, `manually_labelled` and
+  `third_party_reproduction` are human-gated adapters, each with its own ingest
+  escalation. A claim never advances on simulator evidence pretending to be
+  external validity.
+
+## Escalation (`lib/escalation.mjs`)
+
+Everything the loop cannot resolve autonomously reduces to ONE decision in one
+category — `NEEDS_NEW_SIMULATOR`, `NEEDS_EXTERNAL_DATASET`, `NEEDS_HARDWARE`,
+`NEEDS_HUMAN_LABELS`, `NEEDS_CLINICAL_REVIEW`, `CLAIM_FALSIFIED`,
+`SOFTWARE_CEILING_REACHED` — with a compact machine digest (`brief --json`) and a
+human decision brief (`brief`).
 
 ## Receipts (`lib/receipts.mjs`)
 
-Every completed run produces a receipt — protocol hash, runner version, input
-manifest hash, timings, primary metrics, PASS/FAIL against frozen criteria, the
-red-team verdict, reproduction status, and the resulting claim effect — signed
-with a locally generated ed25519 key (`data/keys/`, git-ignored). Any later edit
+Every completed run produces an ed25519-signed receipt: protocol hash, runner
+version, input manifest hash, world + challenge + candidate, timings, PASS/FAIL
+against frozen criteria, red-team verdict, reproduction status. Any later edit
 breaks the signature.
-
-## Hard autonomy boundaries (`policy/autonomy.json`)
-
-Forbidden and enforced by the governor: hardware purchase, paid API use,
-contacting people, recruiting participants, diagnosing real patients, promoting
-clinical claims, altering frozen thresholds, deleting failed results, using
-private health data. Plus resource budgets (per-experiment runtime, disk floor,
-mains-power requirement, consecutive-failure halt).
-
-## When it escalates (blueprint §13)
-
-A claim reaching C5, a fatal contradiction, exhausted data, or a repeated
-failure without information gain halts the loop and produces a **one-decision**
-digest (`lab.mjs digest <claim_id>`) — pre-hardware status, experiments
-passed/failed, what's resolved, what's unresolved without hardware, the next
-step that would cost money, and a recommendation. Not a sprawling report.
 
 ## Layout
 
 ```
 research_lab/
-  lab.mjs                     CLI: seed | status | plan | run | receipt | reproduce | digest
-  registry/claims/            immutable seed claims (source of truth)
+  lab.mjs                     CLI: seed | status | plan | run | diversity | brief | receipt | reproduce
+  registry/claims/            narrow, falsifiable seed claims with evidence plans
   policy/autonomy.json        hard autonomy boundaries + resource budgets
+  evidence/                   provenance-classed evidence store (adapters for external data)
   lib/
-    rng.mjs                   deterministic seeded RNG (no Math.random in the experiment path)
-    hash.mjs                  canonical JSON + sha256 (freeze/evidence hashes)
-    maturity.mjs              the C0..C8 ladder and the C5 ceiling
-    simulator_a.mjs           mechanistic signal generator
+    simulators/               world registry: sinusoidal, nonstationary, biomechanical, target_absent
+    estimators/               fft_peak, autocorr, adaptive_motion_cancellation, robust_ensemble, sinusoid_template
+    dsp.mjs                   shared signal primitives (periodogram, autocorr, high-pass)
     simulator_b.mjs           adversarial perturbation engine
-    estimators.mjs            baseline + candidate RR estimators (with abstention)
-    statistician.mjs          metrics incl. abstention + frozen utility
+    challenges.mjs            blind challenge sets (public metadata vs hidden manifest)
+    statistician.mjs          metrics incl. abstention + target-absent FP + utility
+    constraints.mjs           hard safety constraints (gate before utility)
     prereg.mjs                protocol build + freeze hash + tamper check
-    selector.mjs              expected-information-gain experiment selection
-    critic.mjs                adversarial critic (confounders, alt explanations)
-    executor.mjs              isolated run vs frozen criteria (no leakage)
+    selector.mjs              expected-information-gain, cross-world experiment selection
+    critic.mjs                adversarial critic
+    executor.mjs              isolated run vs frozen criteria (hidden truth, no leakage)
     reproducer.mjs            rerun from frozen protocol; hash compare
-    governor.mjs              budgets, boundaries, maturity ceiling
-    receipts.mjs              ed25519-signed experiment receipts
-    store.mjs                 file-based ledger/protocol/receipt store
-    ledger.mjs                seeding + summaries + decision digest
-    orchestrator.mjs          the closed loop
-  test/smoke.mjs              offline end-to-end test
+    governor.mjs              budgets, boundaries, C5 ceiling, hard-constraint gate, counters
+    provenance.mjs            evidence provenance classes
+    escalation.mjs            escalation categories + machine/human digests
+    diversity.mjs             campaign diversity report
+    receipts.mjs / store.mjs / ledger.mjs / rng.mjs / hash.mjs / maturity.mjs
+  test/
+    smoke.mjs                 offline end-to-end (34 assertions)
+    mutation.mjs              governance mutation test (kills every guardrail mutant)
+    cross_world.mjs           proof milestone: expose + reject an overfit estimator
   data/                       runtime state: keys, claims, protocols, receipts (git-ignored)
 ```
 
-## Scope guardrails (by design, pre-hardware phase)
+## Scope guardrails (pre-hardware phase)
 
-- Software-only evidence; nothing advances past `C5`.
+- Software-only evidence; nothing advances past `C5`; no evidence advances a
+  claim on a single world family.
 - No hardware, no paid APIs, no human subjects, no private health data.
 - Deterministic simulation and gates; a model may later *propose* hypotheses and
-  draft protocols, but it is never on the decision path.
+  draft protocols, but is never on the decision path.
 - File-based store; the scientific record is plain, inspectable JSON on disk.
+
+## What the current evidence proves — and does not
+
+It proves the **control loop and its guardrails**: cross-world quorum, hard
+safety constraints, protocol-freeze integrity, exact reproduction, separation of
+duties, autonomy containment, and that an estimator overfit to one world is
+exposed and rejected. It does **not** prove that the simulated signals reflect
+real sensor physics, that any estimator works on real humans, or that the worlds
+cover the dangerous confounders — those are exactly the boundaries the C5 ceiling
+and the escalations report, and they require hardware and external data the loop
+is forbidden to fabricate.

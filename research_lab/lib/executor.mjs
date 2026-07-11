@@ -1,47 +1,44 @@
 // Executor — runs a preregistered experiment in a controlled, deterministic
-// way and emits an unsigned receipt. It CANNOT interpret clinical significance
-// (blueprint role table): it computes metrics against the frozen criteria and
-// reports PASS/FAIL, nothing more. Interpretation and maturity changes happen
-// later, gated by the governor.
+// way and emits an unsigned result. It CANNOT interpret clinical significance:
+// it computes metrics against the frozen criteria and reports PASS/FAIL. It is
+// the SOLE reader of the hidden challenge manifest and of per-trial ground
+// truth; the estimator receives only the observation channels.
 
-import { generate } from './simulator_a.mjs';
+import { generateWorld } from './simulators/index.mjs';
 import { perturb } from './simulator_b.mjs';
-import { runEstimator } from './estimators.mjs';
+import { resolveChallengeManifest } from './challenges.mjs';
+import { runEstimator, ESTIMATOR_FAMILIES } from './estimators/index.mjs';
 import { scoreTrials } from './statistician.mjs';
 import { protocolIntact } from './prereg.mjs';
 import { sha256 } from './hash.mjs';
 
-// Resolve the perturbation list for one seed. `perturbations` is either a flat
-// list of names (applied to every seed) or a list of lists (a per-seed rotation
-// so an adversarial campaign mixes separable and ambiguous confounders).
-function perturbationsForSeed(perturbations, index) {
-  if (!perturbations || perturbations.length === 0) return [];
-  if (Array.isArray(perturbations[0])) return perturbations[index % perturbations.length];
-  return perturbations;
+function perturbationsForSeed(schedule, index) {
+  if (!schedule || schedule.length === 0) return [];
+  if (Array.isArray(schedule[0])) return schedule[index % schedule.length];
+  return schedule;
 }
 
-// Build the trials the protocol pins. Ground truth is generated here — AFTER
-// the protocol was frozen — and is never passed to the estimator.
+// Build the exact trials the protocol pins. Ground truth is generated HERE —
+// after the freeze — and never handed to the estimator.
 function buildTrials(protocol) {
-  const { manifest } = protocol.dataset;
-  return protocol.seeds.map((seed, i) => {
-    let trial = generate(seed);
-    const perts = perturbationsForSeed(manifest.perturbations, i);
-    if (perts.length) {
-      trial = perturb(trial, perts, manifest.perturbation_salt);
+  const { challenge_set, world_family, seed_start, seed_count } = protocol;
+  const { perturbation_schedule, salt } = resolveChallengeManifest(challenge_set);
+  const trials = [];
+  for (let i = 0; i < seed_count; i++) {
+    const seed = (seed_start + i) >>> 0;
+    let trial = generateWorld(world_family, seed);
+    const perts = perturbationsForSeed(perturbation_schedule, i);
+    if (perts.length && trial.ground_truth.target_present !== false) {
+      trial = perturb(trial, perts, salt);
     }
-    return trial;
-  });
+    trials.push(trial);
+  }
+  return trials;
 }
 
-// Hash of everything the estimator actually consumes — proves the inputs.
 function inputManifestHash(trials) {
   return sha256(
-    trials.map((t) => ({
-      displacement: t.channels.displacement,
-      imu: t.channels.imu,
-      fs_hz: t.fs_hz,
-    }))
+    trials.map((t) => ({ displacement: t.channels.displacement, imu: t.channels.imu, fs_hz: t.fs_hz }))
   );
 }
 
@@ -67,16 +64,19 @@ export function execute(protocol, opts = {}) {
   const baseline = runArm(protocol.comparison.baseline, trials, params);
   const completedAt = new Date();
 
-  // Structural leakage guard: runEstimator strips ground_truth, so the estimator
-  // provably never saw it. We assert the invariant and record the outcome.
   const leakageClean = candidate.trials.every((t) => t.output && t.output.abstained !== undefined);
 
   const m = candidate.metrics;
   const a = protocol.acceptance;
   const failedReasons = [];
-  if (m.mae_bpm === null || m.mae_bpm > a.mae_max) failedReasons.push('mae_exceeded');
-  if (m.valid_coverage < a.coverage_min) failedReasons.push('coverage_below_min');
-  if (m.false_confident_rate > a.false_confident_max) failedReasons.push('false_confident_rate_exceeded');
+  if (a.mae_max !== null && (m.mae_bpm === null || m.mae_bpm > a.mae_max)) failedReasons.push('mae_exceeded');
+  if (a.coverage_min !== null && m.valid_coverage < a.coverage_min) failedReasons.push('coverage_below_min');
+  if (a.false_confident_max !== null && m.false_confident_rate > a.false_confident_max)
+    failedReasons.push('false_confident_rate_exceeded');
+  if (a.missed_abstention_max !== null && m.missed_abstention_rate > a.missed_abstention_max)
+    failedReasons.push('missed_abstention_rate_exceeded');
+  if (a.target_absent_fp_max !== null && m.target_absent_false_positive_rate > a.target_absent_fp_max)
+    failedReasons.push('target_absent_false_positive_exceeded');
   if (a.utility_min !== null && m.utility < a.utility_min) failedReasons.push('utility_below_min');
   if (!leakageClean) failedReasons.push('ground_truth_visible_to_estimator');
 
@@ -85,6 +85,15 @@ export function execute(protocol, opts = {}) {
   return {
     experiment_id: protocol.experiment_id,
     claim_id: protocol.claim_id,
+    step_id: protocol.step_id,
+    tier: protocol.tier,
+    world_family: protocol.world_family,
+    challenge_set: protocol.challenge_set,
+    provenance_class: protocol.provenance_class,
+    candidate: protocol.comparison.candidate,
+    baseline: protocol.comparison.baseline,
+    candidate_family: ESTIMATOR_FAMILIES[protocol.comparison.candidate],
+    baseline_family: ESTIMATOR_FAMILIES[protocol.comparison.baseline],
     protocol_hash: protocol.protocol_hash,
     input_manifest_hash: inputHash,
     started_at: startedAt.toISOString(),
@@ -99,12 +108,12 @@ export function execute(protocol, opts = {}) {
       false_confident_rate: m.false_confident_rate,
       missed_abstention_rate: m.missed_abstention_rate,
       correct_abstention_rate: m.correct_abstention_rate,
+      target_absent_false_positive_rate: m.target_absent_false_positive_rate,
       utility: m.utility,
     },
     candidate_metrics: candidate.metrics,
     baseline_metrics: baseline.metrics,
     leakage_check: leakageClean ? 'clean' : 'LEAK_DETECTED',
-    // Full per-trial detail kept so the critic and reproducer can re-derive.
     _trials: candidate.trials,
   };
 }

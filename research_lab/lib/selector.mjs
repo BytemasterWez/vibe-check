@@ -1,104 +1,102 @@
-// Experiment Designer / selector — picks the next highest-information
-// experiment (blueprint §5). It CANNOT execute before preregistration (role
-// table); it only proposes a spec. Selection maximizes expected information
-// gain rather than running thousands of trivial variations:
+// Experiment Designer / selector (build-packet §1, cross-world).
 //
-//   Priority = (ClinicalRelevance * Uncertainty * DiscriminatingPower)
-//              / (ComputeCost * DuplicationRisk)
+// Picks the next highest-information experiment. It CANNOT execute before
+// preregistration (role table) and it is BLIND to hidden challenge manifests —
+// it references a challenge set by id and coarse public metadata only. Selection
+// walks each claim's evidence plan step by step, running one world at a time, so
+// that a claim accrues evidence across independent world families before the
+// orchestrator's quorum decides whether it may advance.
 
-import { nextLevel, familyForAdvanceTo, isAtOrBelowCeiling, levelIndex, PRE_HARDWARE_CEILING } from './maturity.mjs';
+import { ALL_WORLDS } from './simulators/index.mjs';
+import { challengePublic } from './challenges.mjs';
+import { levelIndex } from './maturity.mjs';
 
-// Default seed banks. Development ("training") and evaluation seeds are disjoint
-// so an experiment is always scored on data the estimator was not tuned on.
-const EVAL_SEEDS = [104, 833, 1902, 4401, 9950, 12007, 22119, 30411];
+// The first plan step a claim has not yet completed (and is not blocked on).
+export function currentStep(claim) {
+  if (claim.falsified || claim.blocked) return null;
+  const steps = claim.evidence_plan?.steps || [];
+  const done = new Set(claim.completed_steps || []);
+  return steps.find((s) => !done.has(s.id)) || null;
+}
 
-// Per-family experiment template. This is where evidence type maps to a concrete
-// simulator configuration and estimator comparison.
-function templateFor(family, claim) {
-  const acc = claim.acceptance_contract;
-  const base = {
-    candidate: 'adaptive_motion_cancellation_v2',
-    baseline: 'bandpass_peak_v1',
-    seeds: EVAL_SEEDS,
-    perturbation_salt: 7,
-    acceptance: {
-      mae_max: acc.mae_breaths_per_minute,
-      coverage_min: acc.minimum_coverage,
-      false_confident_max: 0.05,
-      utility_min: 0.6,
-    },
-  };
-  if (family === 'independent_data') {
-    return {
-      ...base,
-      family,
-      advance_to: 'C3',
-      perturbations: [],
-      discriminating_power: 0.5,
-      hypothesis:
-        'Respiratory frequency is recoverable from clean mechanistic displacement data the estimator was not tuned on.',
-    };
-  }
-  // adversarial: a per-seed rotation mixing separable and ambiguous confounders
-  // so correct abstention is exercised alongside recovery.
+function stepReceipts(receipts, claim, step) {
+  return receipts.filter((r) => r.claim_id === claim.claim_id && r.step_id === step.id);
+}
+
+// Which of a step's worlds already have a receipt for the claim's candidate.
+export function worldStatus(receipts, claim, step) {
+  const rs = stepReceipts(receipts, claim, step);
+  const run = new Set(rs.map((r) => r.world_family));
+  return { run, receipts: rs, remaining: step.worlds.filter((w) => !run.has(w)) };
+}
+
+function missingWorlds(step) {
+  return step.worlds.filter((w) => !ALL_WORLDS.includes(w));
+}
+
+// Build the experiment spec for one (claim, step, world).
+function buildSpec(claim, step, world) {
   return {
-    ...base,
-    family,
-    advance_to: 'C4',
-    perturbations: [['device_motion'], ['second_person'], ['sensor_dropout'], ['gross_motion']],
-    discriminating_power: 1.0,
-    hypothesis:
-      'Respiratory frequency remains recoverable under IMU-observable apparatus motion, and the estimator abstains when a second person or long dropout makes the rate unrecoverable.',
+    claim_id: claim.claim_id,
+    step_id: step.id,
+    advance_to: step.advance_to,
+    world_family: world,
+    challenge_set: step.challenge_set,
+    provenance_class: 'simulated',
+    candidate: claim.candidate_estimator,
+    baseline: claim.baseline_estimator,
+    seed_start: step.seed_start,
+    seed_count: step.seed_count,
+    acceptance: step.acceptance,
+    hypothesis: `Under the '${step.challenge_set}' challenge on the '${world}' world, ${claim.candidate_estimator} satisfies the frozen acceptance for ${claim.claim_id} (${step.advance_to}).`,
   };
 }
 
-// The next maturity target for a claim, or null if it is at/above the ceiling.
-function nextTarget(claim) {
-  if (!isAtOrBelowCeiling(claim.maturity) || claim.maturity === PRE_HARDWARE_CEILING) return null;
-  const target = nextLevel(claim.maturity);
-  return isAtOrBelowCeiling(target) ? target : null;
-}
-
-// Score one candidate experiment for a claim.
-function scoreClaim(claim, completedIds) {
-  const target = nextTarget(claim);
-  if (!target) return null;
-  const family = familyForAdvanceTo(target);
-  if (family === 'hardware_gate' || !family) return null;
-
-  const spec = templateFor(family, claim);
+// Expected-information-gain priority for a claim's next experiment.
+function priorityFor(claim, step) {
   const clinicalRelevance = claim.clinical_relevance ?? 1;
   const uncertainty = 1 + (claim.open_uncertainties ? claim.open_uncertainties.length : 0);
-  const discriminatingPower = spec.discriminating_power;
-  const computeCost = Math.max(1, spec.seeds.length / 8); // ~cost in units of one 8-seed run
-  // If we've already completed this exact experiment, running it again is pure
-  // duplication — heavily penalize so the loop moves on.
-  const experimentId = provisionalId(claim.claim_id, family, spec);
-  const duplicationRisk = completedIds.has(experimentId) ? 100 : 1;
-
-  const priority = (clinicalRelevance * uncertainty * discriminatingPower) / (computeCost * duplicationRisk);
-  return { claim_id: claim.claim_id, target, family, spec, priority, experiment_id_hint: experimentId };
+  const difficulty = challengePublic(step.challenge_set).difficulty;
+  const discriminatingPower = difficulty === 'baseline' ? 0.6 : 1.0;
+  const computeCost = Math.max(1, step.seed_count / 120); // ~cost in 120-seed units
+  return (clinicalRelevance * uncertainty * discriminatingPower) / computeCost;
 }
 
-// Mirror prereg's id derivation closely enough to detect duplicates without
-// building the full protocol (prereg remains the source of truth).
-function provisionalId(claimId, family, spec) {
-  return `${claimId}:${family}:${spec.candidate}`;
+// One selection decision. Returns an experiment to run, a missing-world signal,
+// or null when nothing is runnable (advancement/terminal handled by the loop).
+export function selectNext(claims, receipts = []) {
+  const experiments = [];
+  const missing = [];
+  for (const claim of claims) {
+    const step = currentStep(claim);
+    if (!step) continue;
+    const miss = missingWorlds(step);
+    if (miss.length) {
+      missing.push({ kind: 'missing_world', claim_id: claim.claim_id, step_id: step.id, worlds: miss });
+      continue;
+    }
+    const { remaining } = worldStatus(receipts, claim, step);
+    if (!remaining.length) continue; // step fully run — awaiting quorum decision
+    experiments.push({ kind: 'experiment', spec: buildSpec(claim, step, remaining[0]), priority: priorityFor(claim, step) });
+  }
+  experiments.sort((a, b) => b.priority - a.priority);
+  if (experiments.length) return experiments[0];
+  if (missing.length) return missing[0];
+  return null;
 }
 
-export function selectNext(claims, completedIds = new Set()) {
-  const scored = claims
-    .map((c) => scoreClaim(c, completedIds))
-    .filter(Boolean)
-    .sort((a, b) => b.priority - a.priority);
-  return scored[0] || null;
+export function rankAll(claims, receipts = []) {
+  const out = [];
+  for (const claim of claims) {
+    const step = currentStep(claim);
+    if (!step) continue;
+    if (missingWorlds(step).length) continue;
+    const { remaining } = worldStatus(receipts, claim, step);
+    for (const world of remaining) {
+      out.push({ claim_id: claim.claim_id, step_id: step.id, world, priority: priorityFor(claim, step), spec: buildSpec(claim, step, world) });
+    }
+  }
+  return out.sort((a, b) => b.priority - a.priority);
 }
 
-export function rankAll(claims, completedIds = new Set()) {
-  return claims
-    .map((c) => scoreClaim(c, completedIds))
-    .filter(Boolean)
-    .sort((a, b) => b.priority - a.priority);
-}
-
-export { EVAL_SEEDS, levelIndex };
+export { levelIndex };

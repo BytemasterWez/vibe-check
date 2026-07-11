@@ -1,33 +1,32 @@
-// Preregistration (blueprint §4).
+// Preregistration (blueprint §4, extended for cross-world experiments).
 //
 // Before an experiment runs, the designer freezes a protocol: the hypothesis,
-// the exact dataset (a manifest of simulator config + seeds, hashed), the
-// candidate vs baseline, the primary metric, the acceptance thresholds, and the
-// failure conditions that would invalidate the run. The protocol is hashed
-// BEFORE the executor generates hidden ground truth. Results can never
-// retroactively change the test — the Protocol Auditor forbids threshold edits
-// after execution, and the reproducer recomputes from this frozen record.
+// the exact world + challenge set + seed range (hashed), the candidate vs
+// baseline estimators, the primary metric, the acceptance thresholds, and the
+// failure conditions. The protocol is hashed BEFORE the executor derives hidden
+// ground truth. Thresholds cannot be edited after results without breaking the
+// freeze hash (`protocolIntact`).
 
 import { sha256, shortHash } from './hash.mjs';
+import { worldVersion } from './simulators/index.mjs';
 
-export const PROTOCOL_VERSION = '1.0.0';
+export const PROTOCOL_VERSION = '2.0.0';
 
-// Non-negotiable failure conditions attached to every protocol.
 const UNIVERSAL_FAILURE_CONDITIONS = [
   'threshold_modified_after_execution',
   'ground_truth_visible_to_estimator',
   'test_subject_used_during_training',
+  'evidence_from_single_simulator_family',
 ];
 
-// Build the frozen dataset manifest for an experiment. It fully determines the
-// data the estimator will see, so hashing it pins the inputs.
 export function buildDatasetManifest(spec) {
   return {
-    simulator_a_version: '1.0.0',
-    simulator_b_version: spec.perturbations.length ? '1.0.0' : null,
-    perturbations: spec.perturbations,
-    perturbation_salt: spec.perturbation_salt ?? 7,
-    seeds: spec.seeds,
+    simulator_world: spec.world_family,
+    world_version: worldVersion(spec.world_family),
+    challenge_set: spec.challenge_set,
+    provenance_class: spec.provenance_class || 'simulated',
+    seed_start: spec.seed_start,
+    seed_count: spec.seed_count,
     channels_exposed: ['displacement', 'imu'],
   };
 }
@@ -37,43 +36,41 @@ export function preregister(spec, meta = {}) {
   const datasetHash = sha256(dataset);
 
   const experimentId = `EXP-${spec.claim_id.replace(/^CLM-/, '')}-${shortHash({
-    family: spec.family,
+    step: spec.step_id,
+    world: spec.world_family,
+    challenge: spec.challenge_set,
     candidate: spec.candidate,
     dataset: datasetHash,
   })}`;
 
-  // The protocol body — everything that must be frozen. Ground truth is NOT
-  // here; the executor derives it from seeds after this is hashed.
   const protocolBody = {
     protocol_version: PROTOCOL_VERSION,
     experiment_id: experimentId,
     claim_id: spec.claim_id,
-    family: spec.family,
+    step_id: spec.step_id,
+    tier: spec.advance_to ?? null,
     advance_to: spec.advance_to ?? null,
     hypothesis: spec.hypothesis,
-    dataset: {
-      source: spec.perturbations.length ? 'synthetic_adversarial_v1' : 'synthetic_mechanistic_v1',
-      frozen_manifest_hash: datasetHash,
-      manifest: dataset,
-    },
-    comparison: {
-      candidate: spec.candidate,
-      baseline: spec.baseline,
-    },
+    world_family: spec.world_family,
+    challenge_set: spec.challenge_set,
+    provenance_class: spec.provenance_class || 'simulated',
+    dataset: { frozen_manifest_hash: datasetHash, manifest: dataset },
+    comparison: { candidate: spec.candidate, baseline: spec.baseline },
     primary_metric: 'respiratory_rate_mae_bpm',
     acceptance: {
-      mae_max: spec.acceptance.mae_max,
-      coverage_min: spec.acceptance.coverage_min,
-      false_confident_max: spec.acceptance.false_confident_max,
+      mae_max: spec.acceptance.mae_max ?? null,
+      coverage_min: spec.acceptance.coverage_min ?? null,
+      false_confident_max: spec.acceptance.false_confident_max ?? null,
+      missed_abstention_max: spec.acceptance.missed_abstention_max ?? null,
+      target_absent_fp_max: spec.acceptance.target_absent_fp_max ?? null,
       utility_min: spec.acceptance.utility_min ?? null,
     },
     failure_conditions: UNIVERSAL_FAILURE_CONDITIONS.slice(),
-    seeds: spec.seeds,
+    seed_start: spec.seed_start,
+    seed_count: spec.seed_count,
   };
 
-  // The freeze hash covers the protocol body verbatim.
   const protocolHash = sha256(protocolBody);
-
   return {
     ...protocolBody,
     protocol_hash: protocolHash,
@@ -83,7 +80,6 @@ export function preregister(spec, meta = {}) {
   };
 }
 
-// The Protocol Auditor's guard: confirm nobody edited a frozen protocol.
 export function protocolIntact(protocol) {
   const body = { ...protocol };
   delete body.protocol_hash;

@@ -31,11 +31,18 @@ jobs:
       - name: Install dependencies (skip Electron binary download)
         run: npm ci --ignore-scripts
 
-      - name: Offline smoke test (26 assertions)
+      - name: Offline smoke test
         run: npm run lab:test
+
+      - name: Governance mutation test (every guardrail must be killed)
+        run: npm run lab:test:mutation
+
+      - name: Cross-world proof (expose and reject an overfit estimator)
+        run: npm run lab:test:cross-world
 
       - name: Run the campaign to a terminal state
         run: |
           npm run lab -- seed
           npm run lab:run
           npm run lab:status
+          npm run lab:diversity

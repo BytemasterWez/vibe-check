@@ -1,0 +1,30 @@
+{
+  "claim_id": "CLM-SYNC-001",
+  "statement": "Multi-sensor fusion remains within its defined performance bounds when sensor clocks have up to +/-50 ms offset and +/-20 ppm drift.",
+  "intended_use": "supervised_clinical_scan",
+  "claim_type": "system_property",
+  "required_modalities": ["mmwave", "thermal", "imu"],
+  "reference_standard": "synchronized_reference",
+  "clinical_relevance": 0.7,
+  "candidate_estimator": "robust_ensemble_v1",
+  "baseline_estimator": "fft_peak_v1",
+  "maturity": "C2",
+  "open_uncertainties": ["clock_offset", "clock_drift", "cross_sensor_correlation"],
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "c3_clock_sync",
+        "advance_to": "C3",
+        "challenge_set": "clock_sync",
+        "worlds": ["clock_sync"],
+        "min_families": 1,
+        "seed_start": 140000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": 2.0, "coverage_min": 0.9, "false_confident_max": 0.02, "utility_min": 0.8 }
+      }
+    ]
+  },
+  "supporting_experiments": [],
+  "contradicting_experiments": [],
+  "completed_steps": []
+}

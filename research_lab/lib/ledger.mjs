@@ -1,10 +1,11 @@
 // Claim ledger helpers: seeding the working store from the registry, and
-// summarizing state for the CLI and the decision digest.
+// summarizing state for the CLI and the decision briefs.
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { describe, PRE_HARDWARE_CEILING } from './maturity.mjs';
+import { decisionBrief, machineDigest } from './escalation.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REGISTRY = path.join(HERE, '..', 'registry', 'claims');
@@ -16,17 +17,21 @@ export function registryClaims() {
     .map((f) => JSON.parse(fs.readFileSync(path.join(REGISTRY, f), 'utf-8')));
 }
 
-// Seed (or reset) the working store from the immutable registry. Reset restores
-// the declared starting maturity — used to rerun a campaign from scratch.
 export function seed(store, { reset = false } = {}) {
   const seeded = [];
   for (const claim of registryClaims()) {
-    const existing = store.getClaim(claim.claim_id);
-    if (existing && !reset) continue;
+    if (store.getClaim(claim.claim_id) && !reset) continue;
     store.saveClaim(JSON.parse(JSON.stringify(claim)));
     seeded.push(claim.claim_id);
   }
   return seeded;
+}
+
+function claimState(c) {
+  if (c.falsified) return 'FALSIFIED';
+  if (c.blocked) return 'BLOCKED';
+  if (c.software_ceiling_reached) return 'CEILING (hardware next)';
+  return 'in-progress';
 }
 
 export function summarize(store) {
@@ -42,38 +47,48 @@ export function summarize(store) {
       statement: c.statement,
       maturity: c.maturity,
       maturity_name: describe(c.maturity).name,
-      open_uncertainties: c.open_uncertainties || [],
+      state: claimState(c),
+      steps_completed: (c.completed_steps || []).length,
+      steps_total: (c.evidence_plan?.steps || []).length,
       supporting: (c.supporting_experiments || []).length,
       contradicting: (c.contradicting_experiments || []).length,
+      open_uncertainties: c.open_uncertainties || [],
     })),
     experiments: { total: receipts.length, passed: byResult.PASSED || 0, failed: byResult.FAILED || 0 },
   };
 }
 
-// The one-decision digest (blueprint §13): terse, actionable, no sprawl.
-export function decisionDigest(store, claimId) {
-  const claim = store.getClaim(claimId);
-  const receipts = store.listReceipts().filter((r) => r.claim_id === claimId);
-  const passed = receipts.filter((r) => r.result === 'PASSED').length;
-  const failed = receipts.filter((r) => r.result === 'FAILED').length;
-  const resolved = passed
-    ? 'Respiratory frequency is recoverable under modeled conditions, with correct abstention on unrecoverable trials.'
-    : 'No passing evidence yet.';
-  const unresolved = (claim.open_uncertainties || []).join(', ') || 'none tracked';
+// Categorize a claim's current escalation state for the decision brief.
+export function claimCategory(claim) {
+  if (claim.blocked) return 'NEEDS_NEW_SIMULATOR';
+  if (claim.falsified) return 'CLAIM_FALSIFIED';
+  if (claim.software_ceiling_reached) return 'SOFTWARE_CEILING_REACHED';
+  return null;
+}
 
-  return [
-    `DECISION REQUIRED: ${claim.claim_id}`,
-    `Pre-hardware status: ${claim.maturity}`,
-    `Completed experiments: ${receipts.length}`,
-    `Passed: ${passed}`,
-    `Failed: ${failed}`,
-    `Resolved:`,
-    `  ${resolved}`,
-    `Unresolved (software-untestable without hardware):`,
-    `  ${unresolved}`,
-    `Next step requiring expenditure:`,
-    `  A physical mmWave evaluation board to measure real SNR and handheld-motion coupling.`,
-    `Recommendation:`,
-    `  Do not purchase until every claim's software campaign has reached its ceiling.`,
-  ].join('\n');
+function evidence(store, claimId) {
+  const rs = store.listReceipts().filter((r) => r.claim_id === claimId);
+  return {
+    experiments: rs.length,
+    passed: rs.filter((r) => r.result === 'PASSED').length,
+    failed: rs.filter((r) => r.result === 'FAILED').length,
+    simulator_families: [...new Set(rs.map((r) => r.world_family))],
+  };
+}
+
+export function brief(store, claimId) {
+  const claim = store.getClaim(claimId);
+  const category = claimCategory(claim) || 'IN_PROGRESS';
+  if (category === 'IN_PROGRESS') {
+    return `${claim.claim_id}: in progress at ${claim.maturity} — ${(claim.completed_steps || []).length}/${
+      (claim.evidence_plan?.steps || []).length
+    } evidence steps complete. No decision required yet.`;
+  }
+  return decisionBrief({ category, claim, evidence: evidence(store, claimId) });
+}
+
+export function machineBrief(store, claimId) {
+  const claim = store.getClaim(claimId);
+  const category = claimCategory(claim) || 'IN_PROGRESS';
+  return machineDigest({ category, claim, evidence: evidence(store, claimId) });
 }

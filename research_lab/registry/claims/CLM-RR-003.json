@@ -1,0 +1,40 @@
+{
+  "claim_id": "CLM-RR-003",
+  "statement": "During complete target absence, the estimator does not report a confident respiratory rate in more than 0.1% of trials.",
+  "intended_use": "supervised_clinical_scan",
+  "claim_type": "safety_property",
+  "required_modalities": ["mmwave"],
+  "reference_standard": "scene_ground_truth",
+  "clinical_relevance": 1.0,
+  "candidate_estimator": "robust_ensemble_v1",
+  "baseline_estimator": "fft_peak_v1",
+  "maturity": "C2",
+  "open_uncertainties": ["low_snr_environmental_motion"],
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "c3_present_sanity",
+        "advance_to": "C3",
+        "challenge_set": "clean",
+        "worlds": ["sinusoidal", "biomechanical"],
+        "min_families": 2,
+        "seed_start": 120000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": 2.0, "coverage_min": 0.9, "false_confident_max": 0.02, "utility_min": 0.8 }
+      },
+      {
+        "id": "c4_target_absent",
+        "advance_to": "C4",
+        "challenge_set": "target_absent",
+        "worlds": ["target_absent"],
+        "min_families": 1,
+        "seed_start": 500000,
+        "seed_count": 1200,
+        "acceptance": { "mae_max": null, "coverage_min": null, "false_confident_max": null, "target_absent_fp_max": 0.001, "utility_min": null }
+      }
+    ]
+  },
+  "supporting_experiments": [],
+  "contradicting_experiments": [],
+  "completed_steps": []
+}

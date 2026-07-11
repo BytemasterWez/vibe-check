@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 
-// research_lab smoke test. No network access required. Proves the autonomous
-// pre-hardware loop end to end and its safety invariants:
+// research_lab smoke test (cross-world edition). Offline, deterministic. Proves
+// the loop and its safety invariants end to end:
 //
-//   1. the RNG and Simulator A are deterministic (reproducibility foundation)
-//   2. estimators recover a clean rate and abstain on an ambiguous second person
-//   3. the statistician keeps coverage in [0,1] and applies the frozen utility
-//   4. a preregistered protocol is hash-frozen and tamper-evident
-//   5. the governor blocks forbidden actions and any advance past the C5 ceiling
-//   6. the executor never leaks ground truth to the estimator
-//   7. an experiment reproduces EXACTLY from its frozen protocol
-//   8. receipts are ed25519-signed and break on mutation
-//   9. a full campaign climbs C2->C5, escalates, and is idempotent on resume
+//   1. determinism of RNG + simulator worlds
+//   2. structurally different worlds; target-absent has no target
+//   3. the ensemble recovers clean rates, abstains on an empty scene; the
+//      overfit template never abstains (invents a rate on empty scenes)
+//   4. the statistician bounds coverage and counts target-absent false positives
+//   5. provenance: only simulated evidence is autonomous
+//   6. blind challenges: the selector-facing surface hides the perturbation schedule
+//   7. preregistration freeze + tamper detection
+//   8. the governor blocks forbidden actions, the C5 ceiling, and gates on hard
+//      safety constraints (utility can never buy back a dangerous error class)
+//   9. executor no-leak + EXACT reproduction
+//  10. a small campaign advances across world families, FALSIFIES a claim that
+//      fails one world, and escalates NEEDS_NEW_SIMULATOR for a missing world
 
 import fs from 'fs';
 import os from 'os';
@@ -19,19 +23,18 @@ import path from 'path';
 import assert from 'assert';
 
 import { createRng } from '../lib/rng.mjs';
-import { generate } from '../lib/simulator_a.mjs';
-import { perturb } from '../lib/simulator_b.mjs';
-import { runEstimator } from '../lib/estimators.mjs';
+import { generateWorld, ALL_WORLDS, RESPIRATORY_WORLDS } from '../lib/simulators/index.mjs';
+import { runEstimator } from '../lib/estimators/index.mjs';
 import { scoreTrials } from '../lib/statistician.mjs';
+import { isAutonomous, ingestEscalationFor } from '../lib/provenance.mjs';
+import { CHALLENGE_PUBLIC } from '../lib/challenges.mjs';
 import { preregister, protocolIntact } from '../lib/prereg.mjs';
 import { createGovernor } from '../lib/governor.mjs';
+import { evaluateHardConstraints } from '../lib/constraints.mjs';
 import { execute } from '../lib/executor.mjs';
 import { reproduce } from '../lib/reproducer.mjs';
-import { ensureKeys, signReceipt, buildReceipt, verifyReceiptSignature } from '../lib/receipts.mjs';
 import { createStore } from '../lib/store.mjs';
-import { seed } from '../lib/ledger.mjs';
 import { runCampaign } from '../lib/orchestrator.mjs';
-import { selectNext } from '../lib/selector.mjs';
 
 let passed = 0;
 function check(name, cond) {
@@ -42,148 +45,177 @@ function check(name, cond) {
 
 console.log('research_lab smoke test\n');
 
-// --- 1. Determinism --------------------------------------------------------
-console.log('determinism');
+// --- 1/2. Determinism + worlds --------------------------------------------
+console.log('worlds');
 {
-  const a = createRng(42);
-  const b = createRng(42);
-  check('same-seed RNG matches', a.uniform() === b.uniform() && a.gaussian() === b.gaussian());
-  const t1 = generate(104);
-  const t2 = generate(104);
-  check('Simulator A is deterministic', JSON.stringify(t1.channels) === JSON.stringify(t2.channels));
-  check('Simulator A withholds ground truth in a separate block', t1.ground_truth && t1.ground_truth.true_rr_bpm > 0);
+  const a = createRng(7);
+  const b = createRng(7);
+  check('same-seed RNG matches', a.gaussian() === b.gaussian());
+  check('>= 3 structurally different respiratory worlds', RESPIRATORY_WORLDS.length >= 3);
+  const t1 = generateWorld('biomechanical', 123);
+  const t2 = generateWorld('biomechanical', 123);
+  check('world generation is deterministic', JSON.stringify(t1.channels) === JSON.stringify(t2.channels));
+  const absent = generateWorld('target_absent', 5);
+  check('target-absent world has no target', absent.ground_truth.target_present === false && absent.ground_truth.true_rr_bpm === null);
 }
 
-// --- 2. Estimator recover + abstain ---------------------------------------
+// --- 3. Estimators recover / abstain / overfit -----------------------------
 console.log('estimators');
 {
-  const clean = generate(1902);
-  const out = runEstimator('adaptive_motion_cancellation_v2', clean, { sqi_min: 6 });
-  check('recovers clean rate within 2 bpm', !out.abstained && Math.abs(out.rr_bpm - clean.ground_truth.true_rr_bpm) < 2);
+  const clean = generateWorld('nonstationary', 321);
+  const out = runEstimator('robust_ensemble_v1', clean, {});
+  check('ensemble recovers a clean rate within 2 bpm', !out.abstained && Math.abs(out.rr_bpm - clean.ground_truth.true_rr_bpm) < 2);
 
-  // A loud second person (ratio near 1) is unrecoverable and should be abstained.
-  let sawUnrecoverable = false;
-  let abstainedOnUnrecoverable = false;
-  for (const s of [7, 15, 23, 31, 45, 88]) {
-    const base = generate(s);
-    const trial = perturb(base, ['second_person'], 7);
-    if (!trial.ground_truth.recoverable) {
-      sawUnrecoverable = true;
-      const r = runEstimator('bandpass_peak_v1', trial, { sqi_min: 6 });
-      if (r.abstained) abstainedOnUnrecoverable = true;
-    }
+  let ensembleFP = 0;
+  let overfitFP = 0;
+  for (let i = 0; i < 40; i++) {
+    const absent = generateWorld('target_absent', 900 + i);
+    if (!runEstimator('robust_ensemble_v1', absent, {}).abstained) ensembleFP++;
+    if (!runEstimator('sinusoid_template_v1', absent, {}).abstained) overfitFP++;
   }
-  check('generates unrecoverable second-person trials', sawUnrecoverable);
-  check('abstains on an unrecoverable second-person trial', abstainedOnUnrecoverable);
+  check('ensemble abstains on empty scenes', ensembleFP === 0);
+  check('overfit template invents a rate on empty scenes', overfitFP === 40);
 }
 
-// --- 3. Statistician bounds + utility -------------------------------------
+// --- 4. Statistician bounds + target-absent FP -----------------------------
 console.log('statistician');
 {
   const trials = [
-    { output: { abstained: false, rr_bpm: 12 }, ground_truth: { recoverable: true, true_rr_bpm: 12.1 } },
-    { output: { abstained: true, rr_bpm: null }, ground_truth: { recoverable: false, true_rr_bpm: 30 } },
-    { output: { abstained: false, rr_bpm: 5 }, ground_truth: { recoverable: false, true_rr_bpm: 30 } }, // dangerous
+    { output: { abstained: false, rr_bpm: 12 }, ground_truth: { target_present: true, recoverable: true, true_rr_bpm: 12.1 } },
+    { output: { abstained: false, rr_bpm: 18 }, ground_truth: { target_present: false, recoverable: false, true_rr_bpm: null } },
+    { output: { abstained: true, rr_bpm: null }, ground_truth: { target_present: false, recoverable: false, true_rr_bpm: null } },
   ];
-  const m = scoreTrials(trials, { error_tolerance_bpm: 2 });
-  check('coverage stays within [0,1]', m.valid_coverage >= 0 && m.valid_coverage <= 1);
-  check('false confident output is counted', m.false_confident_rate > 0);
-  check('utility penalizes danger below coverage', m.utility < m.valid_coverage);
+  const m = scoreTrials(trials);
+  check('coverage within [0,1]', m.valid_coverage >= 0 && m.valid_coverage <= 1);
+  check('target-absent false positive counted', m.target_absent_false_positive_rate === 0.5);
+  check('utility penalizes danger', m.utility < m.valid_coverage);
 }
 
-// --- 4. Preregistration freeze + tamper detection -------------------------
+// --- 5. Provenance ----------------------------------------------------------
+console.log('provenance');
+{
+  check('simulated evidence is autonomous', isAutonomous('simulated'));
+  check('recorded-hardware needs escalation', ingestEscalationFor('recorded_hardware') === 'NEEDS_HARDWARE');
+}
+
+// --- 6. Blind challenges ----------------------------------------------------
+console.log('challenges');
+{
+  const anyHiddenExposed = Object.values(CHALLENGE_PUBLIC).some((c) => 'perturbation_schedule' in c || 'salt' in c);
+  check('selector-facing challenge metadata hides the hidden schedule', !anyHiddenExposed);
+}
+
+// --- 7. Preregistration freeze ---------------------------------------------
 console.log('preregistration');
 let protocol;
 {
   const spec = {
     claim_id: 'CLM-RR-001',
-    family: 'independent_data',
+    step_id: 'c3_clean',
     advance_to: 'C3',
+    world_family: 'sinusoidal',
+    challenge_set: 'clean',
+    provenance_class: 'simulated',
+    candidate: 'robust_ensemble_v1',
+    baseline: 'fft_peak_v1',
+    seed_start: 700000,
+    seed_count: 24,
+    acceptance: { mae_max: 2, coverage_min: 0.9, false_confident_max: 0.02, utility_min: 0.8 },
     hypothesis: 'x',
-    candidate: 'adaptive_motion_cancellation_v2',
-    baseline: 'bandpass_peak_v1',
-    perturbations: [],
-    seeds: [104, 833, 1902],
-    acceptance: { mae_max: 2, coverage_min: 0.9, false_confident_max: 0.05, utility_min: 0.6 },
   };
   protocol = preregister(spec);
   check('protocol carries a freeze hash', protocol.protocol_hash.startsWith('sha256:'));
   check('frozen protocol verifies intact', protocolIntact(protocol));
-  const tampered = { ...protocol, acceptance: { ...protocol.acceptance, mae_max: 999 } };
-  check('threshold edit after freeze is detected', !protocolIntact(tampered));
+  check('threshold edit after freeze is detected', !protocolIntact({ ...protocol, acceptance: { ...protocol.acceptance, mae_max: 999 } }));
 }
 
-// --- 5. Governor boundaries + ceiling -------------------------------------
-console.log('governor');
+// --- 8. Governor + hard constraints ----------------------------------------
+console.log('governor + constraints');
 {
+  const cleanCtx = { false_confident_rate: 0, target_absent_false_positive_rate: 0, reproduction_status: 'EXACT_MATCH', critical_scenario_coverage: 1 };
   const gov = createGovernor();
   check('forbidden action blocked + escalated', gov.checkAction('purchase_hardware').escalate === true);
+  check('hard constraints pass on clean evidence', gov.checkHardConstraints(cleanCtx).pass === true);
   check('advance past C5 ceiling blocked', gov.checkAdvance('C5', 'C6').allowed === false);
-  check('advance within ceiling allowed', gov.checkAdvance('C3', 'C4').allowed === true);
-  check('over-budget execution blocked', gov.checkExecution({ estimated_runtime_minutes: 999 }, {}).allowed === false);
+  check('ceiling breach increments unsupported-promotion counter', gov.counters.unsupported_promotion_attempts === 1);
+  check('governor injects its own counter — clean metrics now fail after a breach', gov.checkHardConstraints(cleanCtx).pass === false);
+
+  const clean = evaluateHardConstraints(cleanCtx);
+  check('constraints module passes clean evidence', clean.pass === true);
+  const danger = evaluateHardConstraints({ ...cleanCtx, false_confident_rate: 0.02 });
+  check('a dangerous false-confident rate fails hard constraints', danger.pass === false);
 }
 
-// --- 6/7. Executor no-leak + exact reproduction ---------------------------
+// --- 9. Executor no-leak + reproduction ------------------------------------
 console.log('executor + reproducer');
 let execResult;
 {
   execResult = execute(protocol);
   check('leakage check is clean', execResult.leakage_check === 'clean');
-  check('experiment passed on clean data', execResult.result === 'PASSED');
-  const rep = reproduce(protocol, execResult);
-  check('experiment reproduces EXACTLY', rep.status === 'EXACT_MATCH');
+  check('clean experiment passed', execResult.result === 'PASSED');
+  check('experiment reproduces EXACTLY', reproduce(protocol, execResult).status === 'EXACT_MATCH');
 }
 
-// --- 8. Receipt signing + tamper --------------------------------------------
-console.log('receipts');
+// --- 10. Small cross-world campaign ----------------------------------------
+console.log('cross-world campaign');
 {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'research-lab-'));
-  const keys = ensureKeys(path.join(tmp, 'keys'));
-  const receipt = signReceipt(
-    buildReceipt({ experiment_id: execResult.experiment_id, primary_metrics: execResult.primary_metrics, result: 'PASSED' }),
-    keys.privateKey
-  );
-  check('receipt signature verifies', verifyReceiptSignature(receipt, keys.publicKey).valid);
-  const mutated = { ...receipt, result: 'FAILED' };
-  check('mutated receipt fails verification', !verifyReceiptSignature(mutated, keys.publicKey).valid);
-}
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'research-lab-xw-'));
+  const store = createStore(path.join(tmp, 'data'));
 
-// --- 9. Full campaign to ceiling, idempotent -------------------------------
-console.log('campaign');
-{
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'research-lab-run-'));
-  const dataDir = path.join(tmp, 'data');
-  const store = createStore(dataDir);
-  seed(store);
+  // A robust claim that should advance across two world families.
+  store.saveClaim(mkClaim('CLM-A', 'robust_ensemble_v1', [
+    step('s1', 'C3', 'clean', ['sinusoidal', 'nonstationary'], 2, 800000, 24),
+  ]));
+  // An overfit candidate that should be FALSIFIED on the target-absent world.
+  store.saveClaim(mkClaim('CLM-B', 'sinusoid_template_v1', [
+    step('s1', 'C4', 'target_absent', ['target_absent'], 1, 810000, 200, { target_absent_fp_max: 0.001 }),
+  ]));
+  // A claim needing a world the registry does not have.
+  store.saveClaim(mkClaim('CLM-C', 'robust_ensemble_v1', [
+    step('s1', 'C3', 'clean', ['no_such_world'], 1, 820000, 24),
+  ]));
 
-  // Run to exhaustion (each decision_required stops one turn; resume loops on).
-  let escalations = 0;
-  let terminal = null;
-  for (let i = 0; i < 10; i++) {
-    const r = runCampaign({ dataDir, maxSteps: 50 });
-    if (r.stop.type === 'decision_required') escalations++;
-    if (r.stop.type === 'terminal') {
-      terminal = r.stop;
-      break;
-    }
-  }
-  const claims = store.listClaims();
-  check('every claim reached the C5 ceiling', claims.every((c) => c.maturity === 'C5'));
-  check('at least one C5 escalation was raised', escalations >= 1);
-  check('loop reaches a clean terminal', terminal && terminal.reason === 'all_testable_claims_resolved');
-
-  // Idempotent: a resolved campaign selects no further experiments.
-  const completed = new Set(store.listReceipts().map((r) => `${r.claim_id}:${r.family}:${r.candidate}`));
-  check('no further experiments selected when resolved', selectNext(store.listClaims(), completed) === null);
-
-  // Every completed experiment reproduces exactly from its retained protocol.
-  const receipts = store.listReceipts();
-  let allExact = receipts.length > 0;
-  for (const rec of receipts) {
-    const p = JSON.parse(fs.readFileSync(path.join(store.dirs.protocols_completed, `${rec.experiment_id}.json`), 'utf-8'));
-    if (reproduce(p, rec).status !== 'EXACT_MATCH') allExact = false;
-  }
-  check('all campaign receipts reproduce exactly', allExact);
+  const res = runCampaign({ dataDir: store.dataDir, maxSteps: 100 });
+  const a = store.getClaim('CLM-A');
+  const b = store.getClaim('CLM-B');
+  const c = store.getClaim('CLM-C');
+  check('robust claim advanced across world families', a.completed_steps.includes('s1') && a.maturity !== 'C2');
+  check('overfit claim on empty scenes is FALSIFIED', b.falsified === true);
+  check('missing-world claim is blocked', c.blocked === true);
+  check('NEEDS_NEW_SIMULATOR escalation raised', res.escalations.some((e) => e.category === 'NEEDS_NEW_SIMULATOR'));
+  check('CLAIM_FALSIFIED escalation raised', res.escalations.some((e) => e.category === 'CLAIM_FALSIFIED'));
+  check('campaign reaches a clean terminal', res.stop.type === 'terminal');
+  check('no unsupported promotions occurred', res.governor_counters.unsupported_promotion_attempts === 0);
+  check('every world referenced by CLM-A exists', ['sinusoidal', 'nonstationary'].every((w) => ALL_WORLDS.includes(w)));
 }
 
 console.log(`\n${passed} checks passed.`);
+
+// --- helpers ---------------------------------------------------------------
+function step(id, advance_to, challenge_set, worlds, min_families, seed_start, seed_count, extra = {}) {
+  return {
+    id,
+    advance_to,
+    challenge_set,
+    worlds,
+    min_families,
+    seed_start,
+    seed_count,
+    acceptance: { mae_max: 2, coverage_min: 0.9, false_confident_max: 0.02, utility_min: 0.8, ...extra },
+  };
+}
+function mkClaim(claim_id, candidate, steps) {
+  return {
+    claim_id,
+    statement: claim_id,
+    clinical_relevance: 1,
+    candidate_estimator: candidate,
+    baseline_estimator: 'fft_peak_v1',
+    maturity: 'C2',
+    open_uncertainties: [],
+    evidence_plan: { steps },
+    supporting_experiments: [],
+    contradicting_experiments: [],
+    completed_steps: [],
+  };
+}

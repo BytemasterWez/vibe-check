@@ -2,44 +2,58 @@
 //
 // It cannot remove inconvenient cases (blueprint role table): it scores every
 // trial the executor hands it. Abstention is a primary metric, and dangerous
-// confidence is penalized far more heavily than an unavailable reading.
-//
-// Per trial the executor supplies { output, ground_truth }. We compare the
-// estimator's decision against two hidden truths: the true rate (for error) and
-// whether the rate was recoverable at all (for abstention correctness).
+// confidence is penalized far more heavily than an unavailable reading. Trials
+// come in three flavours the statistician distinguishes by hidden truth:
+//   * recoverable  (target present, rate recoverable)  -> expect a number
+//   * unrecoverable(target present, but ambiguous/lost) -> expect abstention
+//   * target absent(no subject at all)                  -> expect abstention;
+//                                                          a number here is the
+//                                                          most dangerous class.
 
-export const STATISTICIAN_VERSION = '1.0.0';
+export const STATISTICIAN_VERSION = '1.1.0';
 
 export function scoreTrials(trials, opts = {}) {
-  const errorTolerance = opts.error_tolerance_bpm ?? 2.0; // "confident nonsense" line
+  const errorTolerance = opts.error_tolerance_bpm ?? 2.0;
   const n = trials.length;
 
   let recoverableCount = 0;
-  let validOnRecoverable = 0; // produced a number on a recoverable trial
-  let abstentions = 0;
-  let falseConfident = 0; // produced a number that is wrong beyond tolerance
-  let missedAbstention = 0; // did not abstain when the rate was unrecoverable
-  let correctAbstention = 0; // abstained when the rate was unrecoverable
-  const validErrors = []; // |err| on recoverable trials where a number was given
+  let unrecoverableCount = 0; // target present but not recoverable
+  let targetAbsentCount = 0;
+  let validOnRecoverable = 0;
+  let falseConfident = 0; // confident AND numerically wrong (danger)
+  let missedAbstention = 0; // did not abstain when it should have
+  let correctAbstention = 0; // abstained when it should have
+  let targetAbsentFalsePositive = 0; // confident output on an empty scene
+  const validErrors = [];
 
   for (const t of trials) {
-    const recoverable = t.ground_truth.recoverable;
-    if (recoverable) recoverableCount++;
+    const gt = t.ground_truth;
+    const targetPresent = gt.target_present !== false && gt.true_rr_bpm !== null;
+    const recoverable = targetPresent && gt.recoverable;
+    if (!targetPresent) targetAbsentCount++;
+    else if (recoverable) recoverableCount++;
+    else unrecoverableCount++;
+
     const abstained = t.output.abstained;
+    const shouldAbstain = !recoverable;
 
     if (abstained) {
-      abstentions++;
-      if (!recoverable) correctAbstention++;
+      if (shouldAbstain) correctAbstention++;
       continue;
     }
 
     // Produced a number.
-    const err = Math.abs(t.output.rr_bpm - t.ground_truth.true_rr_bpm);
-
-    if (!recoverable) {
-      // Any confident output on an unrecoverable trial is a missed abstention…
+    if (!targetPresent) {
+      // Confident vital sign on an empty scene — the worst failure class.
+      targetAbsentFalsePositive++;
       missedAbstention++;
-      // …and if it is also numerically wrong it is dangerous confidence.
+      falseConfident++;
+      continue;
+    }
+
+    const err = Math.abs(t.output.rr_bpm - gt.true_rr_bpm);
+    if (!recoverable) {
+      missedAbstention++;
       if (err > errorTolerance) falseConfident++;
     } else {
       validOnRecoverable++;
@@ -48,21 +62,14 @@ export function scoreTrials(trials, opts = {}) {
     }
   }
 
-  const unrecoverableCount = n - recoverableCount;
-  const validOutputs = validOnRecoverable;
-  const mae = validErrors.length
-    ? validErrors.reduce((a, b) => a + b, 0) / validErrors.length
-    : null;
-  const p95 = percentile(validErrors, 0.95);
-
-  // Coverage is over recoverable trials: of the readings we *should* be able to
-  // produce, how many did we produce?
-  const validCoverage = recoverableCount ? validOutputs / recoverableCount : 0;
+  const shouldAbstainCount = unrecoverableCount + targetAbsentCount;
+  const mae = validErrors.length ? validErrors.reduce((a, b) => a + b, 0) / validErrors.length : null;
+  const validCoverage = recoverableCount ? validOnRecoverable / recoverableCount : 0;
   const falseConfidentRate = n ? falseConfident / n : 0;
-  const missedAbstentionRate = unrecoverableCount ? missedAbstention / unrecoverableCount : 0;
-  const correctAbstentionRate = unrecoverableCount ? correctAbstention / unrecoverableCount : 0;
+  const missedAbstentionRate = shouldAbstainCount ? missedAbstention / shouldAbstainCount : 0;
+  const correctAbstentionRate = shouldAbstainCount ? correctAbstention / shouldAbstainCount : 0;
+  const targetAbsentFpRate = targetAbsentCount ? targetAbsentFalsePositive / targetAbsentCount : 0;
 
-  // Frozen engineering utility (blueprint §9): reward coverage, punish danger.
   const utility = validCoverage - 5 * falseConfidentRate - 2 * missedAbstentionRate;
 
   return {
@@ -71,12 +78,14 @@ export function scoreTrials(trials, opts = {}) {
     n_trials: n,
     n_recoverable: recoverableCount,
     n_unrecoverable: unrecoverableCount,
+    n_target_absent: targetAbsentCount,
     mae_bpm: round(mae),
-    p95_error_bpm: round(p95),
+    p95_error_bpm: round(percentile(validErrors, 0.95)),
     valid_coverage: round(validCoverage),
     false_confident_rate: round(falseConfidentRate),
     missed_abstention_rate: round(missedAbstentionRate),
     correct_abstention_rate: round(correctAbstentionRate),
+    target_absent_false_positive_rate: round(targetAbsentFpRate),
     utility: round(utility),
   };
 }
@@ -84,11 +93,10 @@ export function scoreTrials(trials, opts = {}) {
 function percentile(arr, p) {
   if (!arr.length) return null;
   const s = arr.slice().sort((a, b) => a - b);
-  const idx = Math.min(s.length - 1, Math.floor(p * s.length));
-  return s[idx];
+  return s[Math.min(s.length - 1, Math.floor(p * s.length))];
 }
 
-function round(x, d = 4) {
+function round(x, d = 5) {
   if (x === null || x === undefined) return null;
   const f = 10 ** d;
   return Math.round(x * f) / f;

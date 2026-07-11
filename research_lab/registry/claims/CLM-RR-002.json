@@ -1,19 +1,40 @@
 {
   "claim_id": "CLM-RR-002",
-  "statement": "Respiratory rate can be estimated to within 1 breath/min under adversarial apparatus motion",
+  "statement": "When periodic non-respiratory motion has amplitude >= the respiratory displacement, the estimator either maintains MAE <= 2 breaths/min or abstains, in at least 95% of trials (no confident wrong rate).",
   "intended_use": "supervised_clinical_scan",
   "claim_type": "derived_measurement",
   "required_modalities": ["mmwave", "imu"],
   "reference_standard": "respiratory_belt_or_capnography",
-  "clinical_relevance": 0.8,
-  "confounders": ["device_motion", "second_person", "sensor_dropout"],
-  "acceptance_contract": {
-    "mae_breaths_per_minute": 1.0,
-    "minimum_coverage": 0.95,
-    "must_abstain_when_sqi_below": 0.6
-  },
+  "clinical_relevance": 0.9,
+  "candidate_estimator": "robust_ensemble_v1",
+  "baseline_estimator": "fft_peak_v1",
   "maturity": "C2",
   "open_uncertainties": ["handheld_motion"],
+  "evidence_plan": {
+    "steps": [
+      {
+        "id": "c3_clean",
+        "advance_to": "C3",
+        "challenge_set": "clean",
+        "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
+        "min_families": 3,
+        "seed_start": 110000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": 2.0, "coverage_min": 0.9, "false_confident_max": 0.02, "utility_min": 0.8 }
+      },
+      {
+        "id": "c4_periodic_motion",
+        "advance_to": "C4",
+        "challenge_set": "motion",
+        "worlds": ["sinusoidal", "nonstationary", "biomechanical"],
+        "min_families": 3,
+        "seed_start": 210000,
+        "seed_count": 120,
+        "acceptance": { "mae_max": 2.0, "coverage_min": null, "false_confident_max": 0.02, "utility_min": null }
+      }
+    ]
+  },
   "supporting_experiments": [],
-  "contradicting_experiments": []
+  "contradicting_experiments": [],
+  "completed_steps": []
 }

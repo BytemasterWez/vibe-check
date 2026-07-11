@@ -39,20 +39,3 @@ export function nextLevel(level) {
 export function describe(level) {
   return LADDER[levelIndex(level)];
 }
-
-// Which experiment family provides evidence for advancing INTO a given level.
-// C2->C3 needs independent-data reproduction (Family A/B on data we did not
-// author); C3->C4 needs adversarial survival (Family C). This is the only place
-// that maps evidence type to a maturity step.
-export function familyForAdvanceTo(level) {
-  switch (level) {
-    case 'C3':
-      return 'independent_data';
-    case 'C4':
-      return 'adversarial';
-    case 'C5':
-      return 'hardware_gate'; // reached by exhausting software-testable questions
-    default:
-      return null;
-  }
-}
