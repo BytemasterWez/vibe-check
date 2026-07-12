@@ -1,0 +1,253 @@
+{
+  "experiment_id": 34,
+  "event_id": "unemployment_spike_2pp_12m",
+  "windows": {
+    "train_start": "2010-01-01",
+    "split": "2014-01-01",
+    "test_end": "2015-12-31",
+    "train_label_periods": "2013-02-01..2013-09-01",
+    "test_label_periods": "2014-04-01..2015-04-01",
+    "horizon_months": 6
+  },
+  "case_count": 10,
+  "control_count": 100,
+  "best_model": "logistic_regression",
+  "metrics": {
+    "auc": 0.9695652173913044,
+    "precision_at_50": 0.1,
+    "recall_at_50": 1.0,
+    "precision_at_100": 0.09803921568627451,
+    "recall_at_100": 1.0
+  },
+  "baselines": {
+    "baseline_national_average": {
+      "auc": 0.5,
+      "precision_at_50": 0.1,
+      "recall_at_50": 1.0,
+      "precision_at_100": 0.09803921568627451,
+      "recall_at_100": 1.0
+    },
+    "baseline_previous_value": {
+      "auc": 0.85,
+      "precision_at_50": 0.1,
+      "recall_at_50": 1.0,
+      "precision_at_100": 0.09803921568627451,
+      "recall_at_100": 1.0
+    }
+  },
+  "top_variables": [
+    {
+      "feature_id": "bls_laus_unemployment_rate__change_1m",
+      "rank": 1,
+      "importance": 0.8163838451788378,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_labor_force__latest_value",
+      "rank": 2,
+      "importance": -0.5118785053633166,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_labor_force__zscore_national",
+      "rank": 3,
+      "importance": -0.5118785053633166,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__rolling_avg_12m",
+      "rank": 4,
+      "importance": 0.48464731495480823,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__rank_national",
+      "rank": 5,
+      "importance": 0.43444103042200694,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__latest_value",
+      "rank": 6,
+      "importance": 0.3884024722842906,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__pct_change_12m",
+      "rank": 7,
+      "importance": -0.37289712967392075,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_unemployed__pct_change_12m",
+      "rank": 8,
+      "importance": -0.3719367471881178,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__zscore_national",
+      "rank": 9,
+      "importance": 0.27146343076628,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__rolling_avg_3m",
+      "rank": 10,
+      "importance": 0.2711403242805811,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__change_3m",
+      "rank": 11,
+      "importance": -0.23146406800825278,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__zscore_state",
+      "rank": 12,
+      "importance": -0.13390302402987506,
+      "direction": "negative"
+    },
+    {
+      "feature_id": "bls_laus_unemployed__zscore_national",
+      "rank": 13,
+      "importance": 0.11107407726583607,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployed__latest_value",
+      "rank": 14,
+      "importance": 0.0952310156184403,
+      "direction": "positive"
+    },
+    {
+      "feature_id": "bls_laus_unemployment_rate__rank_state",
+      "rank": 15,
+      "importance": -0.009716352942558772,
+      "direction": "negative"
+    }
+  ],
+  "false_positives": [
+    {
+      "county_fips": "51019",
+      "label_period": "2015-04-01",
+      "predicted_probability": 0.4357,
+      "rank": 2,
+      "county_name": "Bedford, VA"
+    },
+    {
+      "county_fips": "53033",
+      "label_period": "2014-04-01",
+      "predicted_probability": 0.3006,
+      "rank": 4,
+      "county_name": "King, WA"
+    },
+    {
+      "county_fips": "21111",
+      "label_period": "2014-07-01",
+      "predicted_probability": 0.2471,
+      "rank": 8,
+      "county_name": "Jefferson, KY"
+    },
+    {
+      "county_fips": "19153",
+      "label_period": "2015-02-01",
+      "predicted_probability": 0.2306,
+      "rank": 9,
+      "county_name": "Polk, IA"
+    },
+    {
+      "county_fips": "27053",
+      "label_period": "2015-02-01",
+      "predicted_probability": 0.1848,
+      "rank": 10,
+      "county_name": "Hennepin, MN"
+    },
+    {
+      "county_fips": "51019",
+      "label_period": "2014-07-01",
+      "predicted_probability": 0.1551,
+      "rank": 11,
+      "county_name": "Bedford, VA"
+    },
+    {
+      "county_fips": "38017",
+      "label_period": "2014-11-01",
+      "predicted_probability": 0.1538,
+      "rank": 12,
+      "county_name": "Cass, ND"
+    },
+    {
+      "county_fips": "44007",
+      "label_period": "2014-11-01",
+      "predicted_probability": 0.129,
+      "rank": 13,
+      "county_name": "Providence, RI"
+    },
+    {
+      "county_fips": "53033",
+      "label_period": "2014-11-01",
+      "predicted_probability": 0.125,
+      "rank": 14,
+      "county_name": "King, WA"
+    },
+    {
+      "county_fips": "17031",
+      "label_period": "2015-02-01",
+      "predicted_probability": 0.1177,
+      "rank": 15,
+      "county_name": "Cook, IL"
+    }
+  ],
+  "false_negatives": [
+    {
+      "county_fips": "46102",
+      "label_period": "2014-11-01",
+      "predicted_probability": 0.2608,
+      "rank": 7,
+      "county_name": "Oglala Lakota, SD"
+    },
+    {
+      "county_fips": "22103",
+      "label_period": "2015-04-01",
+      "predicted_probability": 0.2613,
+      "rank": 6,
+      "county_name": "St. Tammany, LA"
+    },
+    {
+      "county_fips": "05119",
+      "label_period": "2015-02-01",
+      "predicted_probability": 0.2815,
+      "rank": 5,
+      "county_name": "Pulaski, AR"
+    },
+    {
+      "county_fips": "22017",
+      "label_period": "2014-04-01",
+      "predicted_probability": 0.3179,
+      "rank": 3,
+      "county_name": "Caddo, LA"
+    },
+    {
+      "county_fips": "39035",
+      "label_period": "2014-07-01",
+      "predicted_probability": 0.5307,
+      "rank": 1,
+      "county_name": "Cuyahoga, OH"
+    }
+  ],
+  "diagnostics": {
+    "trigger_feature_excluded": true,
+    "prediction_horizon_months": 6,
+    "features_precede_label": true,
+    "n_features": 17,
+    "null_share": 0.04331550802139037,
+    "case_count": 10,
+    "control_count": 100,
+    "excluded_count": 11,
+    "case_state_count": 8,
+    "control_state_count": 37,
+    "control_case_ratio": 10.0
+  },
+  "validation_passed": true
+}

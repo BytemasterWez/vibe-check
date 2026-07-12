@@ -97,5 +97,6 @@ reasoning (Connecticut planning regions, territories, historical changes).
 - [docs/add_new_recipe.md](docs/add_new_recipe.md) — how to add a recipe
 - [docs/api.md](docs/api.md) — endpoint reference
 - [docs/validation.md](docs/validation.md) — the five validation levels
+- [docs/backtest.md](docs/backtest.md) — historical event backtests
 - [docs/compliance.md](docs/compliance.md) — licensing, scraping policy, attribution
 - [docs/deployment.md](docs/deployment.md) — Docker Compose & cloud deployment

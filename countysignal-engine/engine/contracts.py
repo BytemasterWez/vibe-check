@@ -63,6 +63,10 @@ class SourceContract(BaseModel):
     access_method: str
     access_url: Optional[str] = None
     download_url: Optional[str] = None
+    # Optional second official access path for full-history backfills
+    # (e.g. BLS LAUS time-series flat files). Selected per run via
+    # --param dataset=historical; same licence and validation rules apply.
+    historical_url: Optional[str] = None
     licence_status: str
     attribution: Optional[str] = None
     scraping_allowed: bool = False

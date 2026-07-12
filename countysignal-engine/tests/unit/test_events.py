@@ -72,6 +72,46 @@ def test_case_control_set_excludes_event_counties_from_controls():
     assert cc.diagnostics()["control_count"] > 0
 
 
+def test_experiment_split_at_partitions_by_time():
+    import numpy as np
+
+    from engine.experiments.engine import run_experiment
+
+    rng = np.random.default_rng(7)
+    rows = []
+    # 40 counties x 24 months of a trigger feature + one predictor feature
+    for i in range(40):
+        fips = f"{(i % 50) + 1:02d}{i:03d}"
+        is_case = i < 8
+        onset = 8 + i if is_case and i < 4 else (18 + (i - 4) if is_case else None)
+        for m in range(24):
+            period = pd.Timestamp("2020-01-01") + pd.DateOffset(months=m)
+            trigger = 3.0 if (onset is not None and m == onset) else rng.normal(0, 0.3)
+            rows.append({"county_fips": fips, "period": period,
+                         "feature_id": "bls_laus_unemployment_rate__change_12m",
+                         "feature_value": trigger})
+            rows.append({"county_fips": fips, "period": period,
+                         "feature_id": "bls_laus_unemployment_rate__latest_value",
+                         "feature_value": (8.0 if is_case else 4.0) + rng.normal(0, 0.2)})
+    fm = pd.DataFrame(rows)
+    event = make_event()
+    occ = detect_occurrences(event, fm)
+    cc = build_case_control_set(event, occ, fm)
+    split = pd.Timestamp("2021-06-01")
+    result = run_experiment(event, cc, fm, prediction_horizon_months=3,
+                            split_at=split, ks=(5, 10))
+    # explicit boundary respected: all train periods < split <= all test periods
+    train_end = pd.Timestamp(result.train_period.split("..")[-1])
+    test_start = pd.Timestamp(result.test_period.split("..")[0])
+    assert train_end < split <= test_start
+    assert "precision_at_5" in result.best_model.metrics
+    # trigger feature stays out of the design matrix
+    assert result.diagnostics["trigger_feature_excluded"]
+
+    with pytest.raises(ValueError, match="no label periods before"):
+        run_experiment(event, cc, fm, split_at=pd.Timestamp("2019-01-01"))
+
+
 def test_case_control_first_occurrence_per_county():
     fm = feature_frame([
         ("22103", "2025-05-01", 2.1),

@@ -121,11 +121,17 @@ def run_experiment(
     *,
     prediction_horizon_months: int = 6,
     test_fraction: float = 0.3,
+    split_at: pd.Timestamp | None = None,
     ks: tuple[int, ...] = (10, 25, 50),
     model_types: tuple[str, ...] = ("logistic_regression", "random_forest"),
     random_state: int = 42,
 ) -> ExperimentResult:
-    """Time-split experiment: train on early label periods, test on late ones."""
+    """Time-split experiment: train on early label periods, test on late ones.
+
+    split_at (optional): explicit boundary for backtests — label periods
+    strictly before it train, at/after it test. Without it the split falls
+    at (1 - test_fraction) of the distinct label periods.
+    """
     # The event's own trigger feature is excluded from the design matrix: it
     # *defines* the label, so leaving it in would be near-direct leakage.
     trigger = condition_feature_id(event)
@@ -143,8 +149,20 @@ def run_experiment(
 
     # Train/test split BY TIME: no shuffling across periods.
     periods = sorted(design["label_period"].unique())
-    split_idx = max(1, int(round(len(periods) * (1 - test_fraction))))
-    train_periods, test_periods = periods[:split_idx], periods[split_idx:]
+    if split_at is not None:
+        train_periods = [p for p in periods if p < split_at]
+        test_periods = [p for p in periods if p >= split_at]
+        if not train_periods:
+            raise ValueError(
+                f"experiment for {event.event_id}: no label periods before "
+                f"split_at={split_at.date()} — widen the training window")
+        if not test_periods:
+            raise ValueError(
+                f"experiment for {event.event_id}: no label periods at/after "
+                f"split_at={split_at.date()} — no cases in the test window")
+    else:
+        split_idx = max(1, int(round(len(periods) * (1 - test_fraction))))
+        train_periods, test_periods = periods[:split_idx], periods[split_idx:]
     if not test_periods:  # single-period experiments fall back to a row split
         design = design.sample(frac=1.0, random_state=random_state).reset_index(drop=True)
         cut = int(len(design) * (1 - test_fraction))

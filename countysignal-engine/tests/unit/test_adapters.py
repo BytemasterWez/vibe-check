@@ -44,6 +44,47 @@ def test_bls_laus_parses_official_pipe_format():
     assert adapter.src_row(rec)["labor_force"] == 132000.0
 
 
+def test_bls_laus_parses_historical_time_series_fixture():
+    adapter = build_adapter("bls_laus")
+    ctx = RunContext(mode="sample", params={"dataset": "historical"})
+    artifact = adapter.fetch(ctx)
+    batch = adapter.parse(artifact)
+    assert len(batch.records) == 64 * 72          # 64 counties x 2010-2015 monthly
+    rec = batch.records[0]
+    assert rec.period_start.year == 2010
+    # all four measures merged into one record per county-month
+    assert set(rec.values) == {"unemployment_rate", "labor_force", "employed", "unemployed"}
+    assert all(v is not None for v in rec.values.values())
+    assert adapter.validate(batch).passed
+    row = adapter.src_row(rec)
+    assert row["period_month"] == 1 and row["unemployment_rate"] is not None
+
+
+def test_bls_laus_historical_start_year_filter():
+    adapter = build_adapter("bls_laus")
+    ctx = RunContext(mode="sample", params={"dataset": "historical"})
+    artifact = adapter.fetch(ctx)
+    artifact.request_params["start_year"] = "2014"
+    batch = adapter.parse(artifact)
+    assert len(batch.records) == 64 * 24
+    assert min(r.period_start.year for r in batch.records) == 2014
+
+
+def test_bls_laus_time_series_skips_annual_and_missing():
+    adapter = build_adapter("bls_laus")
+    text = "\n".join([
+        "series_id\tyear\tperiod\tvalue\tfootnote_codes",
+        "LAUCN221030000000003\t2012\tM01\t5.5\t",
+        "LAUCN221030000000003\t2012\tM13\t5.6\t",   # annual average: skip
+        "LAUCN221030000000004\t2012\tM01\t-\t",     # missing value -> None
+        "LAUST220000000000003\t2012\tM01\t5.0\t",   # state series: skip
+    ])
+    rows = adapter._parse_time_series(text)
+    assert len(rows) == 1
+    assert rows[0]["unemployment_rate"] == "5.5"
+    assert rows[0]["unemployed"] is None
+
+
 def test_census_acs_parses_fixture():
     adapter = build_adapter("census_acs")
     artifact = adapter.fetch(RunContext(mode="sample"))

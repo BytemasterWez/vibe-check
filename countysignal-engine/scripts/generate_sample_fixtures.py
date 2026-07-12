@@ -87,6 +87,44 @@ def gen_bls_laus(counties: list[dict], rng: random.Random, out: Path) -> None:
         writer.writerows(rows)
 
 
+def gen_bls_laus_historical(counties: list[dict], rng: random.Random, out: Path) -> None:
+    """LAUS time-series flat-file format (la.data.64.County), 2010-2015
+    monthly. Same planted-spike counties as the current-file fixture, with
+    onsets staggered across 2013 (train side) and 2014-2015 (test side) so a
+    windowed backtest has cases on both sides of the split."""
+    hist_onsets = dict(zip(SPIKE_COUNTIES, [
+        "2013-03", "2013-05", "2013-07", "2013-09", "2013-11",
+        "2014-06", "2014-09", "2014-12", "2015-03", "2015-06",
+    ]))
+    lines = ["series_id\tyear\tperiod\tvalue\tfootnote_codes"]
+    measures = {"03": "rate", "04": "unemp", "05": "emp", "06": "lf"}
+    for c in counties:
+        fips = c["county_fips"]
+        base_rate = rng.uniform(3.0, 6.5)
+        if fips in hist_onsets:
+            base_rate += rng.uniform(0.5, 1.5)
+        labor_force = rng.randint(8_000, 900_000)
+        onset = hist_onsets.get(fips)
+        onset_idx = None
+        if onset:
+            oy, om = map(int, onset.split("-"))
+            onset_idx = (oy - 2010) * 12 + (om - 1)
+        for i in range(72):  # 2010-01 .. 2015-12
+            y, m = 2010 + i // 12, i % 12 + 1
+            rate = base_rate + rng.gauss(0, 0.15)
+            if onset_idx is not None and i >= onset_idx - 6:
+                rate += 3.0 * min(1.0, (i - (onset_idx - 6)) / 6.0)
+            rate = max(1.0, round(rate, 1))
+            unemployed = int(labor_force * rate / 100)
+            values = {"rate": rate, "unemp": unemployed,
+                      "emp": labor_force - unemployed, "lf": labor_force}
+            for code, key in measures.items():
+                lines.append(
+                    f"LAUCN{fips}{'0'*8}{code}\t{y}\tM{m:02d}\t{values[key]}\t"
+                )
+    out.write_text("\n".join(lines) + "\n")
+
+
 def gen_census_acs(counties: list[dict], rng: random.Random, out: Path) -> None:
     header = ["NAME", "B19013_001E", "B01003_001E", "B17001_002E", "B25064_001E",
               "state", "county"]
@@ -146,6 +184,8 @@ def main() -> None:
     counties = load_counties()
     rng = random.Random(SEED)
     gen_bls_laus(counties, rng, FIXTURES_DIR / "bls_laus_sample.csv")
+    gen_bls_laus_historical(counties, random.Random(SEED + 1),
+                            FIXTURES_DIR / "bls_laus_historical_sample.txt")
     gen_census_acs(counties, rng, FIXTURES_DIR / "census_acs_sample.json")
     gen_fema_nri(counties, rng, FIXTURES_DIR / "fema_nri_sample.csv")
     print(f"fixtures written to {FIXTURES_DIR}")

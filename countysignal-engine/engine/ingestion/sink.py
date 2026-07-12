@@ -337,6 +337,9 @@ class DbSink(Sink):
         ).fetchone()
         return int(row[0])
 
+    def _count(self, table: str) -> int:
+        return int(self._exec(f"SELECT count(*) FROM {table}").fetchone()[0])
+
     def insert_src_rows(self, table: str, rows: list[dict]) -> int:
         if not rows:
             return 0
@@ -345,58 +348,58 @@ class DbSink(Sink):
         cols = list(rows[0].keys())
         col_sql = ", ".join(cols)
         val_sql = ", ".join(f":{c}" for c in cols)
-        loaded = 0
-        for r in rows:
-            res = self._exec(
-                f"""
-                INSERT INTO {table} ({col_sql}) VALUES ({val_sql})
-                ON CONFLICT (source_id, source_record_id, source_row_hash) DO NOTHING
-                """,
-                **r,
-            )
-            loaded += res.rowcount or 0
-        return loaded
+        sql = text(
+            f"INSERT INTO {table} ({col_sql}) VALUES ({val_sql}) "
+            "ON CONFLICT (source_id, source_record_id, source_row_hash) DO NOTHING"
+        )
+        # Chunked executemany: required for full-history backfills (millions
+        # of rows). ON CONFLICT rowcounts are unreliable under executemany,
+        # so loaded counts come from a before/after count delta.
+        before = self._count(table)
+        for i in range(0, len(rows), 10_000):
+            self.conn.execute(sql, rows[i:i + 10_000])
+        return self._count(table) - before
 
     def insert_observations(self, observations: list[Observation]) -> int:
-        loaded = 0
+        by_grain: dict[str, list[dict]] = {}
         for o in observations:
-            table = _GRAIN_TABLE[o.time_grain]
             if o.time_grain == "static":
-                res = self._exec(
-                    f"""
-                    INSERT INTO {table} (county_fips, variable_id, as_of, value_numeric,
-                        value_text, unit, source_id, source_version, confidence, provenance_json)
-                    VALUES (:county_fips, :variable_id, :as_of, :value_numeric, :value_text,
-                            :unit, :source_id, :source_version, :confidence, :provenance)
-                    ON CONFLICT (county_fips, variable_id, as_of, source_id, source_version)
-                    DO NOTHING
-                    """,
-                    county_fips=o.county_fips, variable_id=o.variable_id,
-                    as_of=o.period_start, value_numeric=o.value_numeric,
-                    value_text=o.value_text, unit=o.unit, source_id=o.source_id,
-                    source_version=o.source_version, confidence=o.confidence,
-                    provenance=json.dumps(o.provenance_json, default=str),
-                )
+                row = {"county_fips": o.county_fips, "variable_id": o.variable_id,
+                       "as_of": o.period_start}
             else:
-                res = self._exec(
-                    f"""
-                    INSERT INTO {table} (county_fips, period_start, period_end, variable_id,
-                        value_numeric, value_text, unit, source_id, source_version,
-                        confidence, provenance_json)
-                    VALUES (:county_fips, :period_start, :period_end, :variable_id,
-                            :value_numeric, :value_text, :unit, :source_id,
-                            :source_version, :confidence, :provenance)
-                    ON CONFLICT (county_fips, period_start, variable_id, source_id, source_version)
-                    DO NOTHING
-                    """,
-                    county_fips=o.county_fips, period_start=o.period_start,
-                    period_end=o.period_end, variable_id=o.variable_id,
-                    value_numeric=o.value_numeric, value_text=o.value_text, unit=o.unit,
-                    source_id=o.source_id, source_version=o.source_version,
-                    confidence=o.confidence,
-                    provenance=json.dumps(o.provenance_json, default=str),
-                )
-            loaded += res.rowcount or 0
+                row = {"county_fips": o.county_fips, "period_start": o.period_start,
+                       "period_end": o.period_end, "variable_id": o.variable_id}
+            row.update(value_numeric=o.value_numeric, value_text=o.value_text,
+                       unit=o.unit, source_id=o.source_id,
+                       source_version=o.source_version, confidence=o.confidence,
+                       provenance=json.dumps(o.provenance_json, default=str))
+            by_grain.setdefault(o.time_grain, []).append(row)
+
+        loaded = 0
+        for grain, rows in by_grain.items():
+            table = _GRAIN_TABLE[grain]
+            if grain == "static":
+                sql = text(
+                    f"""INSERT INTO {table} (county_fips, variable_id, as_of, value_numeric,
+                            value_text, unit, source_id, source_version, confidence, provenance_json)
+                        VALUES (:county_fips, :variable_id, :as_of, :value_numeric, :value_text,
+                                :unit, :source_id, :source_version, :confidence, :provenance)
+                        ON CONFLICT (county_fips, variable_id, as_of, source_id, source_version)
+                        DO NOTHING""")
+            else:
+                sql = text(
+                    f"""INSERT INTO {table} (county_fips, period_start, period_end, variable_id,
+                            value_numeric, value_text, unit, source_id, source_version,
+                            confidence, provenance_json)
+                        VALUES (:county_fips, :period_start, :period_end, :variable_id,
+                                :value_numeric, :value_text, :unit, :source_id,
+                                :source_version, :confidence, :provenance)
+                        ON CONFLICT (county_fips, period_start, variable_id, source_id, source_version)
+                        DO NOTHING""")
+            before = self._count(table)
+            for i in range(0, len(rows), 10_000):
+                self.conn.execute(sql, rows[i:i + 10_000])
+            loaded += self._count(table) - before
         return loaded
 
     def quarantine(self, source_id, run_id, entries) -> None:

@@ -5,6 +5,10 @@ category: labour
 access_method: official_download
 access_url: https://www.bls.gov/lau/tables.htm#cntyaa
 download_url: https://www.bls.gov/web/metro/laucntycur14.txt
+# Full-history backfill path (LAUS time-series flat file, county series,
+# monthly, 1990-present). Used for historical backtests:
+#   run_pipeline --source bls_laus --mode full --param dataset=historical [--param start_year=2010]
+historical_url: https://download.bls.gov/pub/time.series/la/la.data.64.County
 licence_status: public_government_data
 attribution: "Source: U.S. Bureau of Labor Statistics, Local Area Unemployment Statistics"
 scraping_allowed: false

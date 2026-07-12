@@ -31,24 +31,53 @@ def _parse_period(year: Any, month: Any) -> tuple[date | None, date | None]:
         return None, None
 
 
+# LAUS time-series measure codes (last 2 chars of the series id)
+_TS_MEASURES = {
+    "03": "unemployment_rate",
+    "04": "unemployed",
+    "05": "employed",
+    "06": "labor_force",
+}
+
+
 class BlsLausAdapter(SourceAdapter):
     source_id = "bls_laus"
 
     def fetch(self, run_context: RunContext) -> RawArtifact:
+        historical = run_context.params.get("dataset") == "historical"
         if run_context.mode == "sample":
+            if historical:
+                path = run_context.fixtures_dir / "bls_laus_historical_sample.txt"
+                artifact = RawArtifact(
+                    filename=path.name, data=path.read_bytes(),
+                    source_url=f"fixture://{path.name}",
+                    request_params=dict(run_context.params, mode="sample"),
+                )
+                return artifact
             return self._fixture_artifact(run_context, content_type="text/csv")
-        url = self.contract.download_url
-        resp = self._http_get(url)
+        url = self.contract.historical_url if historical else self.contract.download_url
+        if historical and not url:
+            raise ValueError("bls_laus contract has no historical_url")
+        resp = self._http_get(url, timeout=1800.0 if historical else 120.0)
         return RawArtifact(
             filename=url.rsplit("/", 1)[-1],
             data=resp.content,
             source_url=url,
+            request_params=dict(run_context.params),
             content_type=resp.headers.get("content-type", "text/plain"),
         )
 
     def parse(self, raw_artifact: RawArtifact) -> ParsedBatch:
         text = raw_artifact.data.decode("utf-8", errors="replace")
-        if raw_artifact.filename.endswith(".csv"):
+        if raw_artifact.filename.startswith("la.data") or (
+            raw_artifact.filename.endswith(".txt")
+            and text[:9].lower().startswith("series_id")
+        ):
+            start_year = raw_artifact.request_params.get("start_year")
+            rows = self._parse_time_series(
+                text, start_year=int(start_year) if start_year else None
+            )
+        elif raw_artifact.filename.endswith(".csv"):
             rows = self._parse_csv(text)
         else:
             rows = self._parse_bls_fixed(text)
@@ -135,6 +164,53 @@ class BlsLausAdapter(SourceAdapter):
                 }
             )
         return out
+
+    def _parse_time_series(self, text: str, start_year: int | None = None) -> list[dict]:
+        """LAUS time-series flat file (la.data.64.County): whitespace-separated
+        columns series_id, year, period, value, footnote_codes. One row per
+        (series, month, measure); measures are merged into one record per
+        (county, month). M13 (annual average) rows are skipped.
+
+        Series id layout: 'LAU' + 'CN' + 5-digit county FIPS + 10 filler +
+        2-digit measure code, e.g. LAUCN220330000000003.
+        """
+        merged: dict[tuple[str, int, int], dict] = {}
+        for line in text.splitlines():
+            parts = line.split()
+            if len(parts) < 4:
+                continue
+            series_id, year_s, period = parts[0], parts[1], parts[2]
+            if not series_id.startswith("LAUCN") or len(series_id) < 20:
+                continue
+            measure = _TS_MEASURES.get(series_id[-2:])
+            if measure is None or not period.startswith("M") or period == "M13":
+                continue
+            try:
+                year, month = int(year_s), int(period[1:])
+            except ValueError:
+                continue
+            if start_year is not None and year < start_year:
+                continue
+            fips = series_id[5:10]
+            value = parts[3]
+            key = (fips, year, month)
+            row = merged.setdefault(
+                key,
+                {
+                    "series_id": f"LAUCN{fips}" + "0" * 8,   # area-code form
+                    "state_fips": fips[:2],
+                    "county_fips_part": fips[2:],
+                    "area_title": "",
+                    "period_year": year,
+                    "period_month": month,
+                    "labor_force": None,
+                    "employed": None,
+                    "unemployed": None,
+                    "unemployment_rate": None,
+                },
+            )
+            row[measure] = None if value in ("-", "") else value
+        return [merged[k] for k in sorted(merged)]
 
     def src_row(self, record: ParsedRecord) -> dict[str, Any]:
         raw = record.raw
