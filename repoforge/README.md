@@ -42,13 +42,23 @@ not a stub. What runs and is tested today:
 | PostgreSQL advisory locks | ✅ implemented + tested |
 | Full normalized schema (31 tables) + Alembic migration + pgvector | ✅ builds, migrates, verified in Docker |
 | Docker Compose (app + pgvector), non-root, healthchecks, restart survival | ✅ built + verified |
+| APScheduler loop with advisory-lock-guarded rotating discovery + scheduler-status API | ✅ implemented + verified live |
+| DB-backed work queue: dedup, exponential-backoff retries, dead-letter table | ✅ implemented + tested against real Postgres |
+| Ollama classifier/embedding client (strict schema, JSON-repair, cache, graceful-unavailable) | ✅ implemented + tested |
+| `local_ai` card enrichment (never invents licences/hardware; prompt-injection-guarded) | ✅ implemented + tested |
+| DB-backed discovery store (dedup + history snapshots, card/edge persistence) | ✅ implemented + tested against real Postgres |
 
-**Scaffolded (schema/ADRs present, background loops not yet wired):** the
-APScheduler daily/weekly cadence, recursive term discovery + quarantine
-promotion, the Ollama classifier/embedding client, catalogue revisit, and
-dead-letter processing. These have tables and interfaces but are not yet running
-autonomous loops. They are the next slice. Nothing is faked — absent features
-are simply absent, not stubbed with fake results.
+**Scaffolded (schema present, background loops not yet wired):** recursive term
+discovery + quarantine promotion, catalogue revisit, and the daily/weekly
+Telegram reports on a schedule. These have tables and interfaces but are not yet
+running autonomous loops — the next slice. Nothing is faked: absent features are
+simply absent, not stubbed with fake results.
+
+> **Live GitHub note:** the automated tests never touch the real GitHub
+> allowance. A live discovery run requires a normal `GITHUB_TOKEN` with search
+> access. The discovery loop degrades gracefully if GitHub returns 403/429 or a
+> rate limit — it records the run as deferred and retries later rather than
+> crashing.
 
 ---
 
@@ -186,8 +196,9 @@ See `docs/ARCHITECTURE.md` for the module map and data flow.
 ## Tests
 
 ```bash
-make test        # 69 tests, no network, no real GitHub allowance used
-make test-live   # explicit live GitHub smoke test (needs GITHUB_TOKEN)
+make test        # 85 tests, no network, no real GitHub allowance used
+                 # (11 more DB-backed tests run when REPOFORGE_TEST_DATABASE_URL is set → 96 total)
+make test-live   # explicit live GitHub smoke test (needs a search-capable GITHUB_TOKEN)
 ```
 
 Fixtures are synthetic/recorded. The live test is deselected by default via the

@@ -7,7 +7,9 @@ escaped. Secrets are never rendered.
 
 from __future__ import annotations
 
+import contextlib
 import logging
+from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -20,7 +22,39 @@ from app.reliability.preflight import CheckStatus, run_preflight
 
 logger = logging.getLogger("repoforge.api")
 
-app = FastAPI(title="RepoForge", version="0.1.0")
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Start the background scheduler if the DB is reachable and mode != paused."""
+    settings = get_settings()
+    app.state.scheduler = None
+    if settings.repoforge_mode is Mode.paused:
+        logger.info("mode=paused: scheduler not started")
+    else:
+        try:
+            from app.database.session import get_session_factory
+            from app.scheduler.scheduler import build_scheduler
+
+            factory = get_session_factory()
+            # Fail fast if the DB is unreachable; don't start a doomed scheduler.
+            with factory() as probe:
+                probe.execute(text("SELECT 1"))
+            scheduler = build_scheduler(settings, factory)
+            scheduler.start()
+            app.state.scheduler = scheduler
+            logger.info("scheduler started")
+        except Exception as exc:  # noqa: BLE001 - startup must not crash the API
+            logger.warning("scheduler not started: %s", exc)
+    try:
+        yield
+    finally:
+        sched = getattr(app.state, "scheduler", None)
+        if sched is not None:
+            sched.shutdown(wait=False)
+            logger.info("scheduler stopped")
+
+
+app = FastAPI(title="RepoForge", version="0.1.0", lifespan=lifespan)
 
 _jinja = Environment(
     loader=PackageLoader("app.dashboard", "templates"),
@@ -111,10 +145,53 @@ def config_status(settings: Annotated[Settings, Depends(get_config)]) -> dict:
     return settings.safe_status()
 
 
+@app.get("/api/scheduler/status", response_class=JSONResponse)
+def scheduler_status(settings: Annotated[Settings, Depends(get_config)]) -> dict:
+    sched = getattr(app.state, "scheduler", None)
+    running = bool(sched and sched.running)
+    jobs = []
+    if sched is not None:
+        for job in sched.get_jobs():
+            nxt = getattr(job, "next_run_time", None)
+            jobs.append({"id": job.id, "next_run": nxt.isoformat() if nxt else None})
+    recent: list[dict] = []
+    try:
+        from app.database.session import get_engine
+
+        with get_engine().connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT task, status, detail, started_at FROM scheduler_runs "
+                    "ORDER BY id DESC LIMIT 10"
+                )
+            )
+            recent = [
+                {"task": r[0], "status": r[1], "detail": r[2],
+                 "started_at": r[3].isoformat() if r[3] else None}
+                for r in rows
+            ]
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("scheduler_status recent query failed: %s", exc)
+    return {"running": running, "mode": settings.repoforge_mode.value,
+            "jobs": jobs, "recent_runs": recent}
+
+
 @app.post("/api/rescan", dependencies=[Depends(require_admin)])
-def manual_rescan() -> dict:
-    """Enqueue a manual discovery rescan (mutation; admin-only)."""
-    return {"queued": True}
+async def manual_rescan(settings: Annotated[Settings, Depends(get_config)]) -> dict:
+    """Run one discovery tick now (mutation; admin-only), under the same
+    advisory lock as the scheduled job so it can't overlap."""
+    if settings.repoforge_mode is Mode.paused:
+        return {"queued": False, "reason": "paused"}
+    try:
+        from app.database.session import get_session_factory
+        from app.scheduler.scheduler import run_guarded
+        from app.scheduler.tasks import discovery_tick
+
+        factory = get_session_factory()
+        result = await run_guarded(factory, settings, "discovery_tick", discovery_tick)
+        return {"queued": True, "result": result}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=f"rescan failed: {exc}") from exc
 
 
 @app.post("/api/feedback", dependencies=[Depends(require_admin)])

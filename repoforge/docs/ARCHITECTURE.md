@@ -41,7 +41,13 @@ GitHubClient ──► DiscoveryEngine ──► prefilter ──► repositorie
 | `discovery/queries.py` | Seed capability families + date-window splitting. |
 | `discovery/prefilter.py` | Cheap deterministic accept/quarantine/reject with evidence. |
 | `discovery/engine.py` | Search → dedup → prefilter → checkpoint. Storage injected via protocol. |
-| `extraction/component_card.py` | Build component cards (metadata mode; local_ai enrichment planned). |
+| `extraction/component_card.py` | Build component cards (metadata mode). |
+| `classification/ollama_client.py` | Native-Ollama client: strict schemas, JSON-repair retries, cache, graceful-unavailable. |
+| `classification/classifier.py` | `local_ai` card enrichment; never invents licences/hardware; prompt-injection-guarded. |
+| `scheduler/scheduler.py` | APScheduler wiring + `run_guarded` advisory-lock task wrapper. |
+| `scheduler/tasks.py` | Rotating discovery tick (idempotent, budget/rate-limit aware). |
+| `scheduler/jobs.py` | DB work queue: dedup, exponential-backoff retries, dead-letter. |
+| `database/store.py` | DB-backed DiscoveryStore + card/edge persistence (history-preserving). |
 | `licensing/policy.py` | SPDX → class + commercial-use; never marks unknown as safe. |
 | `matching/edges.py` | Output→input matching, adapters, licence/deployment compatibility. |
 | `combinations/builder.py` | Constrained beam search; dedup by component set. |
