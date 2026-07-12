@@ -1,0 +1,18 @@
+# Never commit secrets or local data.
+.env
+*.env
+!.env.example
+data/
+reports/*.json
+reports/*.md
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.venv/
+venv/
+_ci_ca.crt
+Dockerfile.buildtest
+docker-compose.override.yml

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RepoForge — System Status</title>
+  <style>
+    body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem auto;
+           max-width: 880px; color: #1c1c1e; padding: 0 1rem; }
+    h1 { margin-bottom: 0.2rem; }
+    .sub { color: #666; margin-top: 0; }
+    .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px;
+             font-size: 0.8rem; font-weight: 600; }
+    .ok { background: #e3f6e5; color: #147d23; }
+    .warn { background: #fff4d6; color: #8a6100; }
+    .fail { background: #fde2e1; color: #b3261e; }
+    .skipped { background: #eceef1; color: #555; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #eee; }
+    code { background: #f4f4f6; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 1rem 1.2rem; margin: 1rem 0; }
+    nav a { margin-right: 1rem; color: #0a68d4; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>RepoForge</h1>
+  <p class="sub">Autonomous GitHub component-discovery &amp; combination engine</p>
+
+  <nav>
+    <a href="/">Status</a>
+    <a href="/api/metrics">Metrics (JSON)</a>
+    <a href="/api/config">Config (JSON)</a>
+    <a href="/ready">Readiness (JSON)</a>
+    <a href="/health">Health (JSON)</a>
+  </nav>
+
+  <div class="card">
+    <h2>System status</h2>
+    <p>
+      Mode:
+      <span class="badge {{ 'warn' if paused else 'ok' }}">{{ mode }}</span>
+      &nbsp; Database:
+      <span class="badge {{ 'ok' if db_ok else 'fail' }}">{{ 'connected' if db_ok else 'unavailable' }}</span>
+    </p>
+    {% if not db_ok %}<p class="sub">DB detail: {{ db_detail }}</p>{% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Preflight checks</h2>
+    <table>
+      <tr><th>Check</th><th>Status</th><th>Detail</th></tr>
+      {% for c in checks %}
+      <tr>
+        <td><code>{{ c.name }}</code></td>
+        <td><span class="badge {{ c.status }}">{{ c.status }}</span></td>
+        <td>{{ c.detail }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Configuration (secrets redacted)</h2>
+    <table>
+      {% for k, v in config.items() %}
+      <tr><td><code>{{ k }}</code></td><td>{{ v }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <p class="sub">Listening on <code>http://localhost:{{ port }}</code> — also reachable over Tailscale.</p>
+</body>
+</html>
