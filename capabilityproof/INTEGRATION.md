@@ -1,98 +1,113 @@
-# Integrating this morning's work into Vigil
+# Porting this morning's capabilities into Vigil
 
-This documents how to amend the **Vigil** repo (the one with 300+ passing
-tests) with the capabilities built this morning. It is written so the port is
-mechanical: copy a self-contained folder, merge one dependency and a few
-scripts, reconcile any overlap, run the tests.
+**Read this first — it is a specification, not a copy job.**
 
-## What was built this morning
+The code in `capabilityproof/` is **Node/JavaScript**. Vigil is **Python**
+(pytest / httpx / Starlette), with a *judged membrane + audited record layer +
+pluggable domain adapters + execution broker + red-team harness*. So these
+files are the **reference implementation of three capabilities**; the Vigil
+agent should **reimplement them in Python against Vigil's existing
+abstractions**, reusing Vigil's own signing / record layer rather than porting
+ours. Vigil already has overlapping machinery ("signed reports",
+"artifact-chain integrity", "execution broker") — **reconcile, do not
+duplicate.**
 
-Three capabilities, layered on the existing CapabilityProof engine, all in the
-agent tool-calling loop:
+Source: repo `BytemasterWez/vibe-check`, branch
+`claude/geospatial-hypothesis-engine-8cskng`, folder `capabilityproof/`.
 
-1. **Call attestations** — a signed, replayable record of a single tool call
-   made through the resolver: what the agent *declared*, what the policy
-   *approved*, the *exact* request sent, and whether it stayed in the approved
-   envelope and returned valid data. Tri-state verdict: `conformant` /
-   `out_of_envelope` (the agent overstepped) / `result_unverified` (the tool
-   misbehaved). HTTP-layer, no kernel tracing.
-2. **Agent readiness test** — exercises an agent's declared operating envelope
-   (capabilities + policy) against a guardrail battery and issues a signed
-   readiness certificate: green/amber/red capabilities, residual risks, and a
-   readiness score.
-3. **Behavioural reconciliation** — reconciles externally-observed effects
-   (network/files/processes, e.g. from a kernel monitor the customer runs)
-   against the session's sanctioned tool calls and signs the result, flagging
-   unaccounted activity. Vigil reconciles and signs; it does **not** capture the
-   observations (stated on every record).
+---
 
-## Self-containment (verified)
+## Capability 1 — Call attestation (per mediated call)
 
-Nothing in `capabilityproof/` imports from outside that folder. The only
-external npm dependency is `@modelcontextprotocol/sdk`; everything else is Node
-built-ins (`crypto`, `fs`, `http`, `os`, `path`, `url`, `child_process`,
-`readline`). Receipts, attestations, certificates and reconciliations are all
-signed with a locally-generated ed25519 key created on first run.
+**Reference:** `lib/attestation.mjs` (`evaluateConformance`, `buildAttestation`,
+verdict logic) + how `lib/service.mjs` `resolveAndFetch` calls it.
 
-## The amendment set (10 files under `capabilityproof/`)
+**What it is:** when the execution broker mediates a call, emit a signed record
+that compares three things and judges conformance:
 
-New files:
+- **declared** — what the caller/agent said it wanted (e.g. the verbatim tool
+  call).
+- **approved** — what the membrane/policy actually allowed (the capability, the
+  only fields the caller may influence, the locked host/path).
+- **actual** — the exact request the broker sent and the response it got.
 
-| File | Purpose |
-| --- | --- |
-| `lib/attestation.mjs` | Conformance evaluation + build/sign/verify call attestations |
-| `lib/readiness.mjs` | Agent readiness test → signed certificate |
-| `lib/reconcile.mjs` | Reconcile observed effects vs sanctioned calls (signed) |
-| `lib/signing.mjs` | Generic ed25519 signing shared by the new artifacts |
+Then a **conformance dimension** of named checks (not one opaque score):
+`param_scope` (caller only touched allowed fields), `host_locked` (actual
+target == approved target), `envelope_match` (used the approved capability;
+fallback disclosed), `result_valid` (response passed its own contract), and a
+**tri-state verdict**:
 
-Edited files:
+- `conformant` — caller in-bounds **and** result valid.
+- `out_of_envelope` — the **caller/agent** overstepped.
+- `result_unverified` — the caller was in-bounds but the **downstream tool**
+  misbehaved.
 
-| File | What changed |
-| --- | --- |
-| `lib/service.mjs` | `resolveAndFetch` now emits an attestation; added `getAttestation`, `getAttestationEvidence`, `replayAttestation`, `readinessTest`, `getCertificate`, `reconcile`, `getReconciliation` |
-| `lib/store.mjs` | Persist/retrieve attestations (`cpa_`), certificates (`cert_`), reconciliations (`rec_`) |
-| `api.mjs` | New routes (see below) + `declared` passthrough on resolve-and-fetch |
-| `mcp-server.mjs` | New agent-facing tools (see below) |
-| `test/smoke.mjs` | 8 new assertions (47 total, all passing offline) |
-| `README.md` | Sections documenting all three capabilities with scope/provenance notes |
+**Why it's the key delta:** Vigil already signs records; the genuinely new part
+is (a) the conformance checks over declared-vs-approved-vs-actual and (b) the
+verdict that **separates caller-fault from tool-fault**. That distinction is
+what an auditor/insurer buys.
 
-## How to port
+**Map onto Vigil:** emit this from the **execution broker** at the moment it
+brokers a call; store it in the **audited record layer** next to Vigil's
+signed reports; sign with **Vigil's existing signing**, not `signing.mjs`.
 
-1. **Locate Vigil's equivalent of `capabilityproof/`.** Vigil already gates
-   actions and has a large test suite, so there may already be a
-   verification/receipt/gating core. **Reconcile before copying — do not create
-   a second overlapping layer.**
-   - If Vigil has no such engine: copy the whole `capabilityproof/` folder in.
-   - If Vigil already has receipts/resolver/policy: port only the four new
-     `lib/*.mjs` files and graft the new `service.mjs` methods, `store.mjs`
-     directories, `api.mjs` routes and `mcp-server.mjs` tools onto Vigil's
-     existing equivalents. The new code depends only on: a `resolveAndFetch`
-     that fills manifest placeholders, a deterministic check runner
-     (`runChecks`), a `canonicalize` helper, an ed25519 keypair, and a
-     file/db store. Map those to Vigil's names.
+## Capability 2 — Agent readiness test (pre-deployment)
 
-2. **Merge into Vigil's `package.json`:**
-   - dependency: `"@modelcontextprotocol/sdk": "^1.29.0"` (skip if present)
-   - scripts (adjust paths to Vigil's layout):
-     `capabilityproof:test`, `:verify`, `:api`, `:mcp`, `:bench`, `:demo`
+**Reference:** `lib/readiness.mjs` (`runReadinessTest`, `probeCapability`).
 
-3. **New REST routes** (mirror onto Vigil's API):
-   - `POST /v1/resolve-and-fetch` now returns `attestation` (+ `declared` input)
-   - `GET  /v1/attestations/:id`, `/evidence`, `POST .../replay`
-   - `POST /v1/readiness`, `GET /v1/readiness/:id`
-   - `POST /v1/reconcile`, `GET /v1/reconcile/:id`
+**What it is:** before an agent is deployed, exercise its *declared operating
+envelope* (the capabilities/adapters it will use, under a named policy) against
+a guardrail battery — inject an undeclared parameter (must be caught as
+`out_of_envelope`), point it at a degraded source (must not be blessed
+`conformant`) — and issue a **signed readiness certificate**: green / amber /
+red capabilities, residual risks, authority ceiling (the policy), and a
+`readiness_score` = fraction of guardrail checks that held.
 
-4. **New MCP tools** (mirror onto Vigil's MCP surface):
-   `resolve_and_fetch`, `get_attestation`, `replay_attestation`,
-   `agent_readiness_test`, `reconcile_behavior`.
+**Map onto Vigil:** this is a natural extension of Vigil's existing
+**red-team harness** — fold it in there rather than adding a parallel system.
+Output a signed certificate through the audited record layer.
 
-5. **Run the tests.** `npm run capabilityproof:test` must stay green
-   (47 assertions) alongside Vigil's existing 300+. Then wire the new tools
-   into whatever Vigil integration/e2e suite exists.
+## Capability 3 — Behavioural reconciliation (whole-session)
 
-## Reconciliation caution
+**Reference:** `lib/reconcile.mjs` (`reconcileBehavior`).
 
-Vigil is the source of truth. If Vigil already has an action-gating or
-attestation concept, its naming and semantics win — this morning's code should
-be adapted to Vigil's conventions, not the reverse. The goal is one clean
-capability layer, not two.
+**What it is:** the call attestation only proves the *sanctioned channel*
+(calls the broker mediated). This reconciles a set of effects an **external
+monitor observed** (network hosts / files / processes, e.g. from a kernel
+monitor the customer runs) against the session's sanctioned calls, and signs a
+verdict flagging **unaccounted activity** (a host or file no sanctioned call
+touched).
+
+**Honest boundary — keep it on the record:** Vigil **reconciles and signs**; it
+does **not** capture kernel activity itself. State this provenance on every
+reconciliation, exactly as the reference does.
+
+**Map onto Vigil:** an audited-record-layer function that takes the session's
+attestation records + a caller-supplied observation set and produces a signed
+reconciliation.
+
+---
+
+## What the Vigil agent should actually do
+
+1. **Inventory first.** Find Vigil's execution broker, its signed-report /
+   artifact-chain code, its policy release/rollback, and its red-team harness.
+   Decide, per capability above, whether Vigil already does it, partly does it,
+   or lacks it.
+2. **Reuse Vigil's primitives.** Signing, record storage, policy versioning —
+   use Vigil's, not ours. `signing.mjs` is only a reference for the shape.
+3. **Implement the deltas in Python**, with tests in Vigil's suite:
+   - broker emits conformance-checked, tri-state-verdict attestations;
+   - red-team harness gains the readiness-certificate mode;
+   - record layer gains behavioural reconciliation.
+4. **Do not import or transpile the `.mjs` files.** They are the spec and the
+   test oracle (see `test/smoke.mjs` for the exact assertions each capability
+   must satisfy — 8 relevant ones: signed conformant attestation, replay,
+   out-of-envelope param, tamper-evidence, readiness bucketing + signature,
+   reconciliation clean + unaccounted).
+
+## Test oracle
+
+`capabilityproof/test/smoke.mjs` contains the behavioural assertions the Python
+port must reproduce. Mirror them as pytest cases in Vigil so the ported
+capabilities are proven to the same standard as the reference.
