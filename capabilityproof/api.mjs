@@ -23,6 +23,10 @@
 //   GET  /v1/attestations/:id            signed call attestation (cpa_...)
 //   GET  /v1/attestations/:id/evidence
 //   POST /v1/attestations/:id/replay
+//   POST /v1/readiness                   run agent readiness test -> certificate
+//   GET  /v1/readiness/:id               signed readiness certificate (cert_...)
+//   POST /v1/reconcile                   reconcile observed effects vs sanctioned calls
+//   GET  /v1/reconcile/:id               signed reconciliation (rec_...)
 //   GET  /v1/capabilities/:id/contract
 //   GET  /v1/capabilities/:id/failure
 //   GET  /v1/capabilities/:id/fallbacks
@@ -124,6 +128,17 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       return send(res, 200, await service.resolveAndFetch({ task: body.task, capability_id: body.capability_id, policy: body.policy, params: body.params, declared: body.declared }));
     }
+    if (route === 'POST /v1/readiness') {
+      const body = await readBody(req);
+      if (!Array.isArray(body.capabilities) || body.capabilities.length === 0) {
+        throw new ServiceError(400, 'capabilities must be a non-empty array of capability ids');
+      }
+      return send(res, 200, await service.readinessTest({ agent_id: body.agent_id, capabilities: body.capabilities, policy: body.policy }));
+    }
+    if (route === 'POST /v1/reconcile') {
+      const body = await readBody(req);
+      return send(res, 200, service.reconcile({ session_id: body.session_id, attestation_ids: body.attestation_ids, observed: body.observed }));
+    }
     if (route === 'POST /v1/capabilities/compare') {
       const body = await readBody(req);
       if (!Array.isArray(body.capability_ids) || body.capability_ids.length === 0) {
@@ -150,6 +165,12 @@ const server = http.createServer(async (req, res) => {
     }
     if ((m = url.pathname.match(/^\/v1\/attestations\/(cpa_[A-Za-z0-9_-]+)\/replay$/)) && req.method === 'POST') {
       return send(res, 200, await service.replayAttestation(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/readiness\/(cert_[A-Za-z0-9_-]+)$/)) && req.method === 'GET') {
+      return send(res, 200, service.getCertificate(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/reconcile\/(rec_[A-Za-z0-9_-]+)$/)) && req.method === 'GET') {
+      return send(res, 200, service.getReconciliation(m[1]));
     }
     if ((m = url.pathname.match(/^\/v1\/capabilities\/([a-z0-9_.-]+)\/contract$/)) && req.method === 'GET') {
       const manifest = service.getManifest(m[1]);

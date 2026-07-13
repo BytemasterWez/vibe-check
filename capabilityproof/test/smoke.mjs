@@ -333,6 +333,49 @@ ok('attestations are tamper-evident (mutation breaks the signature)', () => {
   assert.strictEqual(check.valid, false);
 });
 
+// --- Agent readiness test (idea #110) ---------------------------------------
+const cert = await service.readinessTest({
+  agent_id: 'test-agent',
+  capabilities: ['mock.good.population', 'mock.liar.population'],
+  policy: 'production',
+});
+ok('readiness test buckets the healthy source green and the liar red', () => {
+  assert(cert.certificate_id.startsWith('cert_'), 'no certificate id');
+  assert(cert.tested_envelope.green.includes('mock.good.population'), JSON.stringify(cert.tested_envelope));
+  assert(cert.tested_envelope.red.includes('mock.liar.population'), JSON.stringify(cert.tested_envelope));
+  assert(cert.residual_risks.some((r) => r.capability_id === 'mock.liar.population'));
+});
+ok('readiness guardrails hold across the battery and the certificate is signed', () => {
+  assert.strictEqual(cert.guardrails_held, cert.guardrails_total, JSON.stringify(cert.scenarios));
+  assert.strictEqual(cert.readiness_score, 1);
+  const check = service.getCertificate(cert.certificate_id);
+  assert.strictEqual(check.signature_check.valid, true, 'certificate signature invalid');
+});
+
+// --- Behavioural reconciliation (idea #109 deep end) ------------------------
+const sanctionedHost = new URL(raf.attestation.actual.url).host;
+const cleanRec = service.reconcile({
+  session_id: 'sess-clean',
+  attestation_ids: [raf.attestation.attestation_id],
+  observed: { network_hosts: [sanctionedHost] },
+});
+ok('reconciliation is clean when observed hosts match the sanctioned calls', () => {
+  assert.strictEqual(cleanRec.verdict, 'clean', JSON.stringify(cleanRec.unaccounted));
+  assert.strictEqual(cleanRec.unaccounted.network_hosts.length, 0);
+});
+const dirtyRec = service.reconcile({
+  session_id: 'sess-dirty',
+  attestation_ids: [raf.attestation.attestation_id],
+  observed: { network_hosts: [sanctionedHost, 'exfil.evil.example'], files_written: ['/etc/passwd'] },
+});
+ok('reconciliation flags a host and a file the sanctioned calls never touched', () => {
+  assert.strictEqual(dirtyRec.verdict, 'unaccounted_activity');
+  assert(dirtyRec.unaccounted.network_hosts.includes('exfil.evil.example'));
+  assert(dirtyRec.unaccounted.files_written.includes('/etc/passwd'));
+  const check = service.getReconciliation(dirtyRec.reconciliation_id);
+  assert.strictEqual(check.signature_check.valid, true, 'reconciliation signature invalid');
+});
+
 const replayed = await service.replay(resolution.receipt_id);
 ok('receipts replay: evidence is hash-bound and outcomes reproduce', () => {
   assert.strictEqual(replayed.evidence_integrity, true, 'evidence hash mismatch');

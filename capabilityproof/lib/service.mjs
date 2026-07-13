@@ -27,6 +27,9 @@ import {
   signAttestation,
   verifyAttestationSignature,
 } from './attestation.mjs';
+import { runReadinessTest } from './readiness.mjs';
+import { reconcileBehavior } from './reconcile.mjs';
+import { verifyObject } from './signing.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_MANIFEST_DIR = path.join(HERE, '..', 'manifests');
@@ -389,6 +392,38 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     return { attestation, signature_check: signature };
   }
 
+  // Agent readiness test (idea #110): exercise a declared operating envelope
+  // against a guardrail battery and issue a signed readiness certificate.
+  async function readinessTest({ agent_id, capabilities, policy } = {}) {
+    const cert = await runReadinessTest({ resolveAndFetch, manifests }, keys, { agent_id, capabilities, policy });
+    store.saveCertificate(cert);
+    return cert;
+  }
+
+  function getCertificate(id) {
+    const cert = store.getCertificate(id);
+    if (!cert) throw new ServiceError(404, `unknown certificate: ${id}`);
+    return { certificate: cert, signature_check: verifyObject(cert, keys.publicKey) };
+  }
+
+  // Behavioural reconciliation (idea #109 deep end): reconcile externally
+  // observed effects against this session's sanctioned tool calls and sign the
+  // result. CapabilityProof does not capture the observations — see reconcile.mjs.
+  function reconcile({ session_id, attestation_ids = [], observed = {} } = {}) {
+    const attestations = attestation_ids
+      .map((id) => store.getAttestation(id))
+      .filter(Boolean);
+    const rec = reconcileBehavior({ session_id, attestations, observed }, keys);
+    store.saveReconciliation(rec);
+    return rec;
+  }
+
+  function getReconciliation(id) {
+    const rec = store.getReconciliation(id);
+    if (!rec) throw new ServiceError(404, `unknown reconciliation: ${id}`);
+    return { reconciliation: rec, signature_check: verifyObject(rec, keys.publicKey) };
+  }
+
   function getAttestationEvidence(attestationId) {
     const evidence = store.getAttestationEvidence(attestationId);
     if (!evidence) throw new ServiceError(404, `no evidence for attestation: ${attestationId}`);
@@ -573,6 +608,10 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     getAttestation,
     getAttestationEvidence,
     replayAttestation,
+    readinessTest,
+    getCertificate,
+    reconcile,
+    getReconciliation,
     policies: POLICIES,
     getReceipt,
     getEvidence,

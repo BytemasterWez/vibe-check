@@ -75,6 +75,10 @@ node capabilityproof/cli.mjs receipt cpr_...
 | `GET /v1/attestations/:id` | Fetch a call attestation (with signature validity check) |
 | `GET /v1/attestations/:id/evidence` | Raw evidence sample bound to the attestation by hash |
 | `POST /v1/attestations/:id/replay` | Re-run the exact recorded call and diff the outcomes |
+| `POST /v1/readiness` | Run an agent readiness test; returns a signed certificate |
+| `GET /v1/readiness/:id` | Fetch a readiness certificate (with signature validity check) |
+| `POST /v1/reconcile` | Reconcile observed effects vs sanctioned calls; signed result |
+| `GET /v1/reconcile/:id` | Fetch a reconciliation (with signature validity check) |
 | `GET /v1/capabilities/:id/failure` | Explain the latest failure with concrete evidence |
 | `GET /v1/capabilities/:id/fallbacks` | Declared fallbacks + same-category alternatives |
 | `GET /v1/capabilities` | List registered capabilities |
@@ -153,7 +157,9 @@ a PC and Ollama on a VPS both speak the same OpenAI-compatible API.
 ## MCP tools
 
 `search_capabilities`, `verify_capability`, `compare_capabilities`,
-`route_task`, `get_capability_receipt`, `explain_failure`, `find_fallback`.
+`route_task`, `resolve_task`, `resolve_and_fetch`, `get_capability_receipt`,
+`get_attestation`, `replay_attestation`, `agent_readiness_test`,
+`reconcile_behavior`, `explain_failure`, `find_fallback`.
 
 Register with any MCP client:
 
@@ -265,6 +271,54 @@ diffs the outcomes.
 calls CapabilityProof mediates. It does **not** observe anything the agent does
 outside this call (raw sockets, files, other processes); that needs kernel-level
 observation and is out of scope for this layer.
+
+## Agent readiness test (the deployment envelope)
+
+`POST /v1/readiness` takes the capabilities an agent intends to use and the
+policy it will run under, exercises that declared envelope against a guardrail
+battery (does an undeclared param get caught as out of envelope? does a bad
+result avoid being blessed as conformant?), and issues a **signed readiness
+certificate**: which capabilities are green (deployable now), amber (approved
+but the source's result didn't validate on the probe) or red (policy refuses to
+approve them right now), the residual risks, the authority ceiling (the policy),
+and a `readiness_score` = the fraction of guardrail checks that held.
+
+```bash
+curl -s localhost:3200/v1/readiness -d '{
+  "agent_id": "billing-bot",
+  "capabilities": ["source.census.acs5_county_population", "source.worldbank.country_population"],
+  "policy": "production"
+}'
+```
+
+Stated precisely, the same way the failure-injection benchmark is: this is a
+reproducible engineering claim about *this* battery and the sanctioned tool-call
+channel — not a universal safety guarantee, and it says nothing about agent
+behaviour outside CapabilityProof-mediated calls.
+
+## Behavioural reconciliation (the honest black-box deep end)
+
+The call attestation proves the *sanctioned channel*. It cannot, alone, see what
+an agent does *outside* its tool calls — raw sockets, files, spawned processes.
+That needs kernel-level observation (eBPF/Tetragon-style), a different sensing
+layer. `POST /v1/reconcile` does the honest half CapabilityProof *can* do: given
+the session's attestations and a set of effects **an external monitor observed**,
+it computes what the sanctioned calls account for and flags everything left over.
+
+```bash
+curl -s localhost:3200/v1/reconcile -d '{
+  "session_id": "run-42",
+  "attestation_ids": ["cpa_..."],
+  "observed": { "network_hosts": ["api.census.gov", "exfil.evil.example"], "files_written": ["/etc/passwd"] }
+}'
+# -> verdict: "unaccounted_activity", unaccounted.network_hosts: ["exfil.evil.example"], ...
+```
+
+Every reconciliation states its provenance on the record: **the observations are
+caller-supplied; CapabilityProof reconciles and signs them, it does not capture
+kernel-level activity.** That boundary is the product's honesty, not a caveat to
+bury — the signed reconciliation turns a raw kernel feed into "the agent did N
+things outside its sanctioned tools," without pretending to be the sensor.
 
 ## Contracts, policies and the resolver
 
@@ -444,6 +498,9 @@ capabilityproof/
     evaluate.mjs      deterministic check engine + schema-shape hashing
     receipts.mjs      ed25519-signed, short-lived receipts
     attestation.mjs   signed, replayable per-call attestations (the black box)
+    readiness.mjs     agent readiness test -> signed readiness certificate
+    reconcile.mjs     reconcile observed effects vs sanctioned calls (signed)
+    signing.mjs       generic ed25519 signing for evidence artifacts
     store.mjs         file-based receipts/evidence/history store
     registry.mjs      task search, constraint filtering, evidence-first ranking
     policy.mjs        trust policies, transparent confidence, decision gating

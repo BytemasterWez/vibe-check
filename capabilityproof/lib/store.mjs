@@ -13,6 +13,8 @@ export function createStore(dataDir) {
     evidence: path.join(dataDir, 'evidence'),
     history: path.join(dataDir, 'history'),
     attestations: path.join(dataDir, 'attestations'),
+    certificates: path.join(dataDir, 'certificates'),
+    reconciliations: path.join(dataDir, 'reconciliations'),
   };
   for (const d of Object.values(dirs)) fs.mkdirSync(d, { recursive: true });
 
@@ -153,11 +155,31 @@ export function createStore(dataDir) {
     return JSON.parse(fs.readFileSync(file, 'utf-8'));
   }
 
+  // Readiness certificates and behavioural reconciliations: signed artifacts,
+  // retained and retrievable like receipts.
+  function saveCertificate(cert) {
+    fs.writeFileSync(path.join(dirs.certificates, `${cert.certificate_id}.json`), JSON.stringify(cert, null, 2));
+  }
+  function getCertificate(id) {
+    if (!/^cert_[A-Za-z0-9_-]+$/.test(id)) return null;
+    const file = path.join(dirs.certificates, `${id}.json`);
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf-8')) : null;
+  }
+  function saveReconciliation(rec) {
+    fs.writeFileSync(path.join(dirs.reconciliations, `${rec.reconciliation_id}.json`), JSON.stringify(rec, null, 2));
+  }
+  function getReconciliation(id) {
+    if (!/^rec_[A-Za-z0-9_-]+$/.test(id)) return null;
+    const file = path.join(dirs.reconciliations, `${id}.json`);
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf-8')) : null;
+  }
+
   return {
     dataDir,
     saveReceipt, getReceipt, latestReceiptFor,
     saveEvidence, getEvidence,
     appendHistory, getHistory, historyStats, verifiedStreak,
     saveAttestation, getAttestation, saveAttestationEvidence, getAttestationEvidence,
+    saveCertificate, getCertificate, saveReconciliation, getReconciliation,
   };
 }

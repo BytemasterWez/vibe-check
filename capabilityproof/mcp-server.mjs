@@ -6,7 +6,9 @@
 // Usage: node capabilityproof/mcp-server.mjs [--manifests DIR] [--data DIR]
 //
 // Tools: search_capabilities, verify_capability, compare_capabilities,
-//        route_task, get_capability_receipt, explain_failure, find_fallback
+//        route_task, resolve_task, resolve_and_fetch, get_capability_receipt,
+//        get_attestation, replay_attestation, agent_readiness_test,
+//        reconcile_behavior, explain_failure, find_fallback
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -105,6 +107,74 @@ const TOOLS = [
     },
   },
   {
+    name: 'resolve_and_fetch',
+    description: 'Resolve the best policy-approved capability, execute the call, and return the data WITH a signed call attestation: what you declared, what the policy approved, the exact request sent, and whether the call stayed in the approved envelope and returned valid data. Prefer this over calling tools directly when you want the call itself to be provable.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'What you need, in plain language' },
+        capability_id: { type: 'string', description: 'Call a specific capability instead of searching by task' },
+        policy: { anyOf: [{ type: 'string' }, { type: 'object' }], description: 'Named policy or custom rules (see resolve_task)' },
+        params: { type: 'object', description: 'Values that fill {placeholders} in the manifest endpoint template only; host and path are never caller-controlled' },
+        declared: { type: 'object', description: 'Your stated intent, e.g. the verbatim tool_call { name, arguments }; recorded in the attestation' },
+      },
+    },
+  },
+  {
+    name: 'get_attestation',
+    description: 'Fetch a signed call attestation by id (cpa_...), including a signature validity check.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        attestation_id: { type: 'string' },
+        include_evidence: { type: 'boolean', description: 'Also return the stored raw evidence sample bound to it by hash' },
+      },
+      required: ['attestation_id'],
+    },
+  },
+  {
+    name: 'replay_attestation',
+    description: 'Replay a call attestation: verify the evidence is still hash-bound, re-run the exact recorded request, re-apply the contract, and diff the outcomes.',
+    inputSchema: {
+      type: 'object',
+      properties: { attestation_id: { type: 'string' } },
+      required: ['attestation_id'],
+    },
+  },
+  {
+    name: 'agent_readiness_test',
+    description: 'Test an agent\'s declared operating envelope (the capabilities it will use, under a policy) against a guardrail battery and return a signed readiness certificate: green/amber/red capabilities, residual risks, and a readiness score. Covers the sanctioned tool-call channel only.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_id: { type: 'string' },
+        capabilities: { type: 'array', items: { type: 'string' }, minItems: 1, description: 'Capability ids the agent intends to use' },
+        policy: { anyOf: [{ type: 'string' }, { type: 'object' }] },
+      },
+      required: ['capabilities'],
+    },
+  },
+  {
+    name: 'reconcile_behavior',
+    description: 'Reconcile externally-observed effects (network hosts, files, processes — e.g. exported from a kernel monitor you run) against this session\'s sanctioned tool calls, and return a signed reconciliation flagging unaccounted activity. CapabilityProof reconciles and signs; it does NOT capture the observations itself.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: { type: 'string' },
+        attestation_ids: { type: 'array', items: { type: 'string' }, description: 'The sanctioned call attestations for the session' },
+        observed: {
+          type: 'object',
+          description: 'Effects an external monitor observed',
+          properties: {
+            network_hosts: { type: 'array', items: { type: 'string' } },
+            files_written: { type: 'array', items: { type: 'string' } },
+            processes: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'get_capability_receipt',
     description: 'Fetch a capability receipt by id, including a signature validity check.',
     inputSchema: {
@@ -156,6 +226,25 @@ const HANDLERS = {
   },
   async resolve_task(input) {
     return jsonContent(await service.resolve({ task: input.task, capability_id: input.capability_id, policy: input.policy }));
+  },
+  async resolve_and_fetch(input) {
+    return jsonContent(await service.resolveAndFetch({ task: input.task, capability_id: input.capability_id, policy: input.policy, params: input.params, declared: input.declared }));
+  },
+  async get_attestation(input) {
+    const out = service.getAttestation(input.attestation_id);
+    if (input.include_evidence) {
+      try { out.evidence = service.getAttestationEvidence(input.attestation_id); } catch { out.evidence = null; }
+    }
+    return jsonContent(out);
+  },
+  async replay_attestation(input) {
+    return jsonContent(await service.replayAttestation(input.attestation_id));
+  },
+  async agent_readiness_test(input) {
+    return jsonContent(await service.readinessTest({ agent_id: input.agent_id, capabilities: input.capabilities, policy: input.policy }));
+  },
+  async reconcile_behavior(input) {
+    return jsonContent(service.reconcile({ session_id: input.session_id, attestation_ids: input.attestation_ids, observed: input.observed }));
   },
   async get_capability_receipt(input) {
     const out = service.getReceipt(input.receipt_id);
