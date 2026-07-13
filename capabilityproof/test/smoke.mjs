@@ -20,6 +20,7 @@ import path from 'path';
 import assert from 'assert';
 import { createService } from '../lib/service.mjs';
 import { verifyReceiptSignature } from '../lib/receipts.mjs';
+import { verifyAttestationSignature } from '../lib/attestation.mjs';
 import { runChecks } from '../lib/evaluate.mjs';
 import { createLlmClient, extractJson } from '../lib/llm.mjs';
 import { findRowArray, draftManifestFallback, draftManifestLlm } from '../scout.mjs';
@@ -278,11 +279,58 @@ ok('resolver rejections are explained per candidate', async () => {
   assert(rejected.candidates.every((c) => c.blocked_by.length > 0));
 });
 
-const raf = await service.resolveAndFetch({ task: 'retrieve county population estimates', policy: 'production' });
+const raf = await service.resolveAndFetch({
+  task: 'retrieve county population estimates',
+  policy: 'production',
+  declared: { tool_call: { name: 'get_county_population', arguments: {} } },
+});
 ok('resolve-and-fetch returns live data with the receipt attached', () => {
   assert.strictEqual(raf.resolution.decision, 'approved');
   assert.strictEqual(raf.fetch.http_status, 200);
   assert(Array.isArray(raf.fetch.data) && raf.fetch.data.length > 50);
+});
+ok('the call earns a signed, in-envelope attestation with the result re-validated', () => {
+  const a = raf.attestation;
+  assert(a && a.attestation_id.startsWith('cpa_'), 'no attestation issued');
+  assert.strictEqual(a.verdict, 'conformant', JSON.stringify(a.violations));
+  assert.strictEqual(a.conformance.host_locked.ok, true);
+  assert.strictEqual(a.conformance.param_scope.ok, true);
+  assert.strictEqual(a.conformance.result_valid.ok, true);
+  assert.deepStrictEqual(a.declared, { tool_call: { name: 'get_county_population', arguments: {} } });
+  const sig = service.getAttestation(a.attestation_id);
+  assert.strictEqual(sig.signature_check.valid, true, 'attestation signature invalid');
+});
+
+const attReplay = await service.replayAttestation(raf.attestation.attestation_id);
+ok('attestations replay: evidence is hash-bound and the call reproduces', () => {
+  assert.strictEqual(attReplay.evidence_integrity, true, 'attestation evidence hash mismatch');
+  assert.strictEqual(attReplay.outcomes_match, true, JSON.stringify(attReplay.differences));
+  assert.strictEqual(attReplay.replay_result_valid, true);
+});
+
+// An agent supplying a param the manifest never declared as a placeholder is
+// out of envelope: the request stepped outside what was approved, even though
+// the source itself is healthy.
+const outOfEnvelope = await service.resolveAndFetch({
+  capability_id: 'mock.good.population',
+  policy: 'production',
+  params: { admin_override: 'true' },
+});
+ok('an undeclared param is caught as out_of_envelope, not silently dropped', () => {
+  const a = outOfEnvelope.attestation;
+  assert.strictEqual(a.verdict, 'out_of_envelope', JSON.stringify(a));
+  assert.strictEqual(a.conformance.param_scope.ok, false);
+  assert(a.violations.some((v) => v.check === 'param_scope'));
+  // The fetch still succeeded — the point is the record flags the overreach.
+  assert.strictEqual(outOfEnvelope.fetch.http_status, 200);
+});
+
+// Tamper-evidence: mutating a stored attestation breaks its signature.
+ok('attestations are tamper-evident (mutation breaks the signature)', () => {
+  const { attestation } = service.getAttestation(raf.attestation.attestation_id);
+  const forged = { ...attestation, verdict: 'conformant', capability_id: 'mock.liar.population' };
+  const check = verifyAttestationSignature(forged, service.publicKey);
+  assert.strictEqual(check.valid, false);
 });
 
 const replayed = await service.replay(resolution.receipt_id);

@@ -21,6 +21,12 @@ import { notify } from './notify.mjs';
 import { resolvePolicy, applyPolicy, POLICIES } from './policy.mjs';
 import { RUNNER_VERSION } from './receipts.mjs';
 import { runChecks as evaluateChecks } from './evaluate.mjs';
+import {
+  evaluateConformance,
+  buildAttestation,
+  signAttestation,
+  verifyAttestationSignature,
+} from './attestation.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_MANIFEST_DIR = path.join(HERE, '..', 'manifests');
@@ -288,9 +294,15 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
   // Resolve, then actually execute the call against the approved source.
   // Caller-supplied params only fill {placeholders} in the manifest's own
   // endpoint template — the host and path are never caller-controlled.
-  async function resolveAndFetch({ task, capability_id, policy, params = {} } = {}) {
+  //
+  // Because this function both sees the agent's declared intent and executes
+  // the real call, it emits a signed *call attestation*: the HTTP-layer black
+  // box recording declared-vs-approved-vs-actual and whether the call stayed in
+  // the approved envelope and returned valid data. `declared` is optional (e.g.
+  // the verbatim LLM tool_call) and only enriches the record.
+  async function resolveAndFetch({ task, capability_id, policy, params = {}, declared } = {}) {
     const resolution = await resolve({ task, capability_id, policy });
-    if (resolution.decision !== 'approved') return { resolution, fetch: null };
+    if (resolution.decision !== 'approved') return { resolution, fetch: null, attestation: null };
 
     const manifest = manifests.get(resolution.capability_id);
     let request = manifest.test_pack.request;
@@ -305,6 +317,57 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
       }
     }
     const probe = await runProbe(request);
+    const actualRequest = { method: request.method || 'GET', url: probe.url };
+
+    // Re-run the capability's own contract against THIS call's real response —
+    // not the pre-approval probe — so the attestation reflects what the agent
+    // actually received.
+    const resultEvaluation = evaluateChecks(probe, manifest.test_pack);
+    const conformance = evaluateConformance({
+      manifest,
+      approvedCapabilityId: resolution.capability_id,
+      requestedCapabilityId: capability_id || null,
+      params,
+      actualRequest,
+      resultEvaluation,
+    });
+
+    const evidence = {
+      capability_id: resolution.capability_id,
+      contract_version: resolution.contract_version,
+      runner_version: RUNNER_VERSION,
+      // The full contract + the actual request are retained so the attestation
+      // is replayable: re-run this exact request, re-apply these checks, diff.
+      contract: manifest.test_pack,
+      request: actualRequest,
+      response: {
+        http_status: probe.status,
+        content_type: probe.content_type,
+        latency_ms: probe.latency_ms,
+        fetched_at: probe.fetched_at,
+        error: probe.error,
+      },
+      checks: resultEvaluation.checks,
+      body_sample: probe.body_text ? probe.body_text.slice(0, 16 * 1024) : null,
+    };
+    const evHash = evidenceHash(evidence);
+
+    let attestation = buildAttestation({
+      manifest,
+      resolution,
+      requestedCapabilityId: capability_id || null,
+      declared,
+      params,
+      actualRequest,
+      probe,
+      conformance,
+      runnerVersion: RUNNER_VERSION,
+      evidenceHashValue: evHash,
+    });
+    attestation = signAttestation(attestation, keys.privateKey);
+    store.saveAttestation(attestation);
+    store.saveAttestationEvidence(attestation.attestation_id, { attestation_id: attestation.attestation_id, ...evidence });
+
     return {
       resolution,
       fetch: {
@@ -315,6 +378,55 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
         error: probe.error,
         data: probe.body ?? probe.body_text,
       },
+      attestation,
+    };
+  }
+
+  function getAttestation(attestationId) {
+    const attestation = store.getAttestation(attestationId);
+    if (!attestation) throw new ServiceError(404, `unknown attestation: ${attestationId}`);
+    const signature = verifyAttestationSignature(attestation, keys.publicKey);
+    return { attestation, signature_check: signature };
+  }
+
+  function getAttestationEvidence(attestationId) {
+    const evidence = store.getAttestationEvidence(attestationId);
+    if (!evidence) throw new ServiceError(404, `no evidence for attestation: ${attestationId}`);
+    return evidence;
+  }
+
+  // Replay a call attestation: prove the stored evidence is still hash-bound to
+  // it, re-run the exact recorded request against the live source, re-apply the
+  // contract, and diff the outcomes. A signed measurement, not just a claim.
+  async function replayAttestation(attestationId) {
+    const attestation = store.getAttestation(attestationId);
+    if (!attestation) throw new ServiceError(404, `unknown attestation: ${attestationId}`);
+    const evidence = store.getAttestationEvidence(attestationId);
+    if (!evidence) throw new ServiceError(404, `no evidence for attestation: ${attestationId}`);
+    if (!evidence.contract) throw new ServiceError(409, 'evidence predates contract retention; cannot replay');
+
+    const { attestation_id, ...evidenceSansId } = evidence;
+    const integrity = evidenceHash(evidenceSansId) === attestation.evidence_hash;
+
+    const probe = await runProbe(evidence.request);
+    const evaluation = evaluateChecks(probe, evidence.contract);
+    const recorded = new Map((evidence.checks || []).map((c, i) => [`${i}:${c.type}`, c.ok]));
+    const differences = evaluation.checks
+      .map((c, i) => ({ index: i, type: c.type, recorded: recorded.get(`${i}:${c.type}`), now: c.ok, detail: c.detail }))
+      .filter((d) => d.recorded !== undefined && d.recorded !== d.now);
+
+    return {
+      attestation_id: attestationId,
+      capability_id: attestation.capability_id,
+      contract_version: evidence.contract_version,
+      runner_version_recorded: evidence.runner_version,
+      runner_version_now: RUNNER_VERSION,
+      evidence_integrity: integrity,
+      recorded_verdict: attestation.verdict,
+      replay_result_valid: evaluation.results.task_success === true,
+      outcomes_match: differences.length === 0,
+      differences,
+      replayed_at: probe.fetched_at,
     };
   }
 
@@ -458,6 +570,9 @@ export function createService({ manifestDir = DEFAULT_MANIFEST_DIR, dataDir = DE
     resolve,
     resolveAndFetch,
     replay,
+    getAttestation,
+    getAttestationEvidence,
+    replayAttestation,
     policies: POLICIES,
     getReceipt,
     getEvidence,

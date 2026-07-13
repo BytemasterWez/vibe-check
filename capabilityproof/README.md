@@ -72,6 +72,9 @@ node capabilityproof/cli.mjs receipt cpr_...
 | `POST /v1/capabilities/compare` | Side-by-side verified comparison |
 | `GET /v1/receipts/:id` | Fetch a receipt (with signature validity check) |
 | `GET /v1/receipts/:id/evidence` | Raw evidence sample bound to the receipt by hash |
+| `GET /v1/attestations/:id` | Fetch a call attestation (with signature validity check) |
+| `GET /v1/attestations/:id/evidence` | Raw evidence sample bound to the attestation by hash |
+| `POST /v1/attestations/:id/replay` | Re-run the exact recorded call and diff the outcomes |
 | `GET /v1/capabilities/:id/failure` | Explain the latest failure with concrete evidence |
 | `GET /v1/capabilities/:id/fallbacks` | Declared fallbacks + same-category alternatives |
 | `GET /v1/capabilities` | List registered capabilities |
@@ -207,6 +210,61 @@ It does not by itself prove the test was well designed or that the source is
 still healthy after expiry — which is why receipts carry a
 `contract_version` (exactly what was asserted), a `runner_version` (exactly
 what code ran), short expiries, and replayable evidence.
+
+## Call attestations (the tool-call black box)
+
+A receipt certifies a **source** ("this capability is fit for this task right
+now"). A **call attestation** certifies a single **call made through the
+resolver** ("the agent asked for X, the policy allowed Y, the exact request
+that went out was Z, and here is whether it stayed inside the approved envelope
+and came back valid"). Because `resolve-and-fetch` both sees the agent's
+declared intent and executes the real call, it can attest conformance at the
+HTTP layer with no kernel tracing — and it re-runs the capability's contract
+against **this call's** real response, not the pre-approval probe.
+
+`POST /v1/resolve-and-fetch` now returns an `attestation` alongside the data.
+Pass an optional `declared` field (e.g. the verbatim LLM `tool_call`) and it is
+recorded as the stated intent.
+
+```json
+{
+  "attestation_id": "cpa_...",
+  "capability_id": "source.census.acs5_county_population",
+  "declared": { "tool_call": { "name": "get_county_population", "arguments": { "county_fips": "037" } } },
+  "requested_capability_id": null,
+  "approved": { "capability_id": "source.census.acs5_county_population", "allowed_placeholders": ["state_fips", "county_fips"], "was_fallback": false },
+  "actual": { "method": "GET", "url": "https://api.census.gov/...037...", "params_used": ["county_fips"], "http_status": 200, "latency_ms": 214 },
+  "conformance": {
+    "param_scope":    { "ok": true, "detail": "all 1 supplied param(s) map to declared placeholders" },
+    "host_locked":    { "ok": true, "detail": "request host api.census.gov matches the manifest" },
+    "envelope_match": { "ok": true, "detail": "used the capability that was approved (...)" },
+    "result_valid":   { "ok": true, "detail": "the response passed the capability contract on this call" }
+  },
+  "verdict": "conformant",
+  "violations": [],
+  "evidence_hash": "sha256:...",
+  "signature": "ed25519:..."
+}
+```
+
+The verdict is deliberately tri-state, and the distinction is the point:
+
+- `conformant` — request stayed in-bounds **and** the response was valid.
+- `out_of_envelope` — the **agent** stepped outside what was approved (e.g.
+  supplied a param the manifest never declared as a placeholder, or the request
+  host didn't match). Caught, not silently dropped.
+- `result_unverified` — the request was in-bounds but the **tool** misbehaved
+  (the response failed its own contract on this call).
+
+Attestations are signed (same ed25519 key as receipts), tamper-evident, and
+replayable: `POST /v1/attestations/:id/replay` re-checks the evidence is still
+hash-bound, re-runs the exact recorded request, re-applies the contract, and
+diffs the outcomes.
+
+**Scope, stated honestly.** This attests the *sanctioned channel* — the tool
+calls CapabilityProof mediates. It does **not** observe anything the agent does
+outside this call (raw sockets, files, other processes); that needs kernel-level
+observation and is out of scope for this layer.
 
 ## Contracts, policies and the resolver
 
@@ -385,6 +443,7 @@ capabilityproof/
     probe.mjs         live HTTP probes
     evaluate.mjs      deterministic check engine + schema-shape hashing
     receipts.mjs      ed25519-signed, short-lived receipts
+    attestation.mjs   signed, replayable per-call attestations (the black box)
     store.mjs         file-based receipts/evidence/history store
     registry.mjs      task search, constraint filtering, evidence-first ranking
     policy.mjs        trust policies, transparent confidence, decision gating

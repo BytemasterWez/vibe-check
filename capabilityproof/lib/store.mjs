@@ -12,6 +12,7 @@ export function createStore(dataDir) {
     receipts: path.join(dataDir, 'receipts'),
     evidence: path.join(dataDir, 'evidence'),
     history: path.join(dataDir, 'history'),
+    attestations: path.join(dataDir, 'attestations'),
   };
   for (const d of Object.values(dirs)) fs.mkdirSync(d, { recursive: true });
 
@@ -116,5 +117,47 @@ export function createStore(dataDir) {
     return streak;
   }
 
-  return { dataDir, saveReceipt, getReceipt, latestReceiptFor, saveEvidence, getEvidence, appendHistory, getHistory, historyStats, verifiedStreak };
+  // Call attestations: one signed record per tool call made through the
+  // resolver, plus the raw evidence sample bound to it by hash (mirrors the
+  // receipt/evidence split).
+  function saveAttestation(attestation) {
+    fs.writeFileSync(
+      path.join(dirs.attestations, `${attestation.attestation_id}.json`),
+      JSON.stringify(attestation, null, 2)
+    );
+  }
+
+  function getAttestation(attestationId) {
+    if (!/^cpa_[A-Za-z0-9_-]+$/.test(attestationId)) return null;
+    const file = path.join(dirs.attestations, `${attestationId}.json`);
+    if (!fs.existsSync(file)) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  }
+
+  function saveAttestationEvidence(attestationId, evidence) {
+    const trimmed = { ...evidence };
+    if (typeof trimmed.body_sample === 'string' && trimmed.body_sample.length > MAX_SAMPLE_BYTES) {
+      trimmed.body_sample = trimmed.body_sample.slice(0, MAX_SAMPLE_BYTES);
+      trimmed.body_sample_truncated = true;
+    }
+    fs.writeFileSync(
+      path.join(dirs.attestations, `${attestationId}.evidence.json`),
+      JSON.stringify(trimmed, null, 2)
+    );
+  }
+
+  function getAttestationEvidence(attestationId) {
+    if (!/^cpa_[A-Za-z0-9_-]+$/.test(attestationId)) return null;
+    const file = path.join(dirs.attestations, `${attestationId}.evidence.json`);
+    if (!fs.existsSync(file)) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  }
+
+  return {
+    dataDir,
+    saveReceipt, getReceipt, latestReceiptFor,
+    saveEvidence, getEvidence,
+    appendHistory, getHistory, historyStats, verifiedStreak,
+    saveAttestation, getAttestation, saveAttestationEvidence, getAttestationEvidence,
+  };
 }

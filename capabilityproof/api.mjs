@@ -20,6 +20,9 @@
 //   GET  /v1/receipts/:id
 //   GET  /v1/receipts/:id/evidence
 //   POST /v1/receipts/:id/replay
+//   GET  /v1/attestations/:id            signed call attestation (cpa_...)
+//   GET  /v1/attestations/:id/evidence
+//   POST /v1/attestations/:id/replay
 //   GET  /v1/capabilities/:id/contract
 //   GET  /v1/capabilities/:id/failure
 //   GET  /v1/capabilities/:id/fallbacks
@@ -119,7 +122,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (route === 'POST /v1/resolve-and-fetch') {
       const body = await readBody(req);
-      return send(res, 200, await service.resolveAndFetch({ task: body.task, capability_id: body.capability_id, policy: body.policy, params: body.params }));
+      return send(res, 200, await service.resolveAndFetch({ task: body.task, capability_id: body.capability_id, policy: body.policy, params: body.params, declared: body.declared }));
     }
     if (route === 'POST /v1/capabilities/compare') {
       const body = await readBody(req);
@@ -138,6 +141,15 @@ const server = http.createServer(async (req, res) => {
     }
     if ((m = url.pathname.match(/^\/v1\/receipts\/(cpr_[A-Za-z0-9_-]+)\/replay$/)) && req.method === 'POST') {
       return send(res, 200, await service.replay(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/attestations\/(cpa_[A-Za-z0-9_-]+)$/)) && req.method === 'GET') {
+      return send(res, 200, service.getAttestation(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/attestations\/(cpa_[A-Za-z0-9_-]+)\/evidence$/)) && req.method === 'GET') {
+      return send(res, 200, service.getAttestationEvidence(m[1]));
+    }
+    if ((m = url.pathname.match(/^\/v1\/attestations\/(cpa_[A-Za-z0-9_-]+)\/replay$/)) && req.method === 'POST') {
+      return send(res, 200, await service.replayAttestation(m[1]));
     }
     if ((m = url.pathname.match(/^\/v1\/capabilities\/([a-z0-9_.-]+)\/contract$/)) && req.method === 'GET') {
       const manifest = service.getManifest(m[1]);
