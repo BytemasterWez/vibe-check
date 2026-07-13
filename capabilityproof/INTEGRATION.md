@@ -49,7 +49,8 @@ what an auditor/insurer buys.
 
 **Map onto Vigil:** emit this from the **execution broker** at the moment it
 brokers a call; store it in the **audited record layer** next to Vigil's
-signed reports; sign with **Vigil's existing signing**, not `signing.mjs`.
+signed reports; sign per the **Signing decision** below (ed25519, not Vigil's
+internal HMAC).
 
 ## Capability 2 — Agent readiness test (pre-deployment)
 
@@ -78,9 +79,12 @@ monitor the customer runs) against the session's sanctioned calls, and signs a
 verdict flagging **unaccounted activity** (a host or file no sanctioned call
 touched).
 
-**Honest boundary — keep it on the record:** Vigil **reconciles and signs**; it
-does **not** capture kernel activity itself. State this provenance on every
-reconciliation, exactly as the reference does.
+**Honest boundary — enforce it in code, not by convention:** Vigil
+**reconciles and signs**; it does **not** capture kernel activity itself. Make
+the provenance note a **required, non-nullable field** on the reconciliation
+record so a record can never be emitted without it. This is the most
+misreadable capability ("does Vigil watch the kernel?" — no); the structural
+guarantee is what keeps it from becoming an overclaim.
 
 **Map onto Vigil:** an audited-record-layer function that takes the session's
 attestation records + a caller-supplied observation set and produces a signed
@@ -94,8 +98,9 @@ reconciliation.
    artifact-chain code, its policy release/rollback, and its red-team harness.
    Decide, per capability above, whether Vigil already does it, partly does it,
    or lacks it.
-2. **Reuse Vigil's primitives.** Signing, record storage, policy versioning —
-   use Vigil's, not ours. `signing.mjs` is only a reference for the shape.
+2. **Reuse Vigil's primitives** for record storage and policy versioning —
+   but **not** for signing these three artifacts (see Signing decision below).
+   `signing.mjs` is only a reference for the shape.
 3. **Implement the deltas in Python**, with tests in Vigil's suite:
    - broker emits conformance-checked, tri-state-verdict attestations;
    - red-team harness gains the readiness-certificate mode;
@@ -105,6 +110,24 @@ reconciliation.
    must satisfy — 8 relevant ones: signed conformant attestation, replay,
    out-of-envelope param, tamper-evidence, readiness bucketing + signature,
    reconciliation clean + unaccounted).
+
+## Signing decision (resolved: hybrid)
+
+Vigil signs internal aggregate reports with **HMAC-SHA256 (symmetric)**. The
+three artifacts here are meant to be handed to an **external auditor/insurer**,
+and HMAC cannot serve that: whoever can verify an HMAC can also forge it, so a
+shared-secret attestation is worthless as independent third-party evidence.
+
+Therefore:
+
+- **Attestations, readiness certificates, reconciliations → ed25519
+  (asymmetric)**, as the reference does. An auditor verifies with a public key
+  and cannot forge. Cost is one Python dependency (`cryptography`) and a small
+  keystore — that is the price of the entire buyer thesis, so pay it.
+- **Vigil's internal reports keep HMAC.** No need to change them.
+
+This supersedes the earlier "reuse Vigil's signing" guidance for these three
+artifacts specifically.
 
 ## Test oracle
 
