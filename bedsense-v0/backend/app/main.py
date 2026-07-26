@@ -130,3 +130,5 @@ for module in (
     routes_settings,
 ):
     app.include_router(module.router)
+
+app.include_router(routes_mock.demo_router)

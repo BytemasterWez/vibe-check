@@ -68,13 +68,17 @@ def test_markdown_report_content_and_filename(tmp_path):
     for heading in (
         "Prototype Boundary Statement", "Session Summary", "Sensors Used",
         "Expected Events", "Actual Events", "Detection Results",
-        "False Positives", "False Negatives", "Signal Quality Summary",
-        "Event Timeline", "Risk Register Summary", "Screenshots",
-        "Conclusion", "Next Validation Steps",
+        "False Positives", "False Negatives", "Unscoped Events",
+        "Signal Quality Summary", "Event Timeline", "Risk Register Snapshot",
+        "Screenshots", "Conclusion", "Next Validation Steps",
     ):
         assert f"## {heading}" in text
     assert "non-clinical research demonstrator" in text.lower()
     assert "| bed_exit | yes | 27.0 | 1 |" in text
+    # V0.1 §4: fusion confidence must be qualified, never read as accuracy.
+    assert "fusion confidence is an internal prototype scoring measure" in text.lower()
+    assert "Operator final assessment:" in text
+    assert "Fusion confidence |" in text  # event timeline column header
 
 
 def test_csv_exports_written_with_session_id(tmp_path):

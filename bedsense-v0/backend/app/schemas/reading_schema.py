@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from ..models.reading import METRICS
 
@@ -45,5 +45,4 @@ class ReadingOut(BaseModel):
     raw_payload: dict[str, Any] | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -27,6 +27,33 @@ Part of the wider CableLight Vitals Bed concept.
 Privacy by construction: no camera, no microphone, no cloud, no accounts,
 session IDs instead of identities, local-only database.
 
+## V0.1 hardening
+
+The demonstrator is evidence-clean by construction:
+
+- **Session enforcement** — no reading, bed state or event can exist without a
+  `session_id`. Manual `POST`s inherit the active session or are rejected with
+  422; starting a mock with no session auto-creates `DEMO_<scenario>_<timestamp>`
+  and finalizes it with computed results when the run completes.
+- **Session-scoped dashboard** — every panel defaults to the active session, so
+  a demo can never show stale state or events from an earlier scenario. A
+  *Current session / All sessions* toggle exposes the unscoped view, which is
+  labelled "Demo mode — unscoped data" when no session is active.
+- **Transition-based events with cooldowns** — a held state updates the bed
+  state every second but does not re-emit events. Cooldowns: breathing-like
+  detected 5 min, breathing-like not detected 60 s, movement 60 s, stillness
+  5 min, quality warning 2 min, sensor conflict 2 min, possible bed exit
+  deduplicated within 15 s, bed exit once per confirmed exit. Opposite events
+  (detected ↔ not detected) reset each other, so a genuine lost-then-restored
+  transition still fires. In `fast` mode the windows scale with the clock.
+- **Fusion confidence, not accuracy** — the score is labelled "fusion
+  confidence" everywhere, and every report states that it is an internal
+  prototype scoring measure, not clinical accuracy.
+- **Reset demo data** — stops the mock, closes open sessions and clears orphan
+  rows. Evidence reports are kept unless deletion is explicitly requested.
+- **One-click demos** — `POST /demo/run` (or the Experiments page buttons) runs
+  a scenario end to end in its own session, leaving a report-ready run.
+
 ## Quick start
 
 Requires Docker + Docker Compose. No other dependencies.
@@ -74,6 +101,7 @@ bedsense-v0/
 | Events | `GET/POST /events`, `PATCH /events/{id}/acknowledge` |
 | Experiments | `GET /experiments`, `POST /experiments/start`, `POST /experiments/{id}/stop`, `POST /experiments/{id}/mark`, `PATCH /experiments/{id}/assess` |
 | Mock | `POST /mock/start`, `POST /mock/stop`, `POST /mock/scenario`, `GET /mock/status` |
+| Demo | `GET /demo/sequences`, `POST /demo/run`, `POST /demo/reset` |
 | Reports | `POST /reports/evidence-pack`, `GET /reports`, `GET /reports/{id}`, `GET /reports/{id}/download/{kind}` |
 | Risk register | `GET/POST /risk-register`, `PATCH /risk-register/{id}` |
 | Settings | `GET/PATCH /settings` (local-only is locked true) |
@@ -88,7 +116,25 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 The tests cover the mock adapter scenario patterns, signal quality scoring,
 fusion rules (including the bed-exit confirmation window), event detection
-(including non-clinical wording checks) and the evidence report generator.
+(cooldowns, spam suppression and non-clinical wording), the evidence report
+generator, and — through the real FastAPI app against a temporary SQLite
+database — session enforcement, auto-created demo sessions, session-scoped
+dashboard queries, demo reset and single-session evidence packs.
+
+## Validation test matrix
+
+V0.1 is the point to stop adding features and start collecting numbers. Run
+each scenario repeatedly via the one-click demos, then fill this in from the
+exported evidence packs:
+
+| Scenario | Runs | Target | Actual | Pass? |
+|----------|------|--------|--------|-------|
+| Empty vs occupied | 10 | 95%+ | TBD | TBD |
+| Moving vs still | 10 | 90%+ | TBD | TBD |
+| Bed-exit detected | 10 | 90%+ | TBD | TBD |
+| Breathing-like while still | 10 | 85%+ | TBD | TBD |
+| Mixed sequence | 5 | qualitative | TBD | TBD |
+| False-alert 60-min runs | 3 | record count | TBD | TBD |
 
 ## First test protocol (spec §20)
 

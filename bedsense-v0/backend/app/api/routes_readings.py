@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import SensorReading
 from ..schemas.reading_schema import ReadingBulkCreate, ReadingCreate, ReadingOut
+from .deps import require_session
 
 router = APIRouter(prefix="/readings", tags=["readings"])
 
@@ -31,7 +32,9 @@ def list_readings(
 
 @router.post("", response_model=ReadingOut, status_code=201)
 def create_reading(payload: ReadingCreate, db: Session = Depends(get_db)):
-    reading = SensorReading(**payload.model_dump(exclude_none=True))
+    data = payload.model_dump(exclude_none=True)
+    data["session_id"] = require_session(data.get("session_id"), db)
+    reading = SensorReading(**data)
     db.add(reading)
     db.commit()
     db.refresh(reading)
@@ -40,7 +43,11 @@ def create_reading(payload: ReadingCreate, db: Session = Depends(get_db)):
 
 @router.post("/bulk", status_code=201)
 def create_readings_bulk(payload: ReadingBulkCreate, db: Session = Depends(get_db)):
-    readings = [SensorReading(**r.model_dump(exclude_none=True)) for r in payload.readings]
+    readings = []
+    for r in payload.readings:
+        data = r.model_dump(exclude_none=True)
+        data["session_id"] = require_session(data.get("session_id"), db)
+        readings.append(SensorReading(**data))
     db.add_all(readings)
     db.commit()
     return {"inserted": len(readings)}

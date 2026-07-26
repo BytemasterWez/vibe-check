@@ -38,6 +38,14 @@ def create_evidence_pack(payload: EvidencePackRequest, db: Session = Depends(get
     session = db.get(ExperimentSession, payload.session_id)
     if not session:
         raise HTTPException(404, "Experiment session not found")
+    # Evidence packs are per-session by construction: every query below is
+    # filtered on session_id, so unscoped data can never leak into a report.
+    if session.ended_at is None:
+        raise HTTPException(
+            409,
+            "Session is still running. Stop it first so the evidence pack "
+            "covers a complete run.",
+        )
 
     readings = db.execute(
         select(SensorReading)

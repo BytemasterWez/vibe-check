@@ -4,9 +4,15 @@ Runs inside the FastAPI process. Every tick it (a) reads samples from the
 active mock/replay adapter if one is running, (b) fuses the rolling reading
 window into a bed state, and (c) records any detected prototype events.
 
+V0.1 session enforcement: nothing is written without a session. If mock data
+starts with no active experiment session, a demo session named
+DEMO_<scenario>_<timestamp> is auto-created; when the mock stops (or a
+finite demo scenario completes) that session is finalized with computed
+results, so every one-click demo produces a report-ready run.
+
 `speed="fast"` compresses time for quick testing: ticks run 5x faster and
-all time-based rules (rolling window, bed-exit confirmation) scale down by
-the same factor so behaviour is preserved.
+all time-based rules (rolling window, bed-exit confirmation, event
+cooldowns) scale down by the same factor so behaviour is preserved.
 """
 import asyncio
 import contextlib
@@ -20,14 +26,25 @@ from .adapters.csv_replay_adapter import CsvReplayAdapter
 from .adapters.mock_adapter import MOCK_SCENARIOS, MockBedSensorSet
 from .config import settings
 from .database import SessionLocal
-from .models import BedState, Event, SensorReading
+from .models import BedState, Event, ExperimentSession, SensorReading
 from .services.event_detector import EventDetector
+from .services.experiment_logger import DEFAULT_EXPECTED, finalize_experiment
 from .services.explanation_layer import explain_state
 from .services.fusion_engine import FusionEngine, ReadingsWindow
 
 logger = logging.getLogger("bedsense.worker")
 
 SPEED_FACTORS = {"realtime": 1.0, "fast": 0.2}
+
+# How long (simulated seconds) an auto-created demo session runs for
+# scenarios that would otherwise generate data forever. Finite scenarios
+# (person_enters_bed, bed_exit, composites) end via scenario_finished().
+DEMO_DURATIONS_S: dict[str, int] = {
+    "empty_bed": 30,
+    "person_still": 45,
+    "breathing_like_motion": 45,
+    "person_moving": 30,
+}
 
 METRIC_UNITS = {
     "pressure_value": "normalized",
@@ -47,6 +64,8 @@ class Runtime:
         self.mock_set: MockBedSensorSet | None = None
         self.replay: CsvReplayAdapter | None = None
         self.current_session_id: uuid.UUID | None = None
+        self.current_session_name: str | None = None
+        self.auto_session: bool = False
         self.fusion = FusionEngine()
         self.detector = EventDetector()
         self._task: asyncio.Task | None = None
@@ -64,6 +83,57 @@ class Runtime:
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task
 
+    # ---- session binding -------------------------------------------------
+    def bind_session(self, session_id: uuid.UUID, name: str) -> None:
+        """Attach the runtime to an operator-started experiment session."""
+        self.current_session_id = session_id
+        self.current_session_name = name
+        self.auto_session = False
+
+    def unbind_session(self, session_id: uuid.UUID) -> None:
+        if self.current_session_id == session_id:
+            self.current_session_id = None
+            self.current_session_name = None
+            self.auto_session = False
+
+    def _create_demo_session(self, scenario: str) -> None:
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        db = SessionLocal()
+        try:
+            session = ExperimentSession(
+                name=f"DEMO_{scenario}_{stamp}",
+                scenario=scenario if scenario in DEFAULT_EXPECTED else "manual_test",
+                operator_name="demo",
+                notes="Auto-created demo session (mock started without an active session).",
+                expected_events=DEFAULT_EXPECTED.get(scenario, []),
+                started_at=datetime.now(timezone.utc),
+            )
+            db.add(session)
+            db.commit()
+            db.refresh(session)
+            self.current_session_id = session.id
+            self.current_session_name = session.name
+            self.auto_session = True
+            logger.info("auto-created demo session %s", session.name)
+        finally:
+            db.close()
+
+    def _finalize_auto_session(self) -> None:
+        if not self.auto_session or self.current_session_id is None:
+            return
+        db = SessionLocal()
+        try:
+            session = db.get(ExperimentSession, self.current_session_id)
+            if session is not None:
+                finalize_experiment(db, session)
+                db.commit()
+                logger.info("finalized demo session %s", session.name)
+        finally:
+            db.close()
+        self.current_session_id = None
+        self.current_session_name = None
+        self.auto_session = False
+
     # ---- controls --------------------------------------------------------
     def start_mock(self, scenario: str = "empty_bed", speed: str = "realtime",
                    csv_file: str | None = None) -> dict:
@@ -80,12 +150,21 @@ class Runtime:
             self.mock_set = MockBedSensorSet(scenario)
             self.replay = None
             self.scenario = scenario
+
+        # Session enforcement: never generate unscoped data. Re-starting the
+        # mock while an auto demo session is live rolls into a fresh demo
+        # session so each run stays cleanly separated.
+        if self.auto_session:
+            self._finalize_auto_session()
+        if self.current_session_id is None:
+            self._create_demo_session(self.scenario)
+
         self.speed = speed if speed in SPEED_FACTORS else "realtime"
         factor = SPEED_FACTORS[self.speed]
         self.fusion = FusionEngine(
             bed_exit_confirmation_seconds=max(1, int(settings.bed_exit_confirmation_seconds * factor))
         )
-        self.detector.reset()
+        self.detector.reset(cooldown_scale=factor)
         self.mock_running = True
         return self.status()
 
@@ -94,6 +173,7 @@ class Runtime:
         self.scenario = None
         self.mock_set = None
         self.replay = None
+        self._finalize_auto_session()
         return self.status()
 
     def status(self) -> dict:
@@ -102,6 +182,8 @@ class Runtime:
             "scenario": self.scenario,
             "speed": self.speed,
             "session_id": str(self.current_session_id) if self.current_session_id else None,
+            "session_name": self.current_session_name,
+            "auto_session": self.auto_session,
         }
 
     # ---- main loop ----------------------------------------------------------
@@ -119,23 +201,43 @@ class Runtime:
                 pass
 
     def _tick(self, factor: float) -> None:
+        # Session enforcement: no session, no writes.
+        if self.current_session_id is None:
+            return
         db = SessionLocal()
         try:
             now = datetime.now(timezone.utc)
             if self.mock_running:
                 self._generate_samples(db, now)
-            self._fuse(db, now, factor)
+            if self.current_session_id is not None:
+                self._fuse(db, now, factor)
             db.commit()
         finally:
             db.close()
 
+    def _demo_finished(self) -> bool:
+        if self.mock_set is None:
+            return False
+        if self.mock_set.scenario_finished():
+            return True
+        if self.auto_session:
+            limit = DEMO_DURATIONS_S.get(self.scenario or "")
+            return limit is not None and self.mock_set.radar.t >= limit
+        return False
+
     def _generate_samples(self, db, now: datetime) -> None:
         samples: list[dict] = []
         if self.mock_set is not None:
+            if self._demo_finished():
+                logger.info("demo scenario '%s' complete; stopping mock", self.scenario)
+                db.commit()  # persist everything written so far this tick
+                self.stop_mock()
+                return
             samples = self.mock_set.read_samples()
         elif self.replay is not None:
             if self.replay.finished():
                 logger.info("CSV replay finished; stopping mock")
+                db.commit()
                 self.stop_mock()
                 return
             samples = [self.replay.read_sample()]
@@ -159,7 +261,10 @@ class Runtime:
         cutoff = now - timedelta(seconds=window_s)
         rows = db.execute(
             select(SensorReading)
-            .where(SensorReading.timestamp_utc >= cutoff)
+            .where(
+                SensorReading.timestamp_utc >= cutoff,
+                SensorReading.session_id == self.current_session_id,
+            )
             .order_by(SensorReading.timestamp_utc)
         ).scalars().all()
         if not rows:

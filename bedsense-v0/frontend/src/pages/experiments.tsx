@@ -13,7 +13,7 @@ const PASS_TONES: Record<string, string> = {
 
 function AssessButtons({ id, onChanged }: { id: string; onChanged: () => void }) {
   return (
-    <span className="flex gap-1">
+    <span className="flex gap-1" title="Operator final assessment">
       {["pass", "partial", "fail"].map((v) => (
         <button
           key={v}
@@ -55,6 +55,18 @@ export default function Experiments() {
                   <span className={`text-xs font-semibold uppercase ${PASS_TONES[s.pass_fail] ?? ""}`}>
                     {s.pass_fail}
                   </span>
+                  {s.actual_results?.suggested_pass_fail && (
+                    <span className="text-xs text-slate-500">
+                      suggested: {s.actual_results.suggested_pass_fail}
+                    </span>
+                  )}
+                  {s.actual_results && (
+                    <span className="text-xs text-slate-500">
+                      fp {s.actual_results.false_positive_count} · fn{" "}
+                      {s.actual_results.false_negative_count} · unscoped{" "}
+                      {s.actual_results.unscoped_events_count ?? 0}
+                    </span>
+                  )}
                   <span className="ml-auto flex items-center gap-2">
                     {s.ended_at && <AssessButtons id={s.id} onChanged={refresh} />}
                     {s.ended_at && <ReportExportButton sessionId={s.id} onDone={refresh} />}

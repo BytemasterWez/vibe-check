@@ -43,7 +43,12 @@ export default function EventTimeline({
               {e.severity}
             </span>
             {e.confidence_score != null && (
-              <span className="text-xs text-slate-400">conf {Math.round(e.confidence_score * 100)}%</span>
+              <span
+                className="text-xs text-slate-400"
+                title="Fusion confidence is an internal prototype scoring measure, not clinical accuracy."
+              >
+                fusion conf {Math.round(e.confidence_score * 100)}%
+              </span>
             )}
             <span className="ml-auto text-xs">
               {e.acknowledged ? (

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Event
 from ..schemas.event_schema import EventCreate, EventOut
+from .deps import require_session
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -31,7 +32,9 @@ def list_events(
 
 @router.post("", response_model=EventOut, status_code=201)
 def create_event(payload: EventCreate, db: Session = Depends(get_db)):
-    event = Event(**payload.model_dump(exclude_none=True))
+    data = payload.model_dump(exclude_none=True)
+    data["session_id"] = require_session(data.get("session_id"), db)
+    event = Event(**data)
     db.add(event)
     db.commit()
     db.refresh(event)

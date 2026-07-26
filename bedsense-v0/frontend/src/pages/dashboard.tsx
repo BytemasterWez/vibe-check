@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import BedStatusCard from "@/components/BedStatusCard";
 import SignalQualityPanel from "@/components/SignalQualityPanel";
@@ -15,16 +16,26 @@ const MOVEMENT_LABELS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { data: current } = usePoll<any>("/state/current", 1000);
-  const { data: mock } = usePoll<any>("/mock/status", 3000);
-  const { data: readings } = usePoll<ReadingRow[]>("/readings?limit=18", 2000);
-  const { data: events, refresh: refreshEvents } = usePoll<EventRow[]>("/events?limit=6", 2000);
-  const { data: experiments } = usePoll<any[]>("/experiments", 5000);
+  // V0.1 §2: default every panel to the active session so a demo never shows
+  // stale readings or events from a previous scenario.
+  const [allSessions, setAllSessions] = useState(false);
+  const { data: mock } = usePoll<any>("/mock/status", 2000);
+  const sessionId: string | null = mock?.session_id ?? null;
+  const scoped = !allSessions && !!sessionId;
+  const scopeQuery = scoped ? `&session_id=${sessionId}` : "";
+
+  const { data: current } = usePoll<any>(
+    `/state/current?all_sessions=${allSessions}`,
+    1000
+  );
+  const { data: readings } = usePoll<ReadingRow[]>(`/readings?limit=18${scopeQuery}`, 2000);
+  const { data: events, refresh: refreshEvents } = usePoll<EventRow[]>(
+    `/events?limit=6${scopeQuery}`,
+    2000
+  );
 
   const state = current?.state;
-  const activeSession = experiments?.find((e) => e.id === mock?.session_id || (!e.ended_at && mock?.session_id === e.id));
-  const sessionName =
-    activeSession?.name ?? experiments?.find((e) => !e.ended_at)?.name ?? "No active session";
+  const sessionName = mock?.session_name ?? null;
 
   const occupiedTone = state?.occupied === true ? "good" : state?.occupied === false ? "info" : "neutral";
   const breathingTone =
@@ -37,19 +48,54 @@ export default function Dashboard() {
   return (
     <Layout title="Dashboard">
       <div className="space-y-6">
+        {!scoped && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+            {allSessions
+              ? "Showing all sessions — events and readings may span multiple scenarios."
+              : "Demo mode — unscoped data. No session is active, so nothing new is being recorded."}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
           <span>
-            Session: <span className="text-slate-200">{sessionName}</span>
+            Session:{" "}
+            <span className="text-slate-200">{sessionName ?? "No active session"}</span>
           </span>
+          {sessionId && (
+            <span className="font-mono text-xs text-slate-500">
+              {sessionId}
+              {mock?.auto_session && (
+                <span className="ml-2 rounded border border-slate-700 px-1.5 py-0.5 text-slate-400">
+                  auto demo
+                </span>
+              )}
+            </span>
+          )}
           <span>
             Mock:{" "}
             <span className="text-slate-200">
               {mock?.mock_running ? `running (${mock.scenario}, ${mock.speed})` : "stopped"}
             </span>
           </span>
-          <span className="ml-auto">
-            Last reading: <span className="text-slate-200">{fmtDateTime(current?.last_reading_at)}</span>
-          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex overflow-hidden rounded border border-slate-700 text-xs">
+              <button
+                onClick={() => setAllSessions(false)}
+                className={`px-2 py-1 ${!allSessions ? "bg-sky-600/30 text-sky-200" : "text-slate-400 hover:bg-slate-800"}`}
+              >
+                Current session
+              </button>
+              <button
+                onClick={() => setAllSessions(true)}
+                className={`px-2 py-1 ${allSessions ? "bg-sky-600/30 text-sky-200" : "text-slate-400 hover:bg-slate-800"}`}
+              >
+                All sessions
+              </button>
+            </div>
+            <span>
+              Last reading:{" "}
+              <span className="text-slate-200">{fmtDateTime(current?.last_reading_at)}</span>
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
@@ -80,7 +126,7 @@ export default function Dashboard() {
             tone={state?.overall_state === "possible_bed_exit" ? "bad" : "info"}
             detail={
               state?.confidence_score != null
-                ? `confidence ${Math.round(state.confidence_score * 100)}%`
+                ? `fusion confidence ${Math.round(state.confidence_score * 100)}%`
                 : undefined
             }
           />
@@ -105,6 +151,9 @@ export default function Dashboard() {
               )}
               <span className="ml-4">Prototype status: {current?.prototype_status ?? "—"}</span>
             </div>
+            <p className="mt-2 text-xs text-slate-600">
+              Fusion confidence is an internal prototype scoring measure, not clinical accuracy.
+            </p>
           </div>
         </div>
 

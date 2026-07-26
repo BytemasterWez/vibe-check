@@ -2,12 +2,12 @@ import { useState } from "react";
 import { post } from "@/lib/api";
 
 const SCENARIO_BUTTONS = [
-  { scenario: "empty_bed", label: "Run mock empty bed" },
-  { scenario: "person_enters_bed", label: "Run mock person enters bed" },
-  { scenario: "person_still", label: "Run mock still breathing-like" },
-  { scenario: "person_moving", label: "Run mock movement" },
-  { scenario: "bed_exit", label: "Run mock bed exit" },
-  { scenario: "mixed_sequence", label: "Run mock mixed sequence" },
+  { scenario: "empty_bed", label: "Empty bed" },
+  { scenario: "person_enters_bed", label: "Person enters bed" },
+  { scenario: "person_still", label: "Still breathing-like" },
+  { scenario: "person_moving", label: "Movement" },
+  { scenario: "bed_exit", label: "Bed exit" },
+  { scenario: "mixed_sequence", label: "Full mixed sequence" },
 ];
 
 const SCENARIOS = [
@@ -124,7 +124,9 @@ export default function ExperimentControls({
 
       <div>
         <div className="mb-2 flex items-center gap-3 text-xs text-slate-400">
-          <span>Mock scenarios</span>
+          <span>
+            {activeSession ? "Mock scenarios (feed current session)" : "One-click demos"}
+          </span>
           <label className="flex items-center gap-1">
             Speed
             <select
@@ -136,15 +138,26 @@ export default function ExperimentControls({
               <option value="fast">fast</option>
             </select>
           </label>
+          {!activeSession && (
+            <span className="text-slate-500">
+              Each demo auto-creates its own session and finishes report-ready.
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {SCENARIO_BUTTONS.map((b) => (
             <button
               key={b.scenario}
               className="rounded border border-sky-700/60 bg-sky-600/10 px-3 py-1.5 text-sm text-sky-200 hover:bg-sky-600/25"
-              onClick={() => run(() => post("/mock/scenario", { scenario: b.scenario, speed }))}
+              onClick={() =>
+                run(() =>
+                  activeSession
+                    ? post("/mock/scenario", { scenario: b.scenario, speed })
+                    : post("/demo/run", { scenario: b.scenario, speed })
+                )
+              }
             >
-              {b.label}
+              {activeSession ? `Run mock ${b.label.toLowerCase()}` : `${b.label} demo`}
             </button>
           ))}
           <button
@@ -152,6 +165,22 @@ export default function ExperimentControls({
             onClick={() => run(() => post("/mock/stop"))}
           >
             Stop mock
+          </button>
+          <button
+            className="rounded border border-rose-700/60 bg-rose-600/10 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-600/25"
+            title="Stops the mock, closes open sessions and clears orphan data. Evidence reports are kept."
+            onClick={() => {
+              if (
+                confirm(
+                  "Reset demo data? This stops the mock, closes any open session and " +
+                    "clears unscoped orphan data. Evidence reports are kept."
+                )
+              ) {
+                run(() => post("/demo/reset", { delete_reports: false }));
+              }
+            }}
+          >
+            Reset demo data
           </button>
         </div>
       </div>

@@ -18,6 +18,11 @@ CSV_EXPORTS = [
     "risk_register",
 ]
 
+FUSION_CONFIDENCE_NOTE = (
+    "Fusion confidence is an internal prototype scoring measure, not clinical "
+    "accuracy."
+)
+
 
 def _stamp(now: datetime | None = None) -> str:
     return (now or datetime.now(timezone.utc)).strftime("%Y%m%d_%H%M%S")
@@ -62,15 +67,20 @@ def generate_evidence_pack(
 
     summary = {
         "session_name": session.get("name"),
+        "session_id": str(session.get("id", "")),
         "scenario": session.get("scenario"),
+        "operator_final_assessment": session.get("pass_fail"),
         "pass_fail": session.get("pass_fail"),
+        "suggested_pass_fail": results.get("suggested_pass_fail"),
         "readings_count": len(readings),
         "bed_states_count": len(bed_states),
         "events_count": len(events),
         "false_positive_count": results.get("false_positive_count"),
         "false_negative_count": results.get("false_negative_count"),
+        "unscoped_events_count": results.get("unscoped_events_count"),
         "signal_quality_average": results.get("signal_quality_average"),
         "boundary_statement": BOUNDARY_STATEMENT,
+        "fusion_confidence_note": FUSION_CONFIDENCE_NOTE,
     }
     json_path.write_text(json.dumps({"summary": summary, "results": results}, indent=2, default=str))
 
@@ -92,6 +102,8 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
     add("")
     add(f"> {BOUNDARY_STATEMENT}")
     add("")
+    add(f"> {FUSION_CONFIDENCE_NOTE}")
+    add("")
 
     add("## Session Summary")
     add("")
@@ -101,7 +113,8 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
     add(f"- **Operator:** {session.get('operator_name') or '—'}")
     add(f"- **Started:** {_fmt_ts(session.get('started_at'))}")
     add(f"- **Ended:** {_fmt_ts(session.get('ended_at'))}")
-    add(f"- **Pass/fail:** {session.get('pass_fail', 'not_assessed')}")
+    add(f"- **Operator final assessment:** {session.get('pass_fail', 'not_assessed')}")
+    add(f"- **Suggested (automated):** {results.get('suggested_pass_fail', 'not_assessed')}")
     add(f"- **Notes:** {session.get('notes') or '—'}")
     add("")
 
@@ -158,10 +171,18 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
     add(f"- Count: **{results.get('false_negative_count', 'not assessed')}**")
     add("")
 
+    add("## Unscoped Events")
+    add("")
+    unscoped = results.get("unscoped_events_count")
+    add(f"- Events recorded without a session during this window: **{unscoped if unscoped is not None else 'not assessed'}**")
+    add("- Session enforcement is active, so this count should be 0. A non-zero")
+    add("  value means data was created outside a session and this report may be incomplete.")
+    add("")
+
     add("## Signal Quality Summary")
     add("")
     avg_q = results.get("signal_quality_average")
-    add(f"- Average quality score: **{avg_q if avg_q is not None else 'not assessed'}**")
+    add(f"- Average sensor signal quality: **{avg_q if avg_q is not None else 'not assessed'}**")
     quality_counts: dict[str, int] = {}
     for bs in bed_states:
         q = bs.get("signal_quality") or "unknown"
@@ -173,8 +194,8 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
     add("## Event Timeline")
     add("")
     if events:
-        add("| Time (UTC) | Event | Severity | Confidence | Description |")
-        add("|-----------|-------|----------|------------|-------------|")
+        add("| Time (UTC) | Event | Severity | Fusion confidence | Description |")
+        add("|-----------|-------|----------|-------------------|-------------|")
         for e in events:
             conf = e.get("confidence_score")
             add(
@@ -186,13 +207,17 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
         add("_No events recorded._")
     add("")
 
-    add("## Risk Register Summary")
+    add("## Risk Register Snapshot")
     add("")
     if risks:
-        add("| Risk | Category | Status |")
-        add("|------|----------|--------|")
+        add("| Risk | Category | Status | Mitigation |")
+        add("|------|----------|--------|------------|")
         for r in risks:
-            add(f"| {r.get('risk_title')} | {r.get('risk_category')} | {r.get('status')} |")
+            mitigation = (r.get("mitigation") or "—").replace("|", "/")
+            add(
+                f"| {r.get('risk_title')} | {r.get('risk_category')} | "
+                f"{r.get('status')} | {mitigation} |"
+            )
     else:
         add("_Risk register is empty._")
     add("")
@@ -212,7 +237,8 @@ def _build_markdown(session, sensors, readings, bed_states, events, risks, resul
     else:
         add("This session was not assessed against expected events.")
     add("")
-    add("This report documents prototype behaviour only and makes no clinical claims.")
+    add(f"{FUSION_CONFIDENCE_NOTE} This report documents prototype behaviour only")
+    add("and makes no clinical claims.")
     add("")
 
     add("## Next Validation Steps")
@@ -256,9 +282,13 @@ def _write_csv_exports(exports_dir: Path, stamp: str, session, readings, bed_sta
         "operator_name": session.get("operator_name"),
         "started_at": session.get("started_at"),
         "ended_at": session.get("ended_at"),
-        "pass_fail": session.get("pass_fail"),
+        "operator_final_assessment": session.get("pass_fail"),
+        "suggested_pass_fail": results.get("suggested_pass_fail"),
+        "expected_events": session.get("expected_events"),
+        "detection_results": results.get("expected"),
         "false_positive_count": results.get("false_positive_count"),
         "false_negative_count": results.get("false_negative_count"),
+        "unscoped_events_count": results.get("unscoped_events_count"),
         "signal_quality_average": results.get("signal_quality_average"),
         "notes": session.get("notes"),
     }

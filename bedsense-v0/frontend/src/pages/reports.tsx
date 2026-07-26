@@ -30,7 +30,11 @@ export default function Reports() {
             {r.summary && (
               <p className="mt-1 text-xs text-slate-400">
                 {r.summary.scenario} · {r.summary.events_count} events ·{" "}
-                {r.summary.readings_count} readings · pass/fail: {r.summary.pass_fail}
+                {r.summary.readings_count} readings · fp{" "}
+                {r.summary.false_positive_count ?? "—"} · fn{" "}
+                {r.summary.false_negative_count ?? "—"} · unscoped{" "}
+                {r.summary.unscoped_events_count ?? "—"} · operator assessment:{" "}
+                {r.summary.operator_final_assessment ?? r.summary.pass_fail}
               </p>
             )}
             <div className="mt-2 flex flex-wrap gap-2">
@@ -47,6 +51,12 @@ export default function Reports() {
             No evidence reports yet. Stop an experiment session, then export from the Experiments page.
           </p>
         )}
+        <p className="pt-2 text-xs text-slate-600">
+          Each pack covers exactly one session and includes the Markdown report, JSON summary,
+          five CSV exports, event timeline, risk register snapshot, screenshot placeholder and the
+          prototype boundary statement. Fusion confidence is an internal prototype scoring
+          measure, not clinical accuracy.
+        </p>
       </div>
     </Layout>
   );

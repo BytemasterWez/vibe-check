@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from ..models.experiment import PASS_FAIL, SCENARIOS
 from ..models.risk import RISK_CATEGORIES, RISK_STATUSES
@@ -54,8 +54,7 @@ class ExperimentOut(BaseModel):
     pass_fail: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RiskCreate(BaseModel):
@@ -118,8 +117,7 @@ class RiskOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReportOut(BaseModel):
@@ -132,8 +130,7 @@ class ReportOut(BaseModel):
     summary: dict[str, Any] | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MockScenarioRequest(BaseModel):
