@@ -1,0 +1,25 @@
+{
+  "name": "aerorisk",
+  "version": "0.1.0",
+  "description": "AeroRisk Due Diligence — public-record aircraft/operator risk intelligence. N-number in, evidence-backed report out.",
+  "type": "module",
+  "bin": {
+    "aerorisk": "bin/aerorisk.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "report": "node bin/aerorisk.js report"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "aviation",
+    "due-diligence",
+    "faa",
+    "ntsb",
+    "risk"
+  ],
+  "license": "UNLICENSED",
+  "private": true
+}

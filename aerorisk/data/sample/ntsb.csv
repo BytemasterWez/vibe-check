@@ -1,0 +1,5 @@
+EVENT_ID,DATE,N_NUMBER,SERIAL_NUMBER,MFR,MODEL,OPERATOR,CITY,STATE,AIRPORT,HIGHEST_INJURY,DAMAGE,STATUS,PROBABLE_CAUSE
+ERA21LA144,2021-03-18,N789EF,31-8152077,PIPER,PA-31-350,Bayline Air Services,OPA-LOCKA,FL,OPF,none,substantial,closed,"The pilot's failure to verify landing gear extension. Contributing: worn landing gear actuator that intermittently failed to lock."
+CEN22LA301,2022-07-09,N4419R,,CESSNA,172N,,WAUKESHA,WI,UES,minor,substantial,closed,"The student pilot's loss of directional control during landing with gusting crosswind."
+WPR23LA089,2023-01-27,N75318,,CESSNA,172N,,CHANDLER,AZ,CHD,none,substantial,closed,"Loss of control during landing bounce recovery resulting in nose gear collapse."
+ERA24LA118,2024-04-02,N629DK,,CIRRUS DESIGN CORP,SR22T,,ASHEVILLE,NC,AVL,none,minor,closed,"Total loss of engine power due to fuel starvation resulting from the pilot's fuel management."

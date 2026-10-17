@@ -1,0 +1,12 @@
+REPORT_ID,DATE,N_NUMBER,MFR,MODEL,JASC_CODE,JASC_DESCRIPTION,PART_NAME,SEVERITY,NARRATIVE
+SDR2022041101,2022-04-11,N7215G,CESSNA,172N,3230,Landing gear retract/extend system,NOSE GEAR STEERING ROD,minor,"Nose gear steering rod end found worn beyond limits during 100-hour inspection"
+SDR2023060502,2023-06-05,N9834H,CESSNA,172N,3230,Landing gear retract/extend system,MAIN GEAR SPRING,minor,"Main landing gear spring attach bolts found loose; hard-landing history suspected"
+SDR2024021703,2024-02-17,N5521Q,CESSNA,172N,2410,Electrical power alternator,ALTERNATOR,minor,"Alternator failed in flight; brushes worn; second failure on this airframe in 200 hours"
+SDR2024111204,2024-11-12,N7215G,CESSNA,172N,2497,Electrical power wiring,BATTERY CONTACTOR WIRING,minor,"Chafed wiring at battery contactor found smoking during runup"
+SDR2025030805,2025-03-08,N2288L,CESSNA,172N,7414,Ignition magneto,MAGNETO,minor,"Left magneto impulse coupling failed; engine rough on runup"
+SDR2024051206,2024-05-12,N41093,PIPER,PA-31-350,7100,Powerplant general,CYLINDER,serious,"Number 4 cylinder head crack found at exhaust port during borescope"
+SDR2025011307,2025-01-13,N27419,PIPER,PA-31-350,7810,Exhaust system,EXHAUST STACK,serious,"Exhaust stack crack with evidence of exhaust gas leakage into nacelle"
+SDR2023091508,2023-09-15,N789EF,PIPER,PA-31-350,3260,Landing gear position indicating,GEAR POSITION SWITCH,minor,"Right main gear down-lock switch intermittent; gear unsafe indication in cruise"
+SDR2025042209,2025-04-22,N789EF,PIPER,PA-31-350,7100,Powerplant general,CYLINDER,serious,"Left engine number 3 cylinder compression 38/80 with head crack suspected; cylinder replaced"
+SDR2023110811,2023-11-08,N3559K,PIPER,PA-31-350,7810,Exhaust system,EXHAUST CLAMP,minor,"Exhaust clamp found cracked with heat discoloration on adjacent nacelle structure"
+SDR2024072010,2024-07-20,N881CT,CIRRUS DESIGN CORP,SR22T,3450,Navigation warning systems,AOA SENSOR,minor,"Angle of attack sensor reported erratic in icing conditions"
